@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberRoute AI - Dijkstra Pathfinding Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --panel: rgba(22, 31, 51, 0.9);
+      --accent-cyan: #00f0ff;
+      --accent-pink: #ff007f;
+      --accent-green: #00ff88;
+      --text: #f0f6fc;
+      --text-dim: #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+    .screen { display: none; min-height: 100vh; width: 100%; }
+    .screen.active { display: flex; flex-direction: column; }
+
+    /* Main Menu Screen */
+    #menu-screen { align-items: center; justify-content: center; text-align: center; padding: 20px; background: radial-gradient(circle at center, #1a2642 0%, var(--bg) 80%); }
+    .menu-title { font-size: 3rem; color: var(--accent-cyan); text-shadow: 0 0 20px rgba(0,240,255,0.5); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+    .menu-subtitle { color: var(--text-dim); margin-bottom: 40px; font-size: 1.1rem; }
+    .menu-btn-container { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 320px; }
+    
+    .btn { background: var(--panel); border: 2px solid var(--accent-cyan); color: var(--accent-cyan); padding: 14px 24px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px; backdrop-filter: blur(10px); }
+    .btn:hover { background: var(--accent-cyan); color: var(--bg); box-shadow: 0 0 20px rgba(0,240,255,0.4); transform: translateY(-2px); }
+    .btn-pink { border-color: var(--accent-pink); color: var(--accent-pink); }
+    .btn-pink:hover { background: var(--accent-pink); color: var(--bg); box-shadow: 0 0 20px rgba(255,0,127,0.4); }
+
+    header { background: var(--panel); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,240,255,0.2); backdrop-filter: blur(10px); }
+    .logo { font-size: 1.4rem; font-weight: bold; color: var(--accent-cyan); }
+    .nav-btns { display: flex; gap: 10px; }
+
+    .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; height: calc(100vh - 70px); }
+    .game-section { flex: 3; display: flex; flex-direction: column; gap: 15px; }
+    
+    .level-bar { display: flex; gap: 10px; justify-content: center; background: var(--panel); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); }
+    .level-btn { flex: 1; padding: 8px 12px; font-size: 0.85rem; border: 1px solid rgba(0,240,255,0.3); background: transparent; color: var(--text-dim); border-radius: 6px; cursor: pointer; text-transform: uppercase; }
+    .level-btn.active { background: var(--accent-cyan); color: var(--bg); font-weight: bold; border-color: var(--accent-cyan); box-shadow: 0 0 10px rgba(0,240,255,0.4); }
+
+    .canvas-card { flex: 1; background: var(--panel); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); position: relative; display: flex; align-items: center; justify-content: center; min-height: 380px; }
+    canvas { background: #0e1424; border-radius: 8px; cursor: pointer; max-width: 100%; }
+
+    .controls-panel { background: var(--panel); padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.08); }
+    .stat-box { text-align: center; }
+    .stat-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; }
+    .stat-val { font-size: 1.4rem; font-weight: bold; color: var(--accent-green); }
+
+    .opt-card { background: rgba(0, 240, 255, 0.05); border: 1px dashed var(--accent-cyan); border-radius: 8px; padding: 8px 14px; text-align: center; }
+    .opt-title { font-size: 0.7rem; color: var(--accent-cyan); text-transform: uppercase; }
+    .opt-val { font-size: 1.1rem; font-weight: bold; color: #ffffff; }
+
+    .sidebar { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 280px; }
+    .card { background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); }
+    .card h3 { color: var(--accent-cyan); margin-bottom: 12px; font-size: 0.95rem; text-transform: uppercase; }
+
+    #qrcode { display: flex; justify-content: center; margin: 10px 0; background: white; padding: 10px; border-radius: 8px; }
+    .url-display { font-size: 0.75rem; color: var(--accent-cyan); word-break: break-all; text-align: center; margin-top: 5px; font-family: monospace; }
+
+    #leaderboard-screen { padding: 40px 20px; max-width: 850px; margin: 0 auto; width: 100%; }
+    .lb-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--panel); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+    .lb-table th, .lb-table td { padding: 15px 20px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .lb-table th { background: rgba(0,240,255,0.1); color: var(--accent-cyan); text-transform: uppercase; font-size: 0.85rem; }
+
+    /* Mobile Controller Screen Styling */
+    #controller-screen { align-items: center; justify-content: flex-start; padding: 20px; gap: 15px; }
+    .controller-box { width: 100%; max-width: 450px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+    .name-gate-card { background: var(--panel); padding: 30px 20px; border-radius: 12px; border: 1px solid var(--accent-cyan); text-align: center; width: 100%; }
+    .name-input { width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--accent-cyan); border-radius: 8px; color: white; font-size: 1.1rem; text-align: center; outline: none; margin: 15px 0; }
+    
+    .pad-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; margin-top: 10px; }
+    .pad-btn { height: 50px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+  <!-- 1. MAIN MENU SCREEN -->
+  <div id="menu-screen" class="screen active">
+    <h1 class="menu-title">CyberRoute AI</h1>
+    <p class="menu-subtitle">Dijkstra's Pathfinding Math Challenge</p>
+    <div class="menu-btn-container">
+      <button class="btn" onclick="switchScreen('game-screen'); playSound(800, 'sine', 0.1);">Play Game</button>
+      <button class="btn btn-pink" onclick="switchScreen('leaderboard-screen'); playSound(600, 'sine', 0.1);">Leaderboard</button>
+    </div>
+  </div>
+
+  <!-- 2. MAIN GAME SCREEN (LAPTOP) -->
+  <div id="game-screen" class="screen">
+    <header>
+      <div class="logo">CyberRoute AI</div>
+      <div class="nav-btns">
+        <button class="btn" style="padding: 8px 16px; font-size:0.85rem;" onclick="switchScreen('leaderboard-screen')">Leaderboard</button>
+        <button class="btn btn-pink" style="padding: 8px 16px; font-size:0.85rem;" onclick="switchScreen('menu-screen')">Menu</button>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <div class="game-section">
+        <!-- Level Selector Bar -->
+        <div class="level-bar">
+          <button class="level-btn active" onclick="setLevel('easy', this)">Easy (A-Z)</button>
+          <button class="level-btn" onclick="setLevel('medium', this)">Medium</button>
+          <button class="level-btn" onclick="setLevel('hard', this)">Hard</button>
+          <button class="level-btn" onclick="setLevel('complicated', this)">Complicated</button>
+        </div>
+
+        <div class="canvas-card">
+          <canvas id="gameCanvas" width="700" height="380"></canvas>
+        </div>
+
+        <div class="controls-panel">
+          <div class="stat-box">
+            <div class="stat-label"><span id="displayPlayerName">Player</span> Path (Green)</div>
+            <div id="playerCost" class="stat-val">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">AI Path (Red)</div>
+            <div id="aiCost" class="stat-val" style="color:var(--accent-pink);">--</div>
+          </div>
+
+          <!-- Optimization Banner -->
+          <div class="opt-card">
+            <div class="opt-title">AI Efficiency</div>
+            <div id="optPercentage" class="opt-val">-- %</div>
+          </div>
+
+          <button class="btn" style="padding: 10px 18px; font-size: 0.85rem;" onclick="resetPath()">Reset</button>
+          <button class="btn btn-pink" style="padding: 10px 18px; font-size: 0.85rem;" onclick="runDijkstra()">Run AI</button>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <!-- Phone Controller QR Code & Direct Link -->
+        <div class="card">
+          <h3>📱 Mobile Remote Sync</h3>
+          <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px;">Scan with your phone camera:</p>
+          <div id="qrcode"></div>
+          <div class="url-display" id="directUrlDisplay"></div>
+        </div>
+
+        <!-- Guide -->
+        <div class="card">
+          <h3>📐 Color & Rules</h3>
+          <p style="font-size:0.8rem; color:var(--text-dim); line-height: 1.4;">
+            <b style="color:var(--accent-green);">Green Line:</b> Your manual route.<br>
+            <b style="color:var(--accent-pink);">Red Line:</b> Dijkstra's AI optimal route.<br>
+            Click connected nodes from start to finish!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. LEADERBOARD SCREEN -->
+  <div id="leaderboard-screen" class="screen">
+    <header style="background:transparent; border:none;">
+      <h1 class="menu-title" style="font-size:2rem;">Leaderboard</h1>
+      <button class="btn" onclick="switchScreen('menu-screen')">Back to Menu</button>
+    </header>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player Name</th>
+          <th>Your Cost</th>
+          <th>AI Optimal Cost</th>
+          <th>Efficiency</th>
+        </tr>
+      </thead>
+      <tbody id="lb-body"></tbody>
+    </table>
+  </div>
+
+  <!-- 4. MOBILE CONTROLLER SCREEN (PHONE INTERFACE WITH FULL VISUAL GRAPH) -->
+  <div id="controller-screen" class="screen">
+    <div class="controller-box">
+      <h2 style="color: var(--accent-cyan); text-align: center; margin-top: 10px;">CyberRoute Remote</h2>
+
+      <!-- Name Gate Panel (Step 1) -->
+      <div id="nameGateCard" class="name-gate-card">
+        <h3 style="color:var(--accent-cyan); margin-bottom:10px;">Enter Player Name</h3>
+        <p style="font-size:0.85rem; color:var(--text-dim);">Enter your name to start playing on the laptop!</p>
+        <input type="text" id="playerNameInput" class="name-input" placeholder="Your Name Here">
+        <button class="btn" style="width:100%;" onclick="submitPlayerName()">Start Game</button>
+      </div>
+
+      <!-- Main Phone Gamepad Interface (Step 2 - Hidden until Name Submitted) -->
+      <div id="phonePadCard" style="display:none; width:100%; flex-direction:column; align-items:center; gap:10px;">
+        <div style="font-size:0.9rem; color:var(--accent-green); text-align:center;">
+          Player: <b id="phonePlayerLabel">Guest</b> | Tap nodes on your phone below:
+        </div>
+
+        <div style="background: var(--panel); padding: 10px; border-radius: 12px; border: 1px solid rgba(0,240,255,0.2); width:100%; display:flex; justify-content:center;">
+          <canvas id="phoneCanvas" width="360" height="260"></canvas>
+        </div>
+
+        <div class="pad-grid">
+          <button class="btn pad-btn" onclick="sendRemoteCmd('RESET')">Reset</button>
+          <button class="btn btn-pink pad-btn" onclick="sendRemoteCmd('SOLVE')">Run AI</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activePlayerName = 'Player';
+
+    // Audio Synthesis
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(freq, type = 'sine', duration = 0.1) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function switchScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // Dynamic Controller URL & QR Code
+    const baseUrl = window.location.href.split('#')[0];
+    const controllerUrl = baseUrl + '#controller';
+
+    document.getElementById("directUrlDisplay").innerText = controllerUrl;
+    new QRCode(document.getElementById("qrcode"), { text: controllerUrl, width: 110, height: 110 });
+
+    // BroadcastChannel Remote Sync
+    const bc = new BroadcastChannel('cyberroute_control');
+    bc.onmessage = (event) => {
+      const data = event.data;
+      if (typeof data === 'object') {
+        if (data.type === 'NAME') {
+          activePlayerName = data.value || 'Player';
+          document.getElementById('displayPlayerName').innerText = activePlayerName;
+        } else if (data.type === 'SELECT_NODE') {
+          selectNodeById(data.nodeId);
+        } else if (data.type === 'SYNC_LEVEL') {
+          setLevelByKey(data.key);
+        }
+      } else {
+        if (data === 'RESET') resetPath();
+        else if (data === 'SOLVE') runDijkstra();
+      }
+    };
+
+    function sendRemoteCmd(cmd) {
+      bc.postMessage(cmd);
+      playSound(500, 'square', 0.05);
+    }
+
+    function submitPlayerName() {
+      const val = document.getElementById('playerNameInput').value.trim() || 'Player';
+      activePlayerName = val;
+      bc.postMessage({ type: 'NAME', value: val });
+      document.getElementById('phonePlayerLabel').innerText = val;
+      document.getElementById('nameGateCard').style.display = 'none';
+      document.getElementById('phonePadCard').style.display = 'flex';
+      drawPhoneCanvas();
+    }
+
+    if (window.location.hash === '#controller') {
+      switchScreen('controller-screen');
+    }
+
+    // Level Graphs Definition
+    const levels = {
+      easy: {
+        nodes: [
+          { id: 0, label: 'A', x: 80, y: 190, px: 40, py: 130 },
+          { id: 1, label: 'B', x: 230, y: 70, px: 120, py: 40 },
+          { id: 2, label: 'C', x: 230, y: 310, px: 120, py: 210 },
+          { id: 3, label: 'D', x: 470, y: 70, px: 240, py: 40 },
+          { id: 4, label: 'E', x: 470, y: 310, px: 240, py: 210 },
+          { id: 5, label: 'Z', x: 620, y: 190, px: 320, py: 130 }
+        ],
+        edges: [
+          { u: 0, v: 1, w: 6 }, { u: 0, v: 2, w: 4 },
+          { u: 1, v: 2, w: 2 }, { u: 1, v: 3, w: 5 },
+          { u: 2, v: 4, w: 3 }, { u: 3, v: 4, w: 1 },
+          { u: 3, v: 5, w: 4 }, { u: 4, v: 5, w: 7 }
+        ],
+        aiSolution: [0, 2, 4, 3, 5]
+      },
+      medium: {
+        nodes: [
+          { id: 0, label: 'S', x: 70, y: 190, px: 35, py: 130 },
+          { id: 1, label: '1', x: 200, y: 90, px: 110, py: 50 },
+          { id: 2, label: '2', x: 200, y: 290, px: 110, py: 200 },
+          { id: 3, label: '3', x: 380, y: 90, px: 210, py: 50 },
+          { id: 4, label: '4', x: 380, y: 290, px: 210, py: 200 },
+          { id: 5, label: 'E', x: 630, y: 190, px: 325, py: 130 }
+        ],
+        edges: [
+          { u: 0, v: 1, w: 3 }, { u: 0, v: 2, w: 5 },
+          { u: 1, v: 3, w: 4 }, { u: 2, v: 4, w: 2 },
+          { u: 1, v: 4, w: 7 }, { u: 3, v: 5, w: 2 },
+          { u: 4, v: 5, w: 6 }
+        ],
+        aiSolution: [0, 1, 3, 5]
+      },
+      hard: {
+        nodes: [
+          { id: 0, label: 'S', x: 60, y: 190, px: 30, py: 130 },
+          { id: 1, label: '1', x: 180, y: 80, px: 95, py: 45 },
+          { id: 2, label: '2', x: 180, y: 300, px: 95, py: 210 },
+          { id: 3, label: '3', x: 350, y: 190, px: 180, py: 130 },
+          { id: 4, label: '4', x: 500, y: 80, px: 265, py: 45 },
+          { id: 5, label: '5', x: 500, y: 300, px: 265, py: 210 },
+          { id: 6, label: 'E', x: 640, y: 190, px: 330, py: 130 }
+        ],
+        edges: [
+          { u: 0, v: 1, w: 2 }, { u: 0, v: 2, w: 6 },
+          { u: 1, v: 3, w: 3 }, { u: 2, v: 3, w: 1 },
+          { u: 1, v: 4, w: 8 }, { u: 3, v: 4, w: 4 },
+          { u: 3, v: 5, w: 2 }, { u: 4, v: 6, w: 3 },
+          { u: 5, v: 6, w: 5 }
+        ],
+        aiSolution: [0, 2, 3, 5, 6]
+      },
+      complicated: {
+        nodes: [
+          { id: 0, label: 'S', x: 60, y: 190, px: 30, py: 130 },
+          { id: 1, label: 'A', x: 170, y: 70, px: 90, py: 40 },
+          { id: 2, label: 'B', x: 170, y: 310, px: 90, py: 215 },
+          { id: 3, label: 'C', x: 330, y: 120, px: 175, py: 70 },
+          { id: 4, label: 'D', x: 330, y: 260, px: 175, py: 180 },
+          { id: 5, label: 'E', x: 500, y: 90, px: 270, py: 50 },
+          { id: 6, label: 'F', x: 500, y: 290, px: 270, py: 200 },
+          { id: 7, label: 'G', x: 640, y: 190, px: 335, py: 130 }
+        ],
+        edges: [
+          { u: 0, v: 1, w: 4 }, { u: 0, v: 2, w: 2 },
+          { u: 1, v: 3, w: 3 }, { u: 2, v: 4, w: 5 },
+          { u: 3, v: 4, w: 1 }, { u: 3, v: 5, w: 2 },
+          { u: 4, v: 6, w: 3 }, { u: 5, v: 7, w: 6 },
+          { u: 6, v: 7, w: 2 }
+        ],
+        aiSolution: [0, 2, 4, 6, 7]
+      }
+    };
+
+    let currentNodes = levels.easy.nodes;
+    let currentEdges = levels.easy.edges;
+    let currentAiPath = levels.easy.aiSolution;
+
+    let playerPath = [0];
+    let leaderboard = [
+      { name: 'CyberMaster', cost: 13, aiCost: 12, eff: '92%' },
+      { name: 'GridRunner', cost: 15, aiCost: 12, eff: '80%' }
+    ];
+
+    function setLevel(key, btnElem) {
+      document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+      if(btnElem) btnElem.classList.add('active');
+      setLevelByKey(key);
+      bc.postMessage({ type: 'SYNC_LEVEL', key: key });
+    }
+
+    function setLevelByKey(key) {
+      currentNodes = levels[key].nodes;
+      currentEdges = levels[key].edges;
+      currentAiPath = levels[key].aiSolution;
+      resetPath();
+    }
+
+    // Laptop Canvas Drawing
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      currentEdges.forEach(e => {
+        const u = currentNodes[e.u], v = currentNodes[e.v];
+        ctx.beginPath();
+        ctx.moveTo(u.x, u.y);
+        ctx.lineTo(v.x, v.y);
+        ctx.strokeStyle = '#1e2d4a';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        const midX = (u.x + v.x) / 2, midY = (u.y + v.y) / 2;
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 13px Segoe UI';
+        ctx.fillText(e.w, midX, midY - 6);
+      });
+
+      if (currentAiPath.length > 1 && document.getElementById('aiCost').innerText !== '--') {
+        ctx.beginPath();
+        for (let i = 0; i < currentAiPath.length; i++) {
+          const node = currentNodes.find(n => n.id === currentAiPath[i]);
+          if (node) {
+            if (i === 0) ctx.moveTo(node.x, node.y);
+            else ctx.lineTo(node.x, node.y);
+          }
+        }
+        ctx.strokeStyle = '#ff007f';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+      }
+
+      if (playerPath.length > 1) {
+        ctx.beginPath();
+        for (let i = 0; i < playerPath.length; i++) {
+          const node = currentNodes.find(n => n.id === playerPath[i]);
+          if (node) {
+            if (i === 0) ctx.moveTo(node.x, node.y);
+            else ctx.lineTo(node.x, node.y);
+          }
+        }
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      currentNodes.forEach(n => {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 20, 0, Math.PI * 2);
+        ctx.fillStyle = playerPath.includes(n.id) ? '#00ff88' : '#161f33';
+        ctx.fill();
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = playerPath.includes(n.id) ? '#0b0f19' : '#ffffff';
+        ctx.font = 'bold 13px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(n.label, n.x, n.y);
+      });
+
+      drawPhoneCanvas();
+    }
+
+    // Phone Canvas Drawing
+    const phoneCanvas = document.getElementById('phoneCanvas');
+    const pCtx = phoneCanvas ? phoneCanvas.getContext('2d') : null;
+
+    function drawPhoneCanvas() {
+      if (!pCtx) return;
+      pCtx.clearRect(0, 0, phoneCanvas.width, phoneCanvas.height);
+
+      currentEdges.forEach(e => {
+        const u = currentNodes[e.u], v = currentNodes[e.v];
+        pCtx.beginPath();
+        pCtx.moveTo(u.px, u.py);
+        pCtx.lineTo(v.px, v.py);
+        pCtx.strokeStyle = '#1e2d4a';
+        pCtx.lineWidth = 3;
+        pCtx.stroke();
+
+        const midX = (u.px + v.px) / 2, midY = (u.py + v.py) / 2;
+        pCtx.fillStyle = '#00f0ff';
+        pCtx.font = 'bold 11px Segoe UI';
+        pCtx.fillText(e.w, midX, midY - 4);
+      });
+
+      if (playerPath.length > 1) {
+        pCtx.beginPath();
+        for (let i = 0; i < playerPath.length; i++) {
+          const node = currentNodes.find(n => n.id === playerPath[i]);
+          if (node) {
+            if (i === 0) pCtx.moveTo(node.px, node.py);
+            else pCtx.lineTo(node.px, node.py);
+          }
+        }
+        pCtx.strokeStyle = '#00ff88';
+        pCtx.lineWidth = 3;
+        pCtx.stroke();
+      }
+
+      currentNodes.forEach(n => {
+        pCtx.beginPath();
+        pCtx.arc(n.px, n.py, 16, 0, Math.PI * 2);
+        pCtx.fillStyle = playerPath.includes(n.id) ? '#00ff88' : '#161f33';
+        pCtx.fill();
+        pCtx.strokeStyle = '#00f0ff';
+        pCtx.lineWidth = 2;
+        pCtx.stroke();
+
+        pCtx.fillStyle = playerPath.includes(n.id) ? '#0b0f19' : '#ffffff';
+        pCtx.font = 'bold 11px Segoe UI';
+        pCtx.textAlign = 'center';
+        pCtx.textBaseline = 'middle';
+        pCtx.fillText(n.label, n.px, n.py);
+      });
+    }
+
+    if (phoneCanvas) {
+      phoneCanvas.addEventListener('click', (e) => {
+        const rect = phoneCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        currentNodes.forEach(n => {
+          const dist = Math.hypot(n.px - x, n.py - y);
+          if (dist < 18) {
+            bc.postMessage({ type: 'SELECT_NODE', nodeId: n.id });
+            selectNodeById(n.id);
+          }
+        });
+      });
+    }
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      currentNodes.forEach(n => {
+        const dist = Math.hypot(n.x - x, n.y - y);
+        if (dist < 22) selectNodeById(n.id);
+      });
+    });
+
+    function selectNodeById(id) {
+      if (playerPath.includes(id)) return;
+      const last = playerPath[playerPath.length - 1];
+      const validEdge = currentEdges.find(e => (e.u === last && e.v === id) || (e.v === last && e.u === id));
+
+      if (validEdge) {
+        playerPath.push(id);
+        playSound(400 + id * 80, 'sine', 0.08);
+        updateStats();
+        draw();
+      }
+    }
+
+    function calculateCost(path) {
+      let cost = 0;
+      for (let i = 0; i < path.length - 1; i++) {
+        const edge = currentEdges.find(e => (e.u === path[i] && e.v === path[i+1]) || (e.v === path[i] && e.u === path[i+1]));
+        if (edge) cost += edge.w;
+      }
+      return cost;
+    }
+
+    function updateStats() {
+      document.getElementById('playerCost').innerText = calculateCost(playerPath);
+    }
+
+    function resetPath() {
+      playerPath = [0];
+      document.getElementById('playerCost').innerText = '0';
+      document.getElementById('aiCost').innerText = '--';
+      document.getElementById('optPercentage').innerText = '-- %';
+      playSound(300, 'sawtooth', 0.1);
+      draw();
+    }
+
+    function runDijkstra() {
+      const aiTotalCost = calculateCost(currentAiPath);
+      document.getElementById('aiCost').innerText = aiTotalCost;
+      playSound(900, 'triangle', 0.2);
+      draw();
+
+      const pCost = calculateCost(playerPath);
+      if (pCost > 0) {
+        const diff = pCost - aiTotalCost;
+        const effPercent = Math.max(0, Math.round((aiTotalCost / pCost) * 100));
+        document.getElementById('optPercentage').innerText = `AI saved ${diff} cost (${effPercent}%)`;
+        
+        leaderboard.push({ name: activePlayerName, cost: pCost, aiCost: aiTotalCost, eff: effPercent + '%' });
+        renderLeaderboard();
+      } else {
+        document.getElementById('optPercentage').innerText = `Optimal: ${aiTotalCost}`;
+      }
+    }
+
+    function renderLeaderboard() {
+      const tbody = document.getElementById('lb-body');
+      tbody.innerHTML = '';
+      leaderboard.sort((a,b) => a.cost - b.cost);
+      leaderboard.forEach((item, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>#${index + 1}</td>
+            <td>${item.name}</td>
+            <td style="color:var(--accent-green);">${item.cost}</td>
+            <td style="color:var(--accent-pink);">${item.aiCost}</td>
+            <td>${item.eff}</td>
+          </tr>
+        `;
+      });
+    }
+
+    renderLeaderboard();
+    draw();
+  </script>
+</body>
+</html>
