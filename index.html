@@ -6,6 +6,8 @@
     <title>CyberRoute AI - Math Fair Edition</title>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- PeerJS for Real-time Cross-Device Sync -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -15,6 +17,7 @@
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
             --border: #334155;
+            --active-node: #10b981;
         }
 
         body {
@@ -66,50 +69,37 @@
         .view-section { display: none; width: 100%; justify-content: center; gap: 20px; flex-wrap: wrap; }
         .view-section.active { display: flex; }
 
-        /* Original Laptop Layout Styling */
-        #laptop-view {
-            display: flex;
-            gap: 20px;
-            width: 100%;
-            justify-content: center;
-            flex-wrap: wrap;
+        #qr-card {
+            text-align: center;
+            width: 250px;
         }
 
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 320px;
-        }
-
-        .qr-section-title {
-            font-size: 0.9rem;
-            color: var(--accent);
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .qr-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #0f172a;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .mini-qrcode {
+        #qrcode {
             background: white;
-            padding: 4px;
-            border-radius: 4px;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 12px 0;
+        }
+
+        .url-text {
+            font-size: 0.75rem;
+            color: var(--accent);
+            word-break: break-all;
         }
 
         canvas {
             background-color: #020617;
             border: 2px solid var(--border);
             border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 260px;
         }
 
         .leaderboard-list {
@@ -128,9 +118,8 @@
 
         .leaderboard-list li:last-child { border-bottom: none; }
 
-        /* Phone Controller View Styling */
         .controller-card {
-            max-width: 380px;
+            max-width: 360px;
             width: 100%;
             text-align: center;
         }
@@ -147,7 +136,7 @@
             margin-bottom: 5px;
         }
 
-        .input-group input {
+        .input-group input, .input-group select {
             width: 100%;
             padding: 10px;
             border-radius: 6px;
@@ -171,20 +160,29 @@
             transition: background-color 0.2s;
         }
 
-        .btn:hover {
-            background-color: var(--accent-hover);
+        .btn:hover { background-color: var(--accent-hover); }
+
+        .node-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
         }
 
-        .level-badge {
-            display: inline-block;
-            background: rgba(56, 189, 248, 0.15);
-            color: var(--accent);
-            padding: 5px 12px;
-            border-radius: 15px;
+        .node-btn {
+            padding: 14px;
+            background: #0f172a;
+            border: 2px solid var(--accent);
+            color: white;
             font-weight: bold;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .node-btn:active {
+            background: var(--accent);
+            color: #0f172a;
         }
     </style>
 </head>
@@ -192,72 +190,80 @@
 
     <header>
         <h1>CyberRoute AI</h1>
-        <p>Master Dijkstra's Algorithm for the Math Fair!</p>
+        <p>Master Dijkstra's Algorithm & Find the Shortest Path!</p>
     </header>
 
-    <!-- LAPTOP DISPLAY VIEW (Original Style + 4 Level QR Codes) -->
+    <!-- LAPTOP MAIN DISPLAY -->
     <div id="laptop-view" class="view-section active">
-        
-        <!-- Left Sidebar with 4 QR Codes -->
+        <!-- QR Code Sidebar -->
+        <div class="card" id="qr-card">
+            <h3 style="margin-top:0; color: var(--accent);">📱 Scan Controller</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim);">Scan to connect your phone!</p>
+            <div id="qrcode"></div>
+            <div class="url-text" id="directUrlDisplay">Connecting...</div>
+        </div>
+
+        <!-- Center Interactive Game Display -->
+        <div class="card" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 340px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; font-weight: bold;">
+                <span id="displayPlayer">Player: Waiting for phone...</span>
+                <span id="displayScore">Score: 0</span>
+            </div>
+            <canvas id="gameCanvas" width="450" height="380"></canvas>
+            <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-dim);" id="gameInstruction">
+                Select nodes on your phone to calculate the shortest path weight!
+            </div>
+        </div>
+
+        <!-- Leaderboard Sidebar -->
         <div class="sidebar">
             <div class="card">
-                <div class="qr-section-title">📱 Phone Controllers (Scan Level)</div>
-                
-                <div class="qr-row">
-                    <span style="font-size: 0.85rem; font-weight: bold;">Level 1</span>
-                    <div class="mini-qrcode" id="qrcode-lvl1"></div>
-                </div>
-                <div class="qr-row">
-                    <span style="font-size: 0.85rem; font-weight: bold;">Level 2</span>
-                    <div class="mini-qrcode" id="qrcode-lvl2"></div>
-                </div>
-                <div class="qr-row">
-                    <span style="font-size: 0.85rem; font-weight: bold;">Level 3</span>
-                    <div class="mini-qrcode" id="qrcode-lvl3"></div>
-                </div>
-                <div class="qr-row">
-                    <span style="font-size: 0.85rem; font-weight: bold;">Level 4</span>
-                    <div class="mini-qrcode" id="qrcode-lvl4"></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-top: 0; color: var(--accent); font-size: 1.1rem;">🏆 Leaderboard</h3>
+                <h3 style="margin-top: 0; color: var(--accent);">🏆 Leaderboard</h3>
                 <ul class="leaderboard-list" id="leaderboardList">
                     <li><span>No scores yet</span><span>-</span></li>
                 </ul>
             </div>
         </div>
-
-        <!-- Central Game Canvas Area -->
-        <div class="card" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 320px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; font-weight: bold;">
-                <span id="displayPlayer">Player: Waiting for phone scan...</span>
-                <span id="displayScore">Score: 0</span>
-            </div>
-            <canvas id="gameCanvas" width="420" height="380"></canvas>
-        </div>
-
     </div>
 
-    <!-- PHONE CONTROLLER VIEW (Optimized Mobile Interface) -->
+    <!-- PHONE REMOTE CONTROLLER VIEW -->
     <div id="controller-view" class="view-section">
         <div class="card controller-card">
-            <h3 style="color: var(--accent); margin-top: 0;">🎮 Game Controller</h3>
-            <div class="level-badge" id="phoneLevelDisplay">Level: Loading...</div>
-            <div class="input-group">
-                <label for="phonePlayerName">Your Name / Team Name</label>
-                <input type="text" id="phonePlayerName" placeholder="Enter name...">
+            <h3 style="color: var(--accent); margin-top: 0;">🎮 Game Remote</h3>
+            
+            <div id="setup-controls">
+                <div class="input-group">
+                    <label for="phonePlayerName">Your Name</label>
+                    <input type="text" id="phonePlayerName" placeholder="Enter player name...">
+                </div>
+                <div class="input-group">
+                    <label for="phoneDifficulty">Choose Level</label>
+                    <select id="phoneDifficulty">
+                        <option value="1">Level 1: Novice (4 Nodes)</option>
+                        <option value="2">Level 2: Intermediate (6 Nodes)</option>
+                        <option value="3">Level 3: Advanced (8 Nodes)</option>
+                        <option value="4">Level 4: Expert (10 Nodes)</option>
+                    </select>
+                </div>
+                <button class="btn" id="phoneStartBtn">Launch Game on Laptop</button>
             </div>
-            <button class="btn" id="phoneStartBtn">Connect to Laptop</button>
-            <div id="controllerStatus" style="margin-top: 15px; color: var(--accent); font-size: 0.9rem;"></div>
+
+            <!-- Active Controller Pad on Phone -->
+            <div id="active-controls" style="display: none;">
+                <div style="font-size: 0.9rem; color: var(--accent); font-weight: bold; margin-bottom: 10px;" id="phoneLevelTitle">Level 1 Active</div>
+                <p style="font-size: 0.85rem; color: var(--text-dim); margin: 0 0 10px 0;">Tap nodes to traverse the graph on laptop screen:</p>
+                <div class="node-grid" id="nodeButtons"></div>
+                <button class="btn" id="resetPathBtn" style="margin-top: 15px; background-color: #ef4444; color: white;">Reset Path</button>
+            </div>
+
+            <div id="controllerStatus" style="margin-top: 15px; color: var(--accent); font-size: 0.85rem;">Connecting to laptop...</div>
         </div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const isController = window.location.hash.includes('controller');
-        const levelParam = urlParams.get('lvl') || '1';
+        const hostId = urlParams.get('room');
+        const isController = window.location.hash.includes('controller') && hostId;
 
         const laptopView = document.getElementById('laptop-view');
         const controllerView = document.getElementById('controller-view');
@@ -267,130 +273,221 @@
             laptopView.classList.remove('active');
             controllerView.classList.add('active');
 
-            const levelNames = {
-                '1': 'Level 1: Novice',
-                '2': 'Level 2: Intermediate',
-                '3': 'Level 3: Advanced',
-                '4': 'Level 4: Expert'
-            };
-            document.getElementById('phoneLevelDisplay').textContent = levelNames[levelParam] || 'Level 1';
+            const peer = new Peer();
+            let conn;
+
+            peer.on('open', () => {
+                document.getElementById('controllerStatus').textContent = "Connecting to main laptop screen...";
+                conn = peer.connect(hostId);
+
+                conn.on('open', () => {
+                    document.getElementById('controllerStatus').textContent = "Connected to laptop! Select level & name.";
+                });
+            });
 
             document.getElementById('phoneStartBtn').addEventListener('click', () => {
                 const name = document.getElementById('phonePlayerName').value.trim();
+                const level = document.getElementById('phoneDifficulty').value;
                 if (!name) {
                     alert("Please enter your name!");
                     return;
                 }
 
-                const sessionPayload = {
-                    player: name,
-                    level: levelParam,
-                    timestamp: Date.now()
-                };
-
-                localStorage.setItem('cyberroute_active_session', JSON.stringify(sessionPayload));
-                document.getElementById('controllerStatus').textContent = "Connected! Check your laptop screen.";
+                if (conn && conn.open) {
+                    conn.send({ type: 'START_GAME', player: name, level: level });
+                    document.getElementById('setup-controls').style.display = 'none';
+                    document.getElementById('active-controls').style.display = 'block';
+                    document.getElementById('phoneLevelTitle').textContent = `Level ${level} Active`;
+                    document.getElementById('controllerStatus').textContent = "Game Active! Tap buttons to route.";
+                    
+                    renderPhoneButtons(level, conn);
+                } else {
+                    alert("Connecting to laptop... Please tap again in 2 seconds.");
+                }
             });
+
+            document.getElementById('resetPathBtn').addEventListener('click', () => {
+                if (conn && conn.open) {
+                    conn.send({ type: 'RESET_PATH' });
+                }
+            });
+
+            function renderPhoneButtons(lvl, connection) {
+                const container = document.getElementById('nodeButtons');
+                container.innerHTML = "";
+                const count = parseInt(lvl) * 2 + 2;
+                const allLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+                const nodes = allLabels.slice(0, count);
+
+                nodes.forEach(label => {
+                    const btn = document.createElement('button');
+                    btn.className = 'node-btn';
+                    btn.textContent = `Node ${label}`;
+                    btn.onclick = () => {
+                        connection.send({ type: 'SELECT_NODE', node: label });
+                    };
+                    container.appendChild(btn);
+                });
+            }
 
         } else {
             // --- LAPTOP DISPLAY MODE ---
             laptopView.classList.add('active');
             controllerView.classList.remove('active');
 
-            const baseUrl = window.location.href.split('#')[0].split('?')[0];
-
-            // Generate the 4 mini QR codes on the sidebar
-            for (let i = 1; i <= 4; i++) {
-                const targetUrl = `${baseUrl}?lvl=${i}#controller`;
-                const container = document.getElementById(`qrcode-lvl${i}`);
-                if (container) {
-                    container.innerHTML = "";
-                    new QRCode(container, {
-                        text: targetUrl,
-                        width: 75,
-                        height: 75,
-                    });
-                }
-            }
-
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
-            let activePlayer = "";
-            let currentLevel = "1";
+            let activePlayer = "Guest";
+            let activeLevel = "1";
             let score = 0;
+            let currentPath = [];
 
             renderLeaderboard();
-            drawIdleCanvas();
 
-            // Listen for phone controller sync events
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'cyberroute_active_session') {
-                    const data = JSON.parse(e.newValue);
-                    if (data && data.player) {
-                        activePlayer = data.player;
-                        currentLevel = data.level;
-                        score = parseInt(currentLevel) * 100;
+            // Set up level graph node layouts
+            const levelGraphs = {
+                '1': [
+                    {x: 80, y: 190, label: 'A'},
+                    {x: 225, y: 110, label: 'B'},
+                    {x: 225, y: 270, label: 'C'},
+                    {x: 370, y: 190, label: 'D'}
+                ],
+                '2': [
+                    {x: 60, y: 190, label: 'A'},
+                    {x: 170, y: 100, label: 'B'},
+                    {x: 170, y: 280, label: 'C'},
+                    {x: 280, y: 100, label: 'D'},
+                    {x: 280, y: 280, label: 'E'},
+                    {x: 390, y: 190, label: 'F'}
+                ],
+                '3': [
+                    {x: 50, y: 190, label: 'A'},
+                    {x: 150, y: 90, label: 'B'},
+                    {x: 150, y: 290, label: 'C'},
+                    {x: 250, y: 90, label: 'D'},
+                    {x: 250, y: 290, label: 'E'},
+                    {x: 350, y: 140, label: 'F'},
+                    {x: 350, y: 240, label: 'G'},
+                    {x: 410, y: 190, label: 'H'}
+                ],
+                '4': [
+                    {x: 40, y: 190, label: 'A'},
+                    {x: 120, y: 90, label: 'B'},
+                    {x: 120, y: 290, label: 'C'},
+                    {x: 210, y: 140, label: 'D'},
+                    {x: 210, y: 240, label: 'E'},
+                    {x: 300, y: 90, label: 'F'},
+                    {x: 300, y: 290, label: 'G'},
+                    {x: 370, y: 140, label: 'H'},
+                    {x: 370, y: 240, label: 'I'},
+                    {x: 420, y: 190, label: 'J'}
+                ]
+            };
 
-                        document.getElementById('displayPlayer').textContent = `Player: ${activePlayer} (Lvl ${currentLevel})`;
-                        document.getElementById('displayScore').textContent = `Score: ${score}`;
-                        drawGameCanvas(currentLevel);
-                    }
-                }
+            // Initial graph drawing on start
+            drawGameGraph("1", []);
+
+            // Generate PeerJS cloud host connection
+            const roomId = 'cyberroute-' + Math.floor(1000 + Math.random() * 9000);
+            const peer = new Peer(roomId);
+
+            peer.on('open', (id) => {
+                const baseUrl = window.location.href.split('#')[0].split('?')[0];
+                const controllerUrl = `${baseUrl}?room=${id}#controller`;
+
+                document.getElementById('directUrlDisplay').textContent = controllerUrl;
+                document.getElementById('qrcode').innerHTML = "";
+                new QRCode(document.getElementById('qrcode'), {
+                    text: controllerUrl,
+                    width: 140,
+                    height: 140,
+                });
             });
 
-            function drawIdleCanvas() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '15px Segoe UI';
-                ctx.textAlign = 'center';
-                ctx.fillText("Scan any Level QR code on the left", canvas.width / 2, canvas.height / 2 - 10);
-                ctx.fillText("with your phone to start playing!", canvas.width / 2, canvas.height / 2 + 20);
-            }
+            peer.on('connection', (conn) => {
+                conn.on('data', (data) => {
+                    if (data.type === 'START_GAME') {
+                        activePlayer = data.player;
+                        activeLevel = data.level;
+                        score = parseInt(activeLevel) * 100;
+                        currentPath = [];
 
-            function drawGameCanvas(lvl) {
+                        document.getElementById('displayPlayer').textContent = `Player: ${activePlayer} (Lvl ${activeLevel})`;
+                        document.getElementById('displayScore').textContent = `Score: ${score}`;
+                        drawGameGraph(activeLevel, currentPath);
+                    } else if (data.type === 'SELECT_NODE') {
+                        if (!currentPath.includes(data.node)) {
+                            currentPath.push(data.node);
+                            score += 50;
+                            document.getElementById('displayScore').textContent = `Score: ${score}`;
+                            drawGameGraph(activeLevel, currentPath);
+                            saveScore(activePlayer, score, activeLevel);
+                            renderLeaderboard();
+                        }
+                    } else if (data.type === 'RESET_PATH') {
+                        currentPath = [];
+                        drawGameGraph(activeLevel, currentPath);
+                    }
+                });
+            });
+
+            function drawGameGraph(lvl, path = []) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
                 ctx.fillStyle = '#38bdf8';
-                ctx.font = 'bold 14px Segoe UI';
+                ctx.font = 'bold 15px Segoe UI';
                 ctx.textAlign = 'center';
-                ctx.fillText(`Level ${lvl} Active! Tap canvas nodes to score points.`, canvas.width / 2, 30);
+                
+                const pathText = path.length > 0 ? path.join(' ➔ ') : 'None';
+                ctx.fillText(`Level ${lvl} Maze | Route: [ ${pathText} ]`, canvas.width / 2, 30);
 
-                const nodes = [
-                    {x: 80, y: 150, label: 'A'},
-                    {x: 210, y: 100, label: 'B'},
-                    {x: 210, y: 260, label: 'C'},
-                    {x: 340, y: 180, label: 'D'}
-                ];
+                const nodes = levelGraphs[lvl] || levelGraphs['1'];
 
-                ctx.strokeStyle = '#64748b';
+                // Draw Edges / Connections
+                ctx.strokeStyle = '#475569';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(80, 150); ctx.lineTo(210, 100);
-                ctx.moveTo(80, 150); ctx.lineTo(210, 260);
-                ctx.moveTo(210, 100); ctx.lineTo(340, 180);
-                ctx.moveTo(210, 260); ctx.lineTo(340, 180);
+                for (let i = 0; i < nodes.length - 1; i++) {
+                    ctx.moveTo(nodes[i].x, nodes[i].y);
+                    ctx.lineTo(nodes[i+1].x, nodes[i+1].y);
+                }
                 ctx.stroke();
 
-                nodes.forEach(n => {
-                    ctx.fillStyle = '#1e293b';
+                // Highlight Selected Path
+                if (path.length > 1) {
+                    ctx.strokeStyle = '#10b981';
+                    ctx.lineWidth = 4;
                     ctx.beginPath();
-                    ctx.arc(n.x, n.y, 22, 0, Math.PI * 2);
+                    let first = true;
+                    nodes.forEach(n => {
+                        if (path.includes(n.label)) {
+                            if (first) {
+                                ctx.moveTo(n.x, n.y);
+                                first = false;
+                            } else {
+                                ctx.lineTo(n.x, n.y);
+                            }
+                        }
+                    });
+                    ctx.stroke();
+                }
+
+                // Draw Nodes
+                nodes.forEach(n => {
+                    const isSelected = path.includes(n.label);
+                    ctx.fillStyle = isSelected ? '#10b981' : '#1e293b';
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, 20, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.strokeStyle = '#38bdf8';
+                    ctx.strokeStyle = isSelected ? '#a7f3d0' : '#38bdf8';
+                    ctx.lineWidth = isSelected ? 3 : 2;
                     ctx.stroke();
 
                     ctx.fillStyle = '#f8fafc';
-                    ctx.font = 'bold 14px Segoe UI';
-                    ctx.fillText(n.label, n.x, n.y);
+                    ctx.font = 'bold 13px Segoe UI';
+                    ctx.fillText(n.label, n.x, n.y + 1);
                 });
             }
-
-            canvas.addEventListener('click', () => {
-                if (!activePlayer) return;
-                score += 50;
-                document.getElementById('displayScore').textContent = `Score: ${score}`;
-                saveScore(activePlayer, score, currentLevel);
-                renderLeaderboard();
-            });
 
             function saveScore(name, finalScore, lvl) {
                 let lb = JSON.parse(localStorage.getItem('cyberroute_lb') || '[]');
