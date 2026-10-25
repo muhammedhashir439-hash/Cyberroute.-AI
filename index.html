@@ -6,7 +6,7 @@
     <title>CyberRoute AI - Math Fair Edition</title>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- PeerJS for Real-time Cross-Device Sync -->
+    <!-- PeerJS for Real-time Cross-Device Cloud Sync -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -17,7 +17,8 @@
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
             --border: #334155;
-            --active-node: #10b981;
+            --success: #10b981;
+            --purple: #a855f7;
         }
 
         body {
@@ -49,6 +50,31 @@
             margin: 5px 0 0 0;
         }
 
+        /* Top Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--accent);
+            color: #0f172a;
+            border-color: var(--accent);
+        }
+
         .main-container {
             display: flex;
             gap: 20px;
@@ -69,6 +95,7 @@
         .view-section { display: none; width: 100%; justify-content: center; gap: 20px; flex-wrap: wrap; }
         .view-section.active { display: flex; }
 
+        /* QR Code Sidebar */
         #qr-card {
             text-align: center;
             width: 250px;
@@ -88,11 +115,11 @@
             word-break: break-all;
         }
 
+        /* Canvas & Game Area */
         canvas {
             background-color: #020617;
             border: 2px solid var(--border);
             border-radius: 8px;
-            cursor: pointer;
         }
 
         .sidebar {
@@ -111,15 +138,16 @@
         .leaderboard-list li {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid var(--border);
             font-size: 0.95rem;
         }
 
         .leaderboard-list li:last-child { border-bottom: none; }
 
+        /* Phone Remote Interface */
         .controller-card {
-            max-width: 360px;
+            max-width: 380px;
             width: 100%;
             text-align: center;
         }
@@ -162,21 +190,33 @@
 
         .btn:hover { background-color: var(--accent-hover); }
 
+        .btn-ai {
+            background-color: var(--purple);
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-done {
+            background-color: var(--success);
+            color: white;
+            margin-top: 10px;
+        }
+
         .node-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
-            margin-top: 15px;
+            margin-top: 12px;
         }
 
         .node-btn {
-            padding: 14px;
+            padding: 12px;
             background: #0f172a;
             border: 2px solid var(--accent);
             color: white;
             font-weight: bold;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             cursor: pointer;
         }
 
@@ -193,17 +233,23 @@
         <p>Master Dijkstra's Algorithm & Find the Shortest Path!</p>
     </header>
 
-    <!-- LAPTOP MAIN DISPLAY -->
+    <!-- Top Column Navigation (Play Game / Leaderboard) -->
+    <div class="nav-tabs" id="laptop-tabs">
+        <button class="tab-btn active" id="tabPlayBtn">🎮 Play Game</button>
+        <button class="tab-btn" id="tabLeaderboardBtn">🏆 Leaderboard View</button>
+    </div>
+
+    <!-- LAPTOP MAIN DISPLAY VIEW -->
     <div id="laptop-view" class="view-section active">
-        <!-- QR Code Sidebar -->
+        <!-- QR Code Controller Card -->
         <div class="card" id="qr-card">
-            <h3 style="margin-top:0; color: var(--accent);">📱 Scan Controller</h3>
-            <p style="font-size: 0.85rem; color: var(--text-dim);">Scan to connect your phone!</p>
+            <h3 style="margin-top:0; color: var(--accent);">📱 Remote Controller</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim);">Scan QR code to open phone interface!</p>
             <div id="qrcode"></div>
-            <div class="url-text" id="directUrlDisplay">Connecting...</div>
+            <div class="url-text" id="directUrlDisplay">Connecting to cloud relay...</div>
         </div>
 
-        <!-- Center Interactive Game Display -->
+        <!-- Interactive Game Canvas Panel -->
         <div class="card" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 340px;">
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; font-weight: bold;">
                 <span id="displayPlayer">Player: Waiting for phone...</span>
@@ -211,12 +257,12 @@
             </div>
             <canvas id="gameCanvas" width="450" height="380"></canvas>
             <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-dim);" id="gameInstruction">
-                Select nodes on your phone to calculate the shortest path weight!
+                Use your phone to build routes or click AI Solve for Dijkstra's optimal path calculation!
             </div>
         </div>
 
-        <!-- Leaderboard Sidebar -->
-        <div class="sidebar">
+        <!-- Leaderboard Panel -->
+        <div class="sidebar" id="leaderboardSidebar">
             <div class="card">
                 <h3 style="margin-top: 0; color: var(--accent);">🏆 Leaderboard</h3>
                 <ul class="leaderboard-list" id="leaderboardList">
@@ -226,10 +272,10 @@
         </div>
     </div>
 
-    <!-- PHONE REMOTE CONTROLLER VIEW -->
+    <!-- PHONE CONTROLLER VIEW -->
     <div id="controller-view" class="view-section">
         <div class="card controller-card">
-            <h3 style="color: var(--accent); margin-top: 0;">🎮 Game Remote</h3>
+            <h3 style="color: var(--accent); margin-top: 0;">🎮 CyberRoute AI Controller</h3>
             
             <div id="setup-controls">
                 <div class="input-group">
@@ -248,12 +294,18 @@
                 <button class="btn" id="phoneStartBtn">Launch Game on Laptop</button>
             </div>
 
-            <!-- Active Controller Pad on Phone -->
+            <!-- Active Controller Pad on Phone with AI & Submit Buttons -->
             <div id="active-controls" style="display: none;">
-                <div style="font-size: 0.9rem; color: var(--accent); font-weight: bold; margin-bottom: 10px;" id="phoneLevelTitle">Level 1 Active</div>
+                <div style="font-size: 0.9rem; color: var(--accent); font-weight: bold; margin-bottom: 8px;" id="phoneLevelTitle">Level 1 Active</div>
                 <p style="font-size: 0.85rem; color: var(--text-dim); margin: 0 0 10px 0;">Tap nodes to traverse the graph on laptop screen:</p>
+
                 <div class="node-grid" id="nodeButtons"></div>
-                <button class="btn" id="resetPathBtn" style="margin-top: 15px; background-color: #ef4444; color: white;">Reset Path</button>
+
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                    <button class="btn btn-ai" id="aiSolveBtn">🤖 Give AI Optimal Path</button>
+                    <button class="btn btn-done" id="submitPathBtn">✅ Done / Submit Route</button>
+                    <button class="btn" id="resetPathBtn" style="background-color: #ef4444; color: white;">🔄 Reset Path</button>
+                </div>
             </div>
 
             <div id="controllerStatus" style="margin-top: 15px; color: var(--accent); font-size: 0.85rem;">Connecting to laptop...</div>
@@ -267,21 +319,23 @@
 
         const laptopView = document.getElementById('laptop-view');
         const controllerView = document.getElementById('controller-view');
+        const laptopTabs = document.getElementById('laptop-tabs');
 
         if (isController) {
-            // --- PHONE CONTROLLER MODE ---
+            // --- PHONE REMOTE INTERFACE MODE ---
             laptopView.classList.remove('active');
             controllerView.classList.add('active');
+            laptopTabs.style.display = 'none';
 
             const peer = new Peer();
             let conn;
 
             peer.on('open', () => {
-                document.getElementById('controllerStatus').textContent = "Connecting to main laptop screen...";
+                document.getElementById('controllerStatus').textContent = "Connecting to laptop...";
                 conn = peer.connect(hostId);
 
                 conn.on('open', () => {
-                    document.getElementById('controllerStatus').textContent = "Connected to laptop! Select level & name.";
+                    document.getElementById('controllerStatus').textContent = "Connected to laptop screen!";
                 });
             });
 
@@ -298,21 +352,36 @@
                     document.getElementById('setup-controls').style.display = 'none';
                     document.getElementById('active-controls').style.display = 'block';
                     document.getElementById('phoneLevelTitle').textContent = `Level ${level} Active`;
-                    document.getElementById('controllerStatus').textContent = "Game Active! Tap buttons to route.";
+                    document.getElementById('controllerStatus').textContent = "Game Active!";
                     
-                    renderPhoneButtons(level, conn);
+                    renderPhoneNodeButtons(level, conn);
                 } else {
-                    alert("Connecting to laptop... Please tap again in 2 seconds.");
+                    alert("Connecting to laptop... Please try again in a moment.");
+                }
+            });
+
+            document.getElementById('aiSolveBtn').addEventListener('click', () => {
+                if (conn && conn.open) {
+                    conn.send({ type: 'AI_SOLVE' });
+                    document.getElementById('controllerStatus').textContent = "AI Dijkstra calculation triggered!";
+                }
+            });
+
+            document.getElementById('submitPathBtn').addEventListener('click', () => {
+                if (conn && conn.open) {
+                    conn.send({ type: 'SUBMIT_ROUTE' });
+                    document.getElementById('controllerStatus').textContent = "Route submitted to leaderboard!";
                 }
             });
 
             document.getElementById('resetPathBtn').addEventListener('click', () => {
                 if (conn && conn.open) {
                     conn.send({ type: 'RESET_PATH' });
+                    document.getElementById('controllerStatus').textContent = "Route reset!";
                 }
             });
 
-            function renderPhoneButtons(lvl, connection) {
+            function renderPhoneNodeButtons(lvl, connection) {
                 const container = document.getElementById('nodeButtons');
                 container.innerHTML = "";
                 const count = parseInt(lvl) * 2 + 2;
@@ -335,59 +404,120 @@
             laptopView.classList.add('active');
             controllerView.classList.remove('active');
 
+            // Top Navigation Column Toggle (Play Game vs Leaderboard)
+            const tabPlayBtn = document.getElementById('tabPlayBtn');
+            const tabLeaderboardBtn = document.getElementById('tabLeaderboardBtn');
+            const gameArea = document.getElementById('game-area');
+            const qrCard = document.getElementById('qr-card');
+            const leaderboardSidebar = document.getElementById('leaderboardSidebar');
+
+            tabPlayBtn.addEventListener('click', () => {
+                tabPlayBtn.classList.add('active');
+                tabLeaderboardBtn.classList.remove('active');
+                gameArea.style.display = 'flex';
+                qrCard.style.display = 'block';
+                leaderboardSidebar.style.display = 'flex';
+            });
+
+            tabLeaderboardBtn.addEventListener('click', () => {
+                tabLeaderboardBtn.classList.add('active');
+                tabPlayBtn.classList.remove('active');
+                gameArea.style.display = 'none';
+                qrCard.style.display = 'none';
+                leaderboardSidebar.style.display = 'flex';
+                leaderboardSidebar.style.width = '100%';
+                leaderboardSidebar.style.maxWidth = '600px';
+            });
+
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
             let activePlayer = "Guest";
             let activeLevel = "1";
-            let score = 0;
+            let score = 100;
             let currentPath = [];
 
             renderLeaderboard();
 
-            // Set up level graph node layouts
+            // Original clean Graph Layouts with edge weights for Dijkstra algorithm
             const levelGraphs = {
-                '1': [
-                    {x: 80, y: 190, label: 'A'},
-                    {x: 225, y: 110, label: 'B'},
-                    {x: 225, y: 270, label: 'C'},
-                    {x: 370, y: 190, label: 'D'}
-                ],
-                '2': [
-                    {x: 60, y: 190, label: 'A'},
-                    {x: 170, y: 100, label: 'B'},
-                    {x: 170, y: 280, label: 'C'},
-                    {x: 280, y: 100, label: 'D'},
-                    {x: 280, y: 280, label: 'E'},
-                    {x: 390, y: 190, label: 'F'}
-                ],
-                '3': [
-                    {x: 50, y: 190, label: 'A'},
-                    {x: 150, y: 90, label: 'B'},
-                    {x: 150, y: 290, label: 'C'},
-                    {x: 250, y: 90, label: 'D'},
-                    {x: 250, y: 290, label: 'E'},
-                    {x: 350, y: 140, label: 'F'},
-                    {x: 350, y: 240, label: 'G'},
-                    {x: 410, y: 190, label: 'H'}
-                ],
-                '4': [
-                    {x: 40, y: 190, label: 'A'},
-                    {x: 120, y: 90, label: 'B'},
-                    {x: 120, y: 290, label: 'C'},
-                    {x: 210, y: 140, label: 'D'},
-                    {x: 210, y: 240, label: 'E'},
-                    {x: 300, y: 90, label: 'F'},
-                    {x: 300, y: 290, label: 'G'},
-                    {x: 370, y: 140, label: 'H'},
-                    {x: 370, y: 240, label: 'I'},
-                    {x: 420, y: 190, label: 'J'}
-                ]
+                '1': {
+                    nodes: [
+                        {x: 80, y: 190, label: 'A'},
+                        {x: 225, y: 110, label: 'B'},
+                        {x: 225, y: 270, label: 'C'},
+                        {x: 370, y: 190, label: 'D'}
+                    ],
+                    edges: [
+                        {from: 'A', to: 'B', w: 4},
+                        {from: 'A', to: 'C', w: 2},
+                        {from: 'B', to: 'D', w: 5},
+                        {from: 'C', to: 'D', w: 1}
+                    ],
+                    aiPath: ['A', 'C', 'D']
+                },
+                '2': {
+                    nodes: [
+                        {x: 60, y: 190, label: 'A'},
+                        {x: 170, y: 100, label: 'B'},
+                        {x: 170, y: 280, label: 'C'},
+                        {x: 280, y: 100, label: 'D'},
+                        {x: 280, y: 280, label: 'E'},
+                        {x: 390, y: 190, label: 'F'}
+                    ],
+                    edges: [
+                        {from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 2},
+                        {from: 'B', to: 'D', w: 4}, {from: 'C', to: 'E', w: 3},
+                        {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'F', w: 1}
+                    ],
+                    aiPath: ['A', 'C', 'E', 'F']
+                },
+                '3': {
+                    nodes: [
+                        {x: 50, y: 190, label: 'A'},
+                        {x: 150, y: 90, label: 'B'},
+                        {x: 150, y: 290, label: 'C'},
+                        {x: 250, y: 90, label: 'D'},
+                        {x: 250, y: 290, label: 'E'},
+                        {x: 350, y: 140, label: 'F'},
+                        {x: 350, y: 240, label: 'G'},
+                        {x: 410, y: 190, label: 'H'}
+                    ],
+                    edges: [
+                        {from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 4},
+                        {from: 'B', to: 'D', w: 3}, {from: 'C', to: 'E', w: 1},
+                        {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'G', w: 2},
+                        {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'H', w: 3}
+                    ],
+                    aiPath: ['A', 'B', 'D', 'F', 'H']
+                },
+                '4': {
+                    nodes: [
+                        {x: 40, y: 190, label: 'A'},
+                        {x: 120, y: 90, label: 'B'},
+                        {x: 120, y: 290, label: 'C'},
+                        {x: 210, y: 140, label: 'D'},
+                        {x: 210, y: 240, label: 'E'},
+                        {x: 300, y: 90, label: 'F'},
+                        {x: 300, y: 290, label: 'G'},
+                        {x: 370, y: 140, label: 'H'},
+                        {x: 370, y: 240, label: 'I'},
+                        {x: 420, y: 190, label: 'J'}
+                    ],
+                    edges: [
+                        {from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5},
+                        {from: 'B', to: 'D', w: 1}, {from: 'C', to: 'E', w: 2},
+                        {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 1},
+                        {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'I', w: 4},
+                        {from: 'H', to: 'J', w: 1}, {from: 'I', to: 'J', w: 2}
+                    ],
+                    aiPath: ['A', 'B', 'D', 'F', 'H', 'J']
+                }
             };
 
-            // Initial graph drawing on start
-            drawGameGraph("1", []);
+            // Initial graph rendering
+            drawOriginalGraph("1", []);
 
-            // Generate PeerJS cloud host connection
+            // PeerJS Cloud Room Host
             const roomId = 'cyberroute-' + Math.floor(1000 + Math.random() * 9000);
             const peer = new Peer(roomId);
 
@@ -414,56 +544,82 @@
 
                         document.getElementById('displayPlayer').textContent = `Player: ${activePlayer} (Lvl ${activeLevel})`;
                         document.getElementById('displayScore').textContent = `Score: ${score}`;
-                        drawGameGraph(activeLevel, currentPath);
+                        drawOriginalGraph(activeLevel, currentPath);
+
                     } else if (data.type === 'SELECT_NODE') {
                         if (!currentPath.includes(data.node)) {
                             currentPath.push(data.node);
                             score += 50;
                             document.getElementById('displayScore').textContent = `Score: ${score}`;
-                            drawGameGraph(activeLevel, currentPath);
-                            saveScore(activePlayer, score, activeLevel);
-                            renderLeaderboard();
+                            drawOriginalGraph(activeLevel, currentPath);
                         }
+
+                    } else if (data.type === 'AI_SOLVE') {
+                        const graphData = levelGraphs[activeLevel] || levelGraphs['1'];
+                        currentPath = [...graphData.aiPath];
+                        score += 200;
+                        document.getElementById('displayScore').textContent = `Score: ${score} (AI Solved)`;
+                        drawOriginalGraph(activeLevel, currentPath, true);
+                        saveScore(activePlayer, score, activeLevel);
+                        renderLeaderboard();
+
+                    } else if (data.type === 'SUBMIT_ROUTE') {
+                        saveScore(activePlayer, score, activeLevel);
+                        renderLeaderboard();
+                        alert(`Route Submitted! Final Score for ${activePlayer}: ${score} pts`);
+
                     } else if (data.type === 'RESET_PATH') {
                         currentPath = [];
-                        drawGameGraph(activeLevel, currentPath);
+                        drawOriginalGraph(activeLevel, currentPath);
                     }
                 });
             });
 
-            function drawGameGraph(lvl, path = []) {
+            function drawOriginalGraph(lvl, path = [], isAi = false) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                ctx.fillStyle = '#38bdf8';
+                const graph = levelGraphs[lvl] || levelGraphs['1'];
+                
+                ctx.fillStyle = isAi ? '#a855f7' : '#38bdf8';
                 ctx.font = 'bold 15px Segoe UI';
                 ctx.textAlign = 'center';
                 
                 const pathText = path.length > 0 ? path.join(' ➔ ') : 'None';
-                ctx.fillText(`Level ${lvl} Maze | Route: [ ${pathText} ]`, canvas.width / 2, 30);
+                ctx.fillText(`Level ${lvl} Dijkstra Graph | Route: [ ${pathText} ]`, canvas.width / 2, 30);
 
-                const nodes = levelGraphs[lvl] || levelGraphs['1'];
+                // Draw Connections with Numerical Weights
+                graph.edges.forEach(edge => {
+                    const fromNode = graph.nodes.find(n => n.label === edge.from);
+                    const toNode = graph.nodes.find(n => n.label === edge.to);
 
-                // Draw Edges / Connections
-                ctx.strokeStyle = '#475569';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                for (let i = 0; i < nodes.length - 1; i++) {
-                    ctx.moveTo(nodes[i].x, nodes[i].y);
-                    ctx.lineTo(nodes[i+1].x, nodes[i+1].y);
-                }
-                ctx.stroke();
+                    if (fromNode && toNode) {
+                        ctx.strokeStyle = '#475569';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(fromNode.x, fromNode.y);
+                        ctx.lineTo(toNode.x, toNode.y);
+                        ctx.stroke();
 
-                // Highlight Selected Path
+                        // Render edge weight (distance number)
+                        const midX = (fromNode.x + toNode.x) / 2;
+                        const midY = (fromNode.y + toNode.y) / 2 - 8;
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.font = 'bold 12px Segoe UI';
+                        ctx.fillText(edge.w, midX, midY);
+                    }
+                });
+
+                // Highlight active path line
                 if (path.length > 1) {
-                    ctx.strokeStyle = '#10b981';
+                    ctx.strokeStyle = isAi ? '#a855f7' : '#10b981';
                     ctx.lineWidth = 4;
                     ctx.beginPath();
-                    let first = true;
-                    nodes.forEach(n => {
+                    let started = false;
+                    graph.nodes.forEach(n => {
                         if (path.includes(n.label)) {
-                            if (first) {
+                            if (!started) {
                                 ctx.moveTo(n.x, n.y);
-                                first = false;
+                                started = true;
                             } else {
                                 ctx.lineTo(n.x, n.y);
                             }
@@ -473,13 +629,13 @@
                 }
 
                 // Draw Nodes
-                nodes.forEach(n => {
+                graph.nodes.forEach(n => {
                     const isSelected = path.includes(n.label);
-                    ctx.fillStyle = isSelected ? '#10b981' : '#1e293b';
+                    ctx.fillStyle = isSelected ? (isAi ? '#a855f7' : '#10b981') : '#1e293b';
                     ctx.beginPath();
                     ctx.arc(n.x, n.y, 20, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.strokeStyle = isSelected ? '#a7f3d0' : '#38bdf8';
+                    ctx.strokeStyle = isSelected ? '#ffffff' : '#38bdf8';
                     ctx.lineWidth = isSelected ? 3 : 2;
                     ctx.stroke();
 
