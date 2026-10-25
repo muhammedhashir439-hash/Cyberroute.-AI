@@ -19,7 +19,6 @@
             --border: #334155;
             --success: #10b981;
             --purple: #a855f7;
-            --warning: #f59e0b;
         }
 
         body {
@@ -131,6 +130,8 @@
             list-style: none;
             padding: 0;
             margin: 0;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .leaderboard-list li {
@@ -306,7 +307,7 @@
             
             <div id="setup-controls">
                 <div class="input-group">
-                    <label for="phonePlayerName">Your Name</label>
+                    <label for="phonePlayerName">Participant Name</label>
                     <input type="text" id="phonePlayerName" placeholder="Enter player name...">
                 </div>
                 <div class="input-group">
@@ -318,7 +319,7 @@
                         <option value="4" selected>Level 4: Expert Complex Grid (A ➔ J)</option>
                     </select>
                 </div>
-                <button class="btn" id="phoneStartBtn">Launch Game on Laptop</button>
+                <button class="btn" id="phoneStartBtn">Start Game</button>
             </div>
 
             <!-- Active Controller Pad on Phone -->
@@ -335,6 +336,7 @@
                     <button class="btn btn-ai" id="aiSolveBtn">🤖 Calculate AI Optimal Path</button>
                     <button class="btn btn-done" id="submitPathBtn">✅ Done / Submit Route</button>
                     <button class="btn" id="resetPathBtn" style="background-color: #ef4444; color: white;">🔄 Reset Path</button>
+                    <button class="btn" id="nextPlayerBtn" style="background-color: #10b981; color: white; display: none; margin-top: 5px;">👤 Next Player / Play Again</button>
                 </div>
 
                 <div id="phoneAiEfficiency" class="ai-stats-box" style="display: none; margin-top: 12px;"></div>
@@ -383,10 +385,12 @@
                     conn.send({ type: 'START_GAME', player: name, level: level });
                     document.getElementById('setup-controls').style.display = 'none';
                     document.getElementById('active-controls').style.display = 'block';
+                    document.getElementById('nextPlayerBtn').style.display = 'none';
                     
                     const endNodes = { '1': 'D', '2': 'F', '3': 'H', '4': 'J' };
                     document.getElementById('phoneInstructionBanner').textContent = `🎯 Start: Node A ➔ End: Node ${endNodes[level]}`;
                     document.getElementById('controllerStatus').textContent = "Game Active!";
+                    document.getElementById('phoneAiEfficiency').style.display = 'none';
                     
                     renderPhoneNodeButtons(level, conn);
                 } else {
@@ -399,7 +403,18 @@
             });
 
             document.getElementById('submitPathBtn').addEventListener('click', () => {
-                if (conn && conn.open) conn.send({ type: 'SUBMIT_ROUTE' });
+                if (conn && conn.open) {
+                    conn.send({ type: 'SUBMIT_ROUTE' });
+                    document.getElementById('controllerStatus').textContent = "Route submitted successfully!";
+                    document.getElementById('nextPlayerBtn').style.display = 'block';
+                }
+            });
+
+            document.getElementById('nextPlayerBtn').addEventListener('click', () => {
+                document.getElementById('setup-controls').style.display = 'block';
+                document.getElementById('active-controls').style.display = 'none';
+                document.getElementById('phonePlayerName').value = '';
+                document.getElementById('controllerStatus').textContent = "Ready for next participant!";
             });
 
             document.getElementById('resetPathBtn').addEventListener('click', () => {
@@ -458,10 +473,11 @@
             let activeLevel = "4";
             let score = 400;
             let currentPath = [];
+            let activeConn = null;
 
             renderLeaderboard();
 
-            // HIGHLY INTERCONNECTED COMPLEX MESH GRAPHS (Crossroads, diagonals, multiple parallel routes)
+            // MESH NETWORKS DEFINITIONS
             const levelGraphs = {
                 '1': {
                     nodes: [{x: 80, y: 170, label: 'A'}, {x: 230, y: 90, label: 'B'}, {x: 230, y: 250, label: 'C'}, {x: 380, y: 170, label: 'D'}],
@@ -500,7 +516,7 @@
                     ],
                     aiPath: ['A', 'C', 'B', 'E', 'D', 'G', 'H'], optimalWeight: 10, endNode: 'H'
                 },
-                '4': { // FULL 10-NODE COMPLEX MESH GRID (A to J with cross-connections & diagonals)
+                '4': {
                     nodes: [
                         {x: 50, y: 170, label: 'A'},
                         {x: 130, y: 80,  label: 'B'}, {x: 130, y: 260, label: 'C'},
@@ -540,6 +556,7 @@
             });
 
             peer.on('connection', (conn) => {
+                activeConn = conn;
                 conn.on('data', (data) => {
                     const graph = levelGraphs[activeLevel] || levelGraphs['4'];
 
@@ -552,7 +569,7 @@
                         const curGraph = levelGraphs[activeLevel];
                         document.getElementById('displayPlayer').textContent = `Player: ${activePlayer} (Lvl ${activeLevel})`;
                         document.getElementById('displayScore').textContent = `Score: ${score}`;
-                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Start at Node A and find the shortest weight path to Node ${curGraph.endNode}!`;
+                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Start at Node A and find shortest path to Node ${curGraph.endNode}!`;
                         document.getElementById('aiEfficiencyBanner').style.display = 'none';
                         
                         drawComplexGraph(activeLevel, currentPath);
@@ -569,10 +586,9 @@
                         currentPath = [...graph.aiPath];
                         score += 200;
 
-                        // Calculate efficiency percentage
                         const userWeight = calculatePathWeight(graph, currentPath);
                         const efficiency = Math.round(((userWeight - graph.optimalWeight) / userWeight) * 100) || 35;
-                        const efficiencyText = `🤖 AI Dijkstra Route Found! Weight: ${graph.optimalWeight} | AI is ${Math.max(15, efficiency)}% more efficient!`;
+                        const efficiencyText = `⚡ AI Dijkstra Route Optimal! Weight: ${graph.optimalWeight} | AI is ${Math.max(20, efficiency)}% more efficient!`;
 
                         document.getElementById('displayScore').textContent = `Score: ${score} (AI Solved)`;
                         const banner = document.getElementById('aiEfficiencyBanner');
@@ -586,15 +602,18 @@
                     } else if (data.type === 'SUBMIT_ROUTE') {
                         const userWeight = calculatePathWeight(graph, currentPath);
                         const diff = userWeight - graph.optimalWeight;
-                        let msg = `Route Submitted! Path Weight: ${userWeight}. `;
+                        let msg = `Route Submitted! Weight: ${userWeight}. `;
                         if (diff <= 0) {
-                            msg += `🎉 Perfect! You matched Dijkstra's optimal route!`;
+                            msg += `🎉 Perfect! Matched Dijkstra's optimal route!`;
                         } else {
-                            const pct = Math.round((diff / userWeight) * 100);
-                            msg += `🤖 AI Dijkstra path is ${pct}% more efficient.`;
+                            const pct = Math.max(15, Math.round((diff / userWeight) * 100));
+                            msg += `⚡ AI Dijkstra path is ${pct}% more efficient.`;
                         }
 
-                        alert(msg);
+                        const banner = document.getElementById('aiEfficiencyBanner');
+                        banner.textContent = msg;
+                        banner.style.display = 'block';
+
                         saveScore(activePlayer, score, activeLevel);
                         renderLeaderboard();
 
@@ -614,7 +633,7 @@
                         (e.from === path[i+1] && e.to === path[i])
                     );
                     if (edge) total += edge.w;
-                    else total += 5; // Default penalty for non-adjacent jumps
+                    else total += 5;
                 }
                 return total > 0 ? total : 15;
             }
@@ -631,7 +650,6 @@
                 const pathText = path.length > 0 ? path.join(' ➔ ') : 'None';
                 ctx.fillText(`Level ${lvl} Mesh Network | Route: [ ${pathText} ]`, canvas.width / 2, 25);
 
-                // Draw Interconnected Edges & Numerical Weights
                 graph.edges.forEach(edge => {
                     const fromN = graph.nodes.find(n => n.label === edge.from);
                     const toN = graph.nodes.find(n => n.label === edge.to);
@@ -644,7 +662,6 @@
                         ctx.lineTo(toN.x, toN.y);
                         ctx.stroke();
 
-                        // Render edge weight number
                         const mx = (fromN.x + toN.x) / 2;
                         const my = (fromN.y + toN.y) / 2 - 5;
                         ctx.fillStyle = '#94a3b8';
@@ -653,7 +670,6 @@
                     }
                 });
 
-                // Highlight active player or AI path
                 if (path.length > 1) {
                     ctx.strokeStyle = isAi ? '#a855f7' : '#10b981';
                     ctx.lineWidth = 4;
@@ -672,7 +688,6 @@
                     ctx.stroke();
                 }
 
-                // Draw Node Circles
                 graph.nodes.forEach(n => {
                     const isSelected = path.includes(n.label);
                     ctx.fillStyle = isSelected ? (isAi ? '#a855f7' : '#10b981') : '#1e293b';
@@ -693,7 +708,7 @@
                 let lb = JSON.parse(localStorage.getItem('cyberroute_lb') || '[]');
                 lb.push({ name, score: finalScore, level: lvl });
                 lb.sort((a, b) => b.score - a.score);
-                lb = lb.slice(0, 5);
+                lb = lb.slice(0, 10);
                 localStorage.setItem('cyberroute_lb', JSON.stringify(lb));
             }
 
