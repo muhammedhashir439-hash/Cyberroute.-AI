@@ -10,17 +10,17 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
-            --bg-gradient: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
-            --card-bg: rgba(30, 41, 59, 0.85);
-            --accent: #38bdf8;
-            --accent-hover: #0ea5e9;
+            --bg-gradient: linear-gradient(135deg, #2e1065 0%, #1e1b4b 50%, #0f172a 100%);
+            --card-bg: rgba(49, 46, 129, 0.65);
+            --accent-cyan: #22d3ee;
+            --accent-orange: #fb923c;
+            --accent-green: #34d399;
+            --accent-purple: #c084fc;
             --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --border: rgba(56, 189, 248, 0.3);
+            --text-dim: #cbd5e1;
+            --border: rgba(192, 132, 252, 0.35);
             --success: #10b981;
-            --purple: #a855f7;
             --danger: #ef4444;
-            --glow: 0 0 20px rgba(56, 189, 248, 0.3);
         }
 
         body {
@@ -28,111 +28,120 @@
             background: var(--bg-gradient);
             color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 12px;
+        /* Top Audio & Title Bar */
+        .top-bar {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
-        header h1 {
+        .game-title {
+            text-align: center;
+            flex: 1;
+        }
+
+        .game-title h1 {
             margin: 0;
-            color: var(--accent);
-            font-size: 2.5rem;
-            text-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+            background: linear-gradient(to bottom, #ffffff, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.3rem;
+            font-weight: 900;
+            text-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
             letter-spacing: 1px;
         }
 
-        header p {
+        .game-title p {
             color: var(--text-dim);
-            margin: 4px 0 0 0;
-            font-size: 1rem;
+            margin: 2px 0 0 0;
+            font-size: 0.85rem;
         }
 
-        .nav-tabs {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .tab-btn {
-            background-color: var(--card-bg);
+        .audio-btn {
+            background: rgba(30, 27, 75, 0.9);
             border: 2px solid var(--border);
-            color: var(--text-main);
-            padding: 10px 24px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 0.95rem;
+            color: var(--accent-cyan);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .tab-btn.active, .tab-btn:hover {
-            background: linear-gradient(135deg, #38bdf8, #0284c7);
-            color: #0f172a;
-            border-color: #7dd3fc;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
-        }
-
-        .main-container {
+            font-size: 1.2rem;
             display: flex;
-            gap: 20px;
-            max-width: 1200px;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: transform 0.2s;
+        }
+
+        .audio-btn:hover { transform: scale(1.1); }
+
+        /* Glossy Casual Game Menu Cards */
+        .menu-grid {
+            display: flex;
+            gap: 15px;
+            max-width: 1100px;
             width: 100%;
             flex-wrap: wrap;
             justify-content: center;
         }
 
-        .card {
-            background-color: var(--card-bg);
-            backdrop-filter: blur(10px);
+        .glossy-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
             border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 2px 5px rgba(255, 255, 255, 0.15);
         }
 
-        .view-section { display: none; width: 100%; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .view-section { display: none; width: 100%; justify-content: center; gap: 15px; flex-wrap: wrap; }
         .view-section.active { display: flex; }
 
+        /* QR Code Card */
         #qr-card {
             text-align: center;
-            width: 250px;
+            width: 240px;
         }
 
         #qrcode {
             background: white;
             padding: 10px;
-            border-radius: 12px;
+            border-radius: 14px;
             display: inline-block;
-            margin: 12px 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .url-text {
-            font-size: 0.75rem;
-            color: var(--accent);
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
             word-break: break-all;
         }
 
+        /* Canvas & Game Area */
         canvas {
-            background-color: #020617;
-            border: 2px solid rgba(56, 189, 248, 0.4);
-            border-radius: 12px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            background-color: #09090b;
+            border: 2px solid rgba(34, 211, 238, 0.4);
+            border-radius: 14px;
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
         }
 
+        /* Sidebar Leaderboard */
         .sidebar {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            width: 280px;
+            gap: 15px;
+            width: 270px;
         }
 
         .leaderboard-list {
@@ -148,11 +157,12 @@
             justify-content: space-between;
             padding: 10px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .leaderboard-list li:last-child { border-bottom: none; }
 
+        /* Phone Remote Interface */
         .controller-card {
             max-width: 380px;
             width: 100%;
@@ -160,89 +170,88 @@
         }
 
         .input-group {
-            margin-bottom: 15px;
+            margin-bottom: 14px;
             text-align: left;
         }
 
         .input-group label {
             display: block;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-dim);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             font-weight: 600;
         }
 
         .input-group input, .input-group select {
             width: 100%;
             padding: 12px;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 2px solid var(--border);
-            background-color: #0f172a;
+            background-color: rgba(15, 23, 42, 0.8);
             color: var(--text-main);
             font-size: 1rem;
             box-sizing: border-box;
         }
 
-        .btn {
+        /* Glossy Arcade Action Buttons */
+        .btn-play {
             background: linear-gradient(135deg, #38bdf8, #0284c7);
             color: #0f172a;
             border: none;
             padding: 14px 20px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 1.05rem;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 1.1rem;
             cursor: pointer;
             width: 100%;
             transition: all 0.2s;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4), inset 0 2px 4px rgba(255,255,255,0.4);
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5);
-        }
+        .btn-play:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(56, 189, 248, 0.6); }
 
-        .btn-ai { background: linear-gradient(135deg, #c084fc, #9333ea); color: white; margin-top: 8px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); }
-        .btn-done { background: linear-gradient(135deg, #34d399, #059669); color: white; margin-top: 8px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-ai { background: linear-gradient(135deg, #c084fc, #7e22ce); color: white; box-shadow: 0 6px 20px rgba(192, 132, 252, 0.4), inset 0 2px 4px rgba(255,255,255,0.3); }
+        .btn-done { background: linear-gradient(135deg, #34d399, #059669); color: white; box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4), inset 0 2px 4px rgba(255,255,255,0.3); }
 
         .node-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
             margin-top: 10px;
-            max-height: 200px;
+            max-height: 180px;
             overflow-y: auto;
         }
 
         .node-btn {
             padding: 12px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 2px solid var(--accent);
+            background: rgba(30, 27, 75, 0.9);
+            border: 2px solid var(--accent-cyan);
             color: white;
             font-weight: bold;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 0.95rem;
             cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: all 0.1s;
         }
 
-        .node-btn:active { background: var(--accent); color: #0f172a; transform: scale(0.96); }
+        .node-btn:active { background: var(--accent-cyan); color: #0f172a; transform: scale(0.96); }
 
         .instruction-box {
-            background: rgba(56, 189, 248, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            padding: 10px 12px;
+            background: rgba(34, 211, 238, 0.15);
+            border: 1px solid rgba(34, 211, 238, 0.4);
+            padding: 8px 12px;
             border-radius: 10px;
-            font-size: 0.85rem;
-            color: var(--accent);
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
             margin-bottom: 8px;
             font-weight: bold;
         }
 
         .ai-stats-box {
-            background: rgba(168, 85, 247, 0.2);
-            border: 1px solid rgba(168, 85, 247, 0.5);
-            color: #e9d5ff;
+            background: rgba(192, 132, 252, 0.2);
+            border: 1px solid rgba(192, 132, 252, 0.5);
+            color: #f3e8ff;
             padding: 10px;
             border-radius: 10px;
             font-weight: bold;
@@ -257,132 +266,150 @@
             background: rgba(239, 68, 68, 0.25);
             border: 1px solid rgba(239, 68, 68, 0.6);
             color: #fca5a5;
-            padding: 6px 12px;
+            padding: 5px 12px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 0.95rem;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+            font-size: 0.9rem;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
         }
 
-        /* Audio toggle icon button */
-        .audio-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--card-bg);
-            border: 2px solid var(--border);
-            color: var(--accent);
-            padding: 10px 14px;
-            border-radius: 50%;
+        /* Bottom Casual Game Navigation Bar */
+        .bottom-nav {
+            margin-top: 15px;
+            display: flex;
+            gap: 15px;
+            background: rgba(30, 27, 75, 0.7);
+            padding: 8px 25px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+
+        .nav-pill {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-weight: bold;
+            font-size: 0.9rem;
             cursor: pointer;
-            font-size: 1.2rem;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .nav-pill.active, .nav-pill:hover {
+            background: var(--accent-cyan);
+            color: #0f172a;
+            box-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
         }
     </style>
 </head>
 <body>
 
-    <!-- Audio toggle button -->
-    <button class="audio-toggle" id="audioToggleBtn" title="Toggle Sound & Music">🔊</button>
-
-    <header>
-        <h1>CyberRoute AI</h1>
-        <p>Master Dijkstra's Shortest Path Algorithm for the Math Fair!</p>
-    </header>
-
-    <div class="nav-tabs" id="laptop-tabs">
-        <button class="tab-btn active" id="tabPlayBtn">🎮 Play Game</button>
-        <button class="tab-btn" id="tabLeaderboardBtn">🏆 Leaderboard View</button>
+    <div class="top-bar">
+        <div style="width: 44px;"></div> <!-- Spacer -->
+        <div class="game-title">
+            <h1>CyberRoute AI</h1>
+            <p>Master Dijkstra's Shortest Path Algorithm[cite: 3]</p>
+        </div>
+        <button class="audio-btn" id="audioToggleBtn" title="Toggle Sound & Music">🔊</button>
     </div>
 
-    <!-- LAPTOP MAIN DISPLAY VIEW -->
-    <div id="laptop-view" class="view-section active">
-        <!-- QR Code Card -->
-        <div class="card" id="qr-card">
-            <h3 style="margin-top:0; color: var(--accent);">📱 Remote Controller</h3>
-            <p style="font-size: 0.85rem; color: var(--text-dim);">Scan QR code to open phone remote!</p>
-            <div id="qrcode"></div>
-            <div class="url-text" id="directUrlDisplay">Connecting to cloud relay...</div>
-        </div>
-
-        <!-- Interactive Game Canvas Panel -->
-        <div class="card" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 380px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px; font-weight: bold; align-items: center;">
-                <span id="displayPlayer">Player: Waiting for phone...</span>
-                <div class="timer-badge" id="displayTimer">⏱️ 01:30</div>
-                <span id="displayScore">Score: 0</span>
-            </div>
-            
-            <div class="instruction-box" id="laptopInstruction">
-                🎯 Objective: Start at Node A and find your path before time runs out!
-            </div>
-
-            <canvas id="gameCanvas" width="480" height="320"></canvas>
-            
-            <div id="aiEfficiencyBanner" class="ai-stats-box" style="display: none;">
-                ⚡ AI Analysis: Calculating path efficiency...
-            </div>
-        </div>
-
-        <!-- Leaderboard Panel -->
-        <div class="sidebar" id="leaderboardSidebar">
-            <div class="card">
-                <h3 style="margin-top: 0; color: var(--accent);">🏆 Leaderboard</h3>
-                <ul class="leaderboard-list" id="leaderboardList">
-                    <li><span>No scores yet</span><span>-</span></li>
-                </ul>
-            </div>
-        </div>
+    <!-- Bottom Navigation Bar Style (Reference UI touch) -->
+    <div class="bottom-nav" id="laptop-tabs">
+        <button class="nav-pill active" id="tabPlayBtn">🎮 Play Game</button>
+        <button class="nav-pill" id="tabLeaderboardBtn">🏆 Leaderboard</button>
     </div>
 
-    <!-- PHONE CONTROLLER VIEW -->
-    <div id="controller-view" class="view-section">
-        <div class="card controller-card">
-            <h3 style="color: var(--accent); margin-top: 0;">🎮 CyberRoute Controller</h3>
-            
-            <div id="setup-controls">
-                <div class="input-group">
-                    <label for="phonePlayerName">Participant Name</label>
-                    <input type="text" id="phonePlayerName" placeholder="Enter player name...">
-                </div>
-                <div class="input-group">
-                    <label for="phoneDifficulty">Select Difficulty Level (1 to 5)</label>
-                    <select id="phoneDifficulty">
-                        <option value="1">Level 1: Novice (A ➔ D)</option>
-                        <option value="2">Level 2: Intermediate (A ➔ F)</option>
-                        <option value="3">Level 3: Advanced Network (A ➔ H)</option>
-                        <option value="4">Level 4: Expert Complex (A ➔ I)</option>
-                        <option value="5" selected>Level 5: Master Grid (A ➔ L)</option>
-                    </select>
-                </div>
-                <button class="btn" id="phoneStartBtn">Start 90s Challenge</button>
+    <div class="menu-grid">
+        <!-- LAPTOP MAIN DISPLAY VIEW -->
+        <div id="laptop-view" class="view-section active" style="width: 100%; justify-content: center;">
+            <!-- QR Code Card -->
+            <div class="glossy-card" id="qr-card">
+                <h3 style="margin-top:0; color: var(--accent-cyan);">📱 Controller</h3>
+                <p style="font-size: 0.8rem; color: var(--text-dim);">Scan QR code to open remote!</p>
+                <div id="qrcode"></div>
+                <div class="url-text" id="directUrlDisplay">Connecting to cloud relay...</div>
             </div>
 
-            <!-- Active Controller Pad on Phone -->
-            <div id="active-controls" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div class="instruction-box" id="phoneInstructionBanner" style="margin-bottom:0; flex:1;">
-                        🎯 Start: A ➔ Target
-                    </div>
-                    <div class="timer-badge" id="phoneTimer" style="margin-left: 8px;">⏱️ 90s</div>
+            <!-- Interactive Game Canvas Panel -->
+            <div class="glossy-card" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 360px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; font-weight: bold; align-items: center;">
+                    <span id="displayPlayer">Player: Waiting for phone...</span>
+                    <div class="timer-badge" id="displayTimer">⏱️ 01:30</div>
+                    <span id="displayScore">Score: 0</span>
                 </div>
                 
-                <p style="font-size: 0.8rem; color: var(--text-dim); margin: 6px 0;">Tap nodes in your custom order:</p>
-
-                <div class="node-grid" id="nodeButtons"></div>
-
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
-                    <button class="btn btn-ai" id="aiSolveBtn">🤖 Show AI Optimal Path</button>
-                    <button class="btn btn-done" id="submitPathBtn">✅ Done / Submit Route</button>
-                    <button class="btn" id="resetPathBtn" style="background-color: var(--danger); color: white;">🔄 Reset Path</button>
-                    <button class="btn" id="nextPlayerBtn" style="background-color: var(--success); color: white; display: none;">👤 Next Player / Play Again</button>
+                <div class="instruction-box" id="laptopInstruction">
+                    🎯 Objective: Start at Node A and find your path before time runs out!
                 </div>
 
-                <div id="phoneAiEfficiency" class="ai-stats-box" style="display: none;"></div>
+                <canvas id="gameCanvas" width="460" height="300"></canvas>
+                
+                <div id="aiEfficiencyBanner" class="ai-stats-box" style="display: none;">
+                    ⚡ AI Analysis: Calculating path efficiency...
+                </div>
             </div>
 
-            <div id="controllerStatus" style="margin-top: 12px; color: var(--accent); font-size: 0.85rem;">Connecting to laptop...</div>
+            <!-- Leaderboard Panel -->
+            <div class="sidebar" id="leaderboardSidebar">
+                <div class="glossy-card">
+                    <h3 style="margin-top: 0; color: var(--accent-cyan);">🏆 Leaderboard</h3>
+                    <ul class="leaderboard-list" id="leaderboardList">
+                        <li><span>No scores yet</span><span>-</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- PHONE CONTROLLER VIEW -->
+        <div id="controller-view" class="view-section">
+            <div class="glossy-card controller-card">
+                <h3 style="color: var(--accent-cyan); margin-top: 0;">🎮 Game Controller</h3>
+                
+                <div id="setup-controls">
+                    <div class="input-group">
+                        <label for="phonePlayerName">Participant Name</label>
+                        <input type="text" id="phonePlayerName" placeholder="Enter player name...">
+                    </div>
+                    <div class="input-group">
+                        <label for="phoneDifficulty">Select Level (1 to 5)</label>
+                        <select id="phoneDifficulty">
+                            <option value="1">Level 1: Novice (A ➔ D)</option>
+                            <option value="2">Level 2: Intermediate (A ➔ F)</option>
+                            <option value="3">Level 3: Advanced Network (A ➔ H)</option>
+                            <option value="4">Level 4: Expert Complex (A ➔ I)</option>
+                            <option value="5" selected>Level 5: Master Grid (A ➔ L)</option>
+                        </select>
+                    </div>
+                    <button class="btn-play" id="phoneStartBtn">Start 90s Challenge</button>
+                </div>
+
+                <!-- Active Controller Pad on Phone -->
+                <div id="active-controls" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div class="instruction-box" id="phoneInstructionBanner" style="margin-bottom:0; flex:1;">
+                            🎯 Start: A ➔ Target
+                        </div>
+                        <div class="timer-badge" id="phoneTimer" style="margin-left: 6px;">⏱️ 90s</div>
+                    </div>
+                    
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin: 6px 0;">Tap nodes in your custom order:</p>
+
+                    <div class="node-grid" id="nodeButtons"></div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                        <button class="btn-play btn-ai" id="aiSolveBtn">🤖 Show AI Optimal Path</button>
+                        <button class="btn-play btn-done" id="submitPathBtn">✅ Done / Submit Route</button>
+                        <button class="btn-play" id="resetPathBtn" style="background: linear-gradient(135deg, #f87171, #dc2626); color: white;">🔄 Reset Path</button>
+                        <button class="btn-play" id="nextPlayerBtn" style="background: linear-gradient(135deg, #34d399, #059669); color: white; display: none;">👤 Next Player / Play Again</button>
+                    </div>
+
+                    <div id="phoneAiEfficiency" class="ai-stats-box" style="display: none;"></div>
+                </div>
+
+                <div id="controllerStatus" style="margin-top: 12px; color: var(--accent-cyan); font-size: 0.85rem;">Connecting to laptop...</div>
+            </div>
         </div>
     </div>
 
@@ -421,9 +448,9 @@
                     osc.stop(now + 0.08);
                 } else if (type === 'success') {
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, now); // C5
-                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
-                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
                     gain.gain.setValueAtTime(0.2, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
                     osc.start(now);
@@ -443,7 +470,7 @@
         function startBGM() {
             if (bgmInterval || !soundEnabled) return;
             initAudio();
-            const chords = [261.63, 329.63, 392.00, 523.25]; // C major arpeggio
+            const chords = [261.63, 329.63, 392.00, 523.25];
             let step = 0;
             bgmInterval = setInterval(() => {
                 if (!soundEnabled || !audioCtx) return;
@@ -482,7 +509,6 @@
             }
         });
 
-        // Start BGM on first user interaction
         window.addEventListener('click', () => {
             if (soundEnabled && !bgmInterval) startBGM();
         }, { once: true });
@@ -638,38 +664,37 @@
             function getLevelGraph(lvl) {
                 if (lvl === 1) {
                     return {
-                        nodes: [{x: 80, y: 160, label: 'A'}, {x: 200, y: 90, label: 'B'}, {x: 200, y: 230, label: 'C'}, {x: 380, y: 160, label: 'D'}],
+                        nodes: [{x: 80, y: 150, label: 'A'}, {x: 200, y: 80, label: 'B'}, {x: 200, y: 220, label: 'C'}, {x: 380, y: 150, label: 'D'}],
                         edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 5}, {from: 'C', to: 'D', w: 1}, {from: 'B', to: 'C', w: 2}],
                         aiPath: ['A', 'C', 'D'], optimalWeight: 3, endNode: 'D'
                     };
                 } else if (lvl === 2) {
                     return {
-                        nodes: [{x: 60, y: 160, label: 'A'}, {x: 160, y: 90, label: 'B'}, {x: 160, y: 230, label: 'C'}, {x: 280, y: 90, label: 'D'}, {x: 280, y: 230, label: 'E'}, {x: 400, y: 160, label: 'F'}],
+                        nodes: [{x: 60, y: 150, label: 'A'}, {x: 160, y: 80, label: 'B'}, {x: 160, y: 220, label: 'C'}, {x: 280, y: 80, label: 'D'}, {x: 280, y: 220, label: 'E'}, {x: 400, y: 150, label: 'F'}],
                         edges: [{from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 4}, {from: 'C', to: 'E', w: 3}, {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'F', w: 1}, {from: 'B', to: 'E', w: 2}],
                         aiPath: ['A', 'C', 'E', 'F'], optimalWeight: 6, endNode: 'F'
                     };
                 } else if (lvl === 3) {
                     return {
-                        nodes: [{x: 50, y: 160, label: 'A'}, {x: 140, y: 80, label: 'B'}, {x: 140, y: 240, label: 'C'}, {x: 230, y: 80, label: 'D'}, {x: 230, y: 240, label: 'E'}, {x: 320, y: 120, label: 'F'}, {x: 320, y: 200, label: 'G'}, {x: 410, y: 160, label: 'H'}],
+                        nodes: [{x: 50, y: 150, label: 'A'}, {x: 140, y: 75, label: 'B'}, {x: 140, y: 225, label: 'C'}, {x: 230, y: 75, label: 'D'}, {x: 230, y: 225, label: 'E'}, {x: 320, y: 110, label: 'F'}, {x: 320, y: 190, label: 'G'}, {x: 410, y: 150, label: 'H'}],
                         edges: [{from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5}, {from: 'B', to: 'D', w: 3}, {from: 'C', to: 'E', w: 1}, {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'G', w: 2}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'H', w: 3}, {from: 'D', to: 'G', w: 4}],
                         aiPath: ['A', 'B', 'D', 'F', 'H'], optimalWeight: 8, endNode: 'H'
                     };
                 } else if (lvl === 4) {
                     return {
-                        nodes: [{x: 40, y: 160, label: 'A'}, {x: 120, y: 80, label: 'B'}, {x: 120, y: 240, label: 'C'}, {x: 200, y: 130, label: 'D'}, {x: 200, y: 190, label: 'E'}, {x: 280, y: 80, label: 'F'}, {x: 280, y: 240, label: 'G'}, {x: 350, y: 160, label: 'H'}, {x: 420, y: 160, label: 'I'}],
+                        nodes: [{x: 40, y: 150, label: 'A'}, {x: 120, y: 75, label: 'B'}, {x: 120, y: 225, label: 'C'}, {x: 200, y: 120, label: 'D'}, {x: 200, y: 180, label: 'E'}, {x: 280, y: 75, label: 'F'}, {x: 280, y: 225, label: 'G'}, {x: 350, y: 150, label: 'H'}, {x: 420, y: 150, label: 'I'}],
                         edges: [{from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5}, {from: 'B', to: 'D', w: 1}, {from: 'C', to: 'E', w: 2}, {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 1}, {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'H', w: 4}, {from: 'H', to: 'I', w: 2}],
                         aiPath: ['A', 'B', 'D', 'F', 'H', 'I'], optimalWeight: 10, endNode: 'I'
                     };
                 } else {
-                    // Level 5: Master Grid (A to L)
                     return {
                         nodes: [
-                            {x: 40, y: 160, label: 'A'},
-                            {x: 110, y: 80, label: 'B'}, {x: 110, y: 240, label: 'C'},
-                            {x: 180, y: 80, label: 'D'}, {x: 180, y: 160, label: 'E'}, {x: 180, y: 240, label: 'F'},
-                            {x: 250, y: 80, label: 'G'}, {x: 250, y: 240, label: 'H'},
-                            {x: 320, y: 120, label: 'I'}, {x: 320, y: 200, label: 'J'},
-                            {x: 390, y: 160, label: 'K'}, {x: 440, y: 160, label: 'L'}
+                            {x: 40, y: 150, label: 'A'},
+                            {x: 110, y: 75, label: 'B'}, {x: 110, y: 225, label: 'C'},
+                            {x: 180, y: 75, label: 'D'}, {x: 180, y: 150, label: 'E'}, {x: 180, y: 225, label: 'F'},
+                            {x: 250, y: 75, label: 'G'}, {x: 250, y: 225, label: 'H'},
+                            {x: 320, y: 110, label: 'I'}, {x: 320, y: 190, label: 'J'},
+                            {x: 390, y: 150, label: 'K'}, {x: 440, y: 150, label: 'L'}
                         ],
                         edges: [
                             {from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 4}, {from: 'A', to: 'E', w: 6},
@@ -714,7 +739,7 @@
 
                         document.getElementById('displayPlayer').textContent = `Player: ${activePlayer} (Lvl ${activeLevel})`;
                         document.getElementById('displayScore').textContent = `Score: ${score}`;
-                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Start at Node A and find path to Node ${currentGraph.endNode}!`;
+                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Start at Node A and find path to Node ${currentGraph.endNode}[cite: 3]!`;
                         document.getElementById('aiEfficiencyBanner').style.display = 'none';
                         
                         startTimer();
@@ -818,12 +843,12 @@
                 
                 const graph = currentGraph;
                 
-                ctx.fillStyle = '#38bdf8';
+                ctx.fillStyle = '#22d3ee';
                 ctx.font = 'bold 13px Segoe UI';
                 ctx.textAlign = 'center';
                 
                 const pathText = humanPath.length > 0 ? humanPath.join(' ➔ ') : 'None';
-                ctx.fillText(`Lvl ${lvl} Mesh | Route: [ ${pathText} ]`, canvas.width / 2, 22);
+                ctx.fillText(`Lvl ${lvl} Mesh | Route: [ ${pathText} ]`, canvas.width / 2, 20);
 
                 // Draw edges & weights
                 graph.edges.forEach(edge => {
@@ -848,7 +873,7 @@
 
                 // Human Path (Green)
                 if (humanPath.length > 1) {
-                    ctx.strokeStyle = '#10b981';
+                    ctx.strokeStyle = '#34d399';
                     ctx.lineWidth = 4;
                     ctx.beginPath();
                     humanPath.forEach((label, idx) => {
@@ -863,7 +888,7 @@
 
                 // AI Path (Purple Dashed)
                 if (aiPath.length > 1) {
-                    ctx.strokeStyle = '#a855f7';
+                    ctx.strokeStyle = '#c084fc';
                     ctx.lineWidth = 3;
                     ctx.setLineDash([4, 4]);
                     ctx.beginPath();
@@ -883,20 +908,20 @@
                     const isHumanSelected = humanPath.includes(n.label);
                     const isAiSelected = aiPath.includes(n.label);
 
-                    let fillColor = '#1e293b';
-                    let strokeColor = '#38bdf8';
+                    let fillColor = '#1e1b4b';
+                    let strokeColor = '#22d3ee';
                     let lineWidth = 2;
 
                     if (isHumanSelected && isAiSelected) {
                         fillColor = '#059669';
-                        strokeColor = '#a855f7';
+                        strokeColor = '#c084fc';
                         lineWidth = 3;
                     } else if (isHumanSelected) {
-                        fillColor = '#10b981';
+                        fillColor = '#34d399';
                         strokeColor = '#ffffff';
                         lineWidth = 3;
                     } else if (isAiSelected) {
-                        fillColor = '#a855f7';
+                        fillColor = '#c084fc';
                         strokeColor = '#ffffff';
                         lineWidth = 3;
                     }
