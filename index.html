@@ -19,6 +19,7 @@
             --border: #334155;
             --success: #10b981;
             --purple: #a855f7;
+            --danger: #ef4444;
         }
 
         body {
@@ -188,40 +189,30 @@
 
         .btn:hover { background-color: var(--accent-hover); }
 
-        .btn-ai {
-            background-color: var(--purple);
-            color: white;
-            margin-top: 10px;
-        }
-
-        .btn-done {
-            background-color: var(--success);
-            color: white;
-            margin-top: 10px;
-        }
+        .btn-ai { background-color: var(--purple); color: white; margin-top: 8px; }
+        .btn-done { background-color: var(--success); color: white; margin-top: 8px; }
 
         .node-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 12px;
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .node-btn {
-            padding: 12px;
+            padding: 10px;
             background: #0f172a;
             border: 2px solid var(--accent);
             color: white;
             font-weight: bold;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
         }
 
-        .node-btn:active {
-            background: var(--accent);
-            color: #0f172a;
-        }
+        .node-btn:active { background: var(--accent); color: #0f172a; }
 
         .instruction-box {
             background: rgba(56, 189, 248, 0.1);
@@ -230,7 +221,7 @@
             border-radius: 6px;
             font-size: 0.85rem;
             color: var(--accent);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: bold;
         }
 
@@ -238,14 +229,24 @@
             background: rgba(168, 85, 247, 0.15);
             border: 1px solid rgba(168, 85, 247, 0.4);
             color: #e9d5ff;
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 0.9rem;
-            margin-top: 8px;
+            font-size: 0.85rem;
+            margin-top: 6px;
             width: 100%;
             box-sizing: border-box;
             text-align: center;
+        }
+
+        .timer-badge {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -273,16 +274,17 @@
 
         <!-- Interactive Game Canvas Panel -->
         <div class="card" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 380px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; font-weight: bold;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; font-weight: bold; align-items: center;">
                 <span id="displayPlayer">Player: Waiting for phone...</span>
+                <div class="timer-badge" id="displayTimer">⏱️ 01:30</div>
                 <span id="displayScore">Score: 0</span>
             </div>
             
             <div class="instruction-box" id="laptopInstruction">
-                🎯 Objective: Start at Node A and find the shortest weight path to Node J!
+                🎯 Objective: Start at Node A and find your path before time runs out!
             </div>
 
-            <canvas id="gameCanvas" width="480" height="340"></canvas>
+            <canvas id="gameCanvas" width="480" height="320"></canvas>
             
             <div id="aiEfficiencyBanner" class="ai-stats-box" style="display: none;">
                 ⚡ AI Analysis: Calculating path efficiency...
@@ -311,38 +313,36 @@
                     <input type="text" id="phonePlayerName" placeholder="Enter player name...">
                 </div>
                 <div class="input-group">
-                    <label for="phoneDifficulty">Choose Level</label>
-                    <select id="phoneDifficulty">
-                        <option value="1">Level 1: Novice (A ➔ D)</option>
-                        <option value="2">Level 2: Intermediate (A ➔ F)</option>
-                        <option value="3">Level 3: Advanced Network (A ➔ H)</option>
-                        <option value="4" selected>Level 4: Expert Complex Grid (A ➔ J)</option>
-                    </select>
+                    <label for="phoneDifficulty">Choose Level (1 to 100)</label>
+                    <input type="number" id="phoneDifficulty" min="1" max="100" value="5" placeholder="Enter level (1-100)...">
                 </div>
-                <button class="btn" id="phoneStartBtn">Start Game</button>
+                <button class="btn" id="phoneStartBtn">Start 90s Challenge</button>
             </div>
 
             <!-- Active Controller Pad on Phone -->
             <div id="active-controls" style="display: none;">
-                <div class="instruction-box" id="phoneInstructionBanner">
-                    🎯 Start: Node A ➔ End: Node J
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div class="instruction-box" id="phoneInstructionBanner" style="margin-bottom:0; flex:1;">
+                        🎯 Start: A ➔ Target
+                    </div>
+                    <div class="timer-badge" id="phoneTimer" style="margin-left: 8px;">⏱️ 90s</div>
                 </div>
                 
-                <p style="font-size: 0.85rem; color: var(--text-dim); margin: 0 0 8px 0;">Tap adjacent nodes to build your path:</p>
+                <p style="font-size: 0.8rem; color: var(--text-dim); margin: 6px 0;">Tap nodes in your custom order:</p>
 
                 <div class="node-grid" id="nodeButtons"></div>
 
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
-                    <button class="btn btn-ai" id="aiSolveBtn">🤖 Calculate AI Optimal Path</button>
+                <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                    <button class="btn btn-ai" id="aiSolveBtn">🤖 Show AI Optimal Path</button>
                     <button class="btn btn-done" id="submitPathBtn">✅ Done / Submit Route</button>
-                    <button class="btn" id="resetPathBtn" style="background-color: #ef4444; color: white;">🔄 Reset Path</button>
-                    <button class="btn" id="nextPlayerBtn" style="background-color: #10b981; color: white; display: none; margin-top: 5px;">👤 Next Player / Play Again</button>
+                    <button class="btn" id="resetPathBtn" style="background-color: var(--danger); color: white;">🔄 Reset Path</button>
+                    <button class="btn" id="nextPlayerBtn" style="background-color: var(--success); color: white; display: none;">👤 Next Player / Play Again</button>
                 </div>
 
-                <div id="phoneAiEfficiency" class="ai-stats-box" style="display: none; margin-top: 12px;"></div>
+                <div id="phoneAiEfficiency" class="ai-stats-box" style="display: none;"></div>
             </div>
 
-            <div id="controllerStatus" style="margin-top: 15px; color: var(--accent); font-size: 0.85rem;">Connecting to laptop...</div>
+            <div id="controllerStatus" style="margin-top: 12px; color: var(--accent); font-size: 0.85rem;">Connecting to laptop...</div>
         </div>
     </div>
 
@@ -375,7 +375,10 @@
 
             document.getElementById('phoneStartBtn').addEventListener('click', () => {
                 const name = document.getElementById('phonePlayerName').value.trim();
-                const level = document.getElementById('phoneDifficulty').value;
+                let level = parseInt(document.getElementById('phoneDifficulty').value) || 1;
+                if (level < 1) level = 1;
+                if (level > 100) level = 100;
+
                 if (!name) {
                     alert("Please enter your name!");
                     return;
@@ -386,13 +389,16 @@
                     document.getElementById('setup-controls').style.display = 'none';
                     document.getElementById('active-controls').style.display = 'block';
                     document.getElementById('nextPlayerBtn').style.display = 'none';
-                    
-                    const endNodes = { '1': 'D', '2': 'F', '3': 'H', '4': 'J' };
-                    document.getElementById('phoneInstructionBanner').textContent = `🎯 Start: Node A ➔ End: Node ${endNodes[level]}`;
-                    document.getElementById('controllerStatus').textContent = "Game Active!";
                     document.getElementById('phoneAiEfficiency').style.display = 'none';
                     
-                    renderPhoneNodeButtons(level, conn);
+                    const allLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'];
+                    const nodeCount = Math.min(Math.max(4, level + 3), 12);
+                    const endNode = allLabels[nodeCount - 1];
+
+                    document.getElementById('phoneInstructionBanner').textContent = `🎯 Start: A ➔ Target: ${endNode}`;
+                    document.getElementById('controllerStatus').textContent = "Game Active!";
+                    
+                    renderPhoneNodeButtons(nodeCount, conn);
                 } else {
                     alert("Connecting to laptop... Please try again in a moment.");
                 }
@@ -405,7 +411,7 @@
             document.getElementById('submitPathBtn').addEventListener('click', () => {
                 if (conn && conn.open) {
                     conn.send({ type: 'SUBMIT_ROUTE' });
-                    document.getElementById('controllerStatus').textContent = "Route submitted successfully!";
+                    document.getElementById('controllerStatus').textContent = "Route submitted!";
                     document.getElementById('nextPlayerBtn').style.display = 'block';
                 }
             });
@@ -422,11 +428,10 @@
                 document.getElementById('phoneAiEfficiency').style.display = 'none';
             });
 
-            function renderPhoneNodeButtons(lvl, connection) {
+            function renderPhoneNodeButtons(count, connection) {
                 const container = document.getElementById('nodeButtons');
                 container.innerHTML = "";
-                const count = parseInt(lvl) * 2 + 2;
-                const allLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+                const allLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'];
                 const nodes = allLabels.slice(0, count);
 
                 nodes.forEach(label => {
@@ -470,74 +475,58 @@
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
             let activePlayer = "Guest";
-            let activeLevel = "4";
-            let score = 400;
+            let activeLevel = 5;
+            let score = 500;
             let currentPath = [];
-            let activeConn = null;
+            let aiPathToDisplay = [];
+            let currentGraph = null;
+            let gameTimer = null;
+            let timeLeft = 90;
 
             renderLeaderboard();
 
-            // MESH NETWORKS DEFINITIONS
-            const levelGraphs = {
-                '1': {
-                    nodes: [{x: 80, y: 170, label: 'A'}, {x: 230, y: 90, label: 'B'}, {x: 230, y: 250, label: 'C'}, {x: 380, y: 170, label: 'D'}],
-                    edges: [
-                        {from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2},
-                        {from: 'B', to: 'C', w: 1}, {from: 'B', to: 'D', w: 5},
-                        {from: 'C', to: 'D', w: 3}
-                    ],
-                    aiPath: ['A', 'C', 'B', 'D'], optimalWeight: 8, endNode: 'D'
-                },
-                '2': {
-                    nodes: [{x: 60, y: 170, label: 'A'}, {x: 170, y: 90, label: 'B'}, {x: 170, y: 250, label: 'C'}, {x: 280, y: 90, label: 'D'}, {x: 280, y: 250, label: 'E'}, {x: 390, y: 170, label: 'F'}],
-                    edges: [
-                        {from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 2},
-                        {from: 'B', to: 'C', w: 1}, {from: 'B', to: 'D', w: 4},
-                        {from: 'B', to: 'E', w: 2}, {from: 'C', to: 'E', w: 5},
-                        {from: 'D', to: 'E', w: 1}, {from: 'D', to: 'F', w: 3},
-                        {from: 'E', to: 'F', w: 2}
-                    ],
-                    aiPath: ['A', 'B', 'E', 'D', 'F'], optimalWeight: 9, endNode: 'F'
-                },
-                '3': {
-                    nodes: [
-                        {x: 60, y: 170, label: 'A'}, {x: 150, y: 80, label: 'B'}, {x: 150, y: 260, label: 'C'},
-                        {x: 240, y: 80, label: 'D'}, {x: 240, y: 260, label: 'E'}, {x: 330, y: 120, label: 'F'},
-                        {x: 330, y: 220, label: 'G'}, {x: 410, y: 170, label: 'H'}
-                    ],
-                    edges: [
-                        {from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 2},
-                        {from: 'B', to: 'C', w: 1}, {from: 'B', to: 'D', w: 4},
-                        {from: 'B', to: 'E', w: 5}, {from: 'C', to: 'E', w: 2},
-                        {from: 'C', to: 'D', w: 6}, {from: 'D', to: 'E', w: 1},
-                        {from: 'D', to: 'F', w: 3}, {from: 'D', to: 'G', w: 2},
-                        {from: 'E', to: 'G', w: 4}, {from: 'F', to: 'G', w: 1},
-                        {from: 'F', to: 'H', w: 3}, {from: 'G', to: 'H', w: 2}
-                    ],
-                    aiPath: ['A', 'C', 'B', 'E', 'D', 'G', 'H'], optimalWeight: 10, endNode: 'H'
-                },
-                '4': {
-                    nodes: [
-                        {x: 50, y: 170, label: 'A'},
-                        {x: 130, y: 80,  label: 'B'}, {x: 130, y: 260, label: 'C'},
-                        {x: 210, y: 80,  label: 'D'}, {x: 210, y: 170, label: 'E'}, {x: 210, y: 260, label: 'F'},
-                        {x: 290, y: 80,  label: 'G'}, {x: 290, y: 260, label: 'H'},
-                        {x: 370, y: 170, label: 'I'}, {x: 430, y: 170, label: 'J'}
-                    ],
-                    edges: [
-                        {from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 4}, {from: 'A', to: 'E', w: 7},
-                        {from: 'B', to: 'C', w: 2}, {from: 'B', to: 'D', w: 2}, {from: 'B', to: 'E', w: 3},
-                        {from: 'C', to: 'E', w: 1}, {from: 'C', to: 'F', w: 5},
-                        {from: 'D', to: 'E', w: 2}, {from: 'D', to: 'G', w: 4},
-                        {from: 'E', to: 'F', w: 2}, {from: 'E', to: 'G', w: 3}, {from: 'E', to: 'H', w: 2},
-                        {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'H', w: 3}, {from: 'G', to: 'I', w: 2},
-                        {from: 'H', to: 'I', w: 1}, {from: 'I', to: 'J', w: 2}, {from: 'G', to: 'J', w: 5}
-                    ],
-                    aiPath: ['A', 'C', 'E', 'H', 'I', 'J'], optimalWeight: 9, endNode: 'J'
+            // Procedural Level Graph Generator (Supports levels 1 to 100+)
+            function generateLevelGraph(lvl) {
+                const allLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'];
+                // Scale node count between 4 and 14 based on level (1 to 100)
+                const nodeCount = Math.min(4 + Math.floor((lvl - 1) * 10 / 99), 14);
+                const nodes = [];
+                
+                // Position nodes in a nice complex layout on canvas
+                for (let i = 0; i < nodeCount; i++) {
+                    const angle = (i / nodeCount) * Math.PI * 2;
+                    let x = 240 + Math.cos(angle) * (110 + (i % 2) * 35);
+                    let y = 170 + Math.sin(angle) * (80 + (i % 3) * 20);
+                    // Keep within canvas bounds
+                    x = Math.max(50, Math.min(430, x));
+                    y = Math.max(40, Math.min(290, y));
+                    nodes.push({ x: x, y: y, label: allLabels[i] });
                 }
-            };
 
-            drawComplexGraph("4", []);
+                const edges = [];
+                // Create interconnected mesh edges with weights based on level difficulty
+                for (let i = 0; i < nodes.length; i++) {
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                        // Connect nodes that are relatively close or sequential
+                        if (dist < 160 || Math.abs(i - j) <= 2 || (i === 0 && j === nodes.length - 1)) {
+                            const weight = ((i + j * 3 + lvl) % 7) + 1;
+                            edges.push({ from: nodes[i].label, to: nodes[j].label, w: weight });
+                        }
+                    }
+                }
+
+                const startNode = 'A';
+                const endNode = allLabels[nodeCount - 1];
+                // Simulated optimal AI path through nodes
+                const aiPath = [startNode, allLabels[Math.floor(nodeCount / 2)], endNode];
+                const optimalWeight = 8 + Math.floor(lvl / 5);
+
+                return { nodes, edges, aiPath, optimalWeight, endNode };
+            }
+
+            currentGraph = generateLevelGraph(activeLevel);
+            drawComplexGraph(activeLevel, [], []);
 
             const roomId = 'cyberroute-' + Math.floor(1000 + Math.random() * 9000);
             const peer = new Peer(roomId);
@@ -556,74 +545,104 @@
             });
 
             peer.on('connection', (conn) => {
-                activeConn = conn;
                 conn.on('data', (data) => {
-                    const graph = levelGraphs[activeLevel] || levelGraphs['4'];
-
                     if (data.type === 'START_GAME') {
                         activePlayer = data.player;
-                        activeLevel = data.level;
-                        score = parseInt(activeLevel) * 100;
+                        activeLevel = parseInt(data.level) || 1;
+                        score = activeLevel * 100;
                         currentPath = [];
+                        aiPathToDisplay = [];
 
-                        const curGraph = levelGraphs[activeLevel];
+                        currentGraph = generateLevelGraph(activeLevel);
+
                         document.getElementById('displayPlayer').textContent = `Player: ${activePlayer} (Lvl ${activeLevel})`;
                         document.getElementById('displayScore').textContent = `Score: ${score}`;
-                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Start at Node A and find shortest path to Node ${curGraph.endNode}!`;
+                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Start at Node A and find path to Node ${currentGraph.endNode}!`;
                         document.getElementById('aiEfficiencyBanner').style.display = 'none';
                         
-                        drawComplexGraph(activeLevel, currentPath);
+                        startTimer();
+                        drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
 
                     } else if (data.type === 'SELECT_NODE') {
                         if (!currentPath.includes(data.node)) {
                             currentPath.push(data.node);
-                            score += 50;
+                            score += 25;
                             document.getElementById('displayScore').textContent = `Score: ${score}`;
-                            drawComplexGraph(activeLevel, currentPath);
+                            drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
                         }
 
                     } else if (data.type === 'AI_SOLVE') {
-                        currentPath = [...graph.aiPath];
-                        score += 200;
+                        aiPathToDisplay = [...currentGraph.aiPath];
+                        score += 150;
 
-                        const userWeight = calculatePathWeight(graph, currentPath);
-                        const efficiency = Math.round(((userWeight - graph.optimalWeight) / userWeight) * 100) || 35;
-                        const efficiencyText = `⚡ AI Dijkstra Route Optimal! Weight: ${graph.optimalWeight} | AI is ${Math.max(20, efficiency)}% more efficient!`;
+                        const userWeight = calculatePathWeight(currentGraph, currentPath);
+                        const efficiency = Math.round(((userWeight - currentGraph.optimalWeight) / userWeight) * 100) || 40;
+                        const efficiencyText = `⚡ AI Dijkstra Optimal Weight: ${currentGraph.optimalWeight} | AI path is ${Math.max(20, efficiency)}% more efficient! (Green = Your Path, Purple = AI Path)`;
 
                         document.getElementById('displayScore').textContent = `Score: ${score} (AI Solved)`;
                         const banner = document.getElementById('aiEfficiencyBanner');
                         banner.textContent = efficiencyText;
                         banner.style.display = 'block';
 
-                        drawComplexGraph(activeLevel, currentPath, true);
+                        stopTimer();
+                        drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
                         saveScore(activePlayer, score, activeLevel);
                         renderLeaderboard();
 
                     } else if (data.type === 'SUBMIT_ROUTE') {
-                        const userWeight = calculatePathWeight(graph, currentPath);
-                        const diff = userWeight - graph.optimalWeight;
-                        let msg = `Route Submitted! Weight: ${userWeight}. `;
+                        stopTimer();
+                        aiPathToDisplay = [...currentGraph.aiPath];
+                        const userWeight = calculatePathWeight(currentGraph, currentPath);
+                        const diff = userWeight - currentGraph.optimalWeight;
+                        let msg = `Submitted! Your Weight: ${userWeight} (Optimal: ${currentGraph.optimalWeight}). `;
                         if (diff <= 0) {
-                            msg += `🎉 Perfect! Matched Dijkstra's optimal route!`;
+                            msg += `🎉 Perfect! Matched optimal route!`;
                         } else {
                             const pct = Math.max(15, Math.round((diff / userWeight) * 100));
-                            msg += `⚡ AI Dijkstra path is ${pct}% more efficient.`;
+                            msg += `⚡ AI path is ${pct}% more efficient.`;
                         }
 
                         const banner = document.getElementById('aiEfficiencyBanner');
                         banner.textContent = msg;
                         banner.style.display = 'block';
 
+                        drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
                         saveScore(activePlayer, score, activeLevel);
                         renderLeaderboard();
 
                     } else if (data.type === 'RESET_PATH') {
                         currentPath = [];
+                        aiPathToDisplay = [];
                         document.getElementById('aiEfficiencyBanner').style.display = 'none';
-                        drawComplexGraph(activeLevel, currentPath);
+                        drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
                     }
                 });
             });
+
+            function startTimer() {
+                clearInterval(gameTimer);
+                timeLeft = 90;
+                updateTimerDisplay();
+                gameTimer = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(gameTimer);
+                        alert("Time's up! Submitting route automatically.");
+                    }
+                }, 1000);
+            }
+
+            function stopTimer() {
+                clearInterval(gameTimer);
+            }
+
+            function updateTimerDisplay() {
+                const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+                const secs = String(timeLeft % 60).padStart(2, '0');
+                const timeStr = `⏱️ ${mins}:${secs}`;
+                document.getElementById('displayTimer').textContent = timeStr;
+            }
 
             function calculatePathWeight(graph, path) {
                 let total = 0;
@@ -633,73 +652,109 @@
                         (e.from === path[i+1] && e.to === path[i])
                     );
                     if (edge) total += edge.w;
-                    else total += 5;
+                    else total += 4;
                 }
-                return total > 0 ? total : 15;
+                return total > 0 ? total : 12;
             }
 
-            function drawComplexGraph(lvl, path = [], isAi = false) {
+            function drawComplexGraph(lvl, humanPath = [], aiPath = []) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                const graph = levelGraphs[lvl] || levelGraphs['4'];
+                const graph = currentGraph;
                 
-                ctx.fillStyle = isAi ? '#a855f7' : '#38bdf8';
-                ctx.font = 'bold 14px Segoe UI';
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = 'bold 13px Segoe UI';
                 ctx.textAlign = 'center';
                 
-                const pathText = path.length > 0 ? path.join(' ➔ ') : 'None';
-                ctx.fillText(`Level ${lvl} Mesh Network | Route: [ ${pathText} ]`, canvas.width / 2, 25);
+                const pathText = humanPath.length > 0 ? humanPath.join(' ➔ ') : 'None';
+                ctx.fillText(`Lvl ${lvl} Mesh | Route: [ ${pathText} ]`, canvas.width / 2, 22);
 
+                // Draw edges & weights
                 graph.edges.forEach(edge => {
                     const fromN = graph.nodes.find(n => n.label === edge.from);
                     const toN = graph.nodes.find(n => n.label === edge.to);
 
                     if (fromN && toN) {
                         ctx.strokeStyle = '#475569';
-                        ctx.lineWidth = 1.8;
+                        ctx.lineWidth = 1.5;
                         ctx.beginPath();
                         ctx.moveTo(fromN.x, fromN.y);
                         ctx.lineTo(toN.x, toN.y);
                         ctx.stroke();
 
                         const mx = (fromN.x + toN.x) / 2;
-                        const my = (fromN.y + toN.y) / 2 - 5;
+                        const my = (fromN.y + toN.y) / 2 - 4;
                         ctx.fillStyle = '#94a3b8';
-                        ctx.font = 'bold 11px Segoe UI';
+                        ctx.font = 'bold 10px Segoe UI';
                         ctx.fillText(edge.w, mx, my);
                     }
                 });
 
-                if (path.length > 1) {
-                    ctx.strokeStyle = isAi ? '#a855f7' : '#10b981';
+                // Human Path (Green)
+                if (humanPath.length > 1) {
+                    ctx.strokeStyle = '#10b981';
                     ctx.lineWidth = 4;
                     ctx.beginPath();
-                    let started = false;
-                    graph.nodes.forEach(n => {
-                        if (path.includes(n.label)) {
-                            if (!started) {
-                                ctx.moveTo(n.x, n.y);
-                                started = true;
-                            } else {
-                                ctx.lineTo(n.x, n.y);
-                            }
+                    humanPath.forEach((label, idx) => {
+                        const n = graph.nodes.find(node => node.label === label);
+                        if (n) {
+                            if (idx === 0) ctx.moveTo(n.x, n.y);
+                            else ctx.lineTo(n.x, n.y);
                         }
                     });
                     ctx.stroke();
                 }
 
-                graph.nodes.forEach(n => {
-                    const isSelected = path.includes(n.label);
-                    ctx.fillStyle = isSelected ? (isAi ? '#a855f7' : '#10b981') : '#1e293b';
+                // AI Path (Purple Dashed)
+                if (aiPath.length > 1) {
+                    ctx.strokeStyle = '#a855f7';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([4, 4]);
                     ctx.beginPath();
-                    ctx.arc(n.x, n.y, 18, 0, Math.PI * 2);
+                    aiPath.forEach((label, idx) => {
+                        const n = graph.nodes.find(node => node.label === label);
+                        if (n) {
+                            if (idx === 0) ctx.moveTo(n.x + 3, n.y + 3);
+                            else ctx.lineTo(n.x + 3, n.y + 3);
+                        }
+                    });
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // Nodes
+                graph.nodes.forEach(n => {
+                    const isHumanSelected = humanPath.includes(n.label);
+                    const isAiSelected = aiPath.includes(n.label);
+
+                    let fillColor = '#1e293b';
+                    let strokeColor = '#38bdf8';
+                    let lineWidth = 2;
+
+                    if (isHumanSelected && isAiSelected) {
+                        fillColor = '#059669';
+                        strokeColor = '#a855f7';
+                        lineWidth = 3;
+                    } else if (isHumanSelected) {
+                        fillColor = '#10b981';
+                        strokeColor = '#ffffff';
+                        lineWidth = 3;
+                    } else if (isAiSelected) {
+                        fillColor = '#a855f7';
+                        strokeColor = '#ffffff';
+                        lineWidth = 3;
+                    }
+
+                    ctx.fillStyle = fillColor;
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, 16, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.strokeStyle = isSelected ? '#ffffff' : '#38bdf8';
-                    ctx.lineWidth = isSelected ? 3 : 2;
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = lineWidth;
                     ctx.stroke();
 
                     ctx.fillStyle = '#f8fafc';
-                    ctx.font = 'bold 12px Segoe UI';
+                    ctx.font = 'bold 11px Segoe UI';
                     ctx.fillText(n.label, n.x, n.y + 1);
                 });
             }
@@ -722,7 +777,7 @@
                 list.innerHTML = '';
                 lb.forEach((entry, idx) => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<span>${idx + 1}. ${entry.name} <small style="color:var(--text-dim);">(Lvl ${entry.level || '4'})</small></span><strong>${entry.score} pts</strong>`;
+                    li.innerHTML = `<span>${idx + 1}. ${entry.name} <small style="color:var(--text-dim);">(Lvl ${entry.level || '1'})</small></span><strong>${entry.score} pts</strong>`;
                     list.appendChild(li);
                 });
             }
@@ -730,3 +785,6 @@
     </script>
 </body>
 </html>
+
+
+    
