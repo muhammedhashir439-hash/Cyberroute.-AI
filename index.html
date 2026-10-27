@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
-            --bg-color: #070d16;
+            --bg-color: #050a14;
             --panel-bg: rgba(9, 16, 29, 0.95);
             --card-border: rgba(56, 189, 248, 0.4);
             --primary-accent: #38bdf8;
@@ -24,13 +24,6 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 15% 20%, rgba(56, 189, 248, 0.18) 0px, transparent 50%),
-                radial-gradient(at 85% 85%, rgba(14, 116, 144, 0.22) 0px, transparent 50%),
-                linear-gradient(rgba(3, 7, 18, 0.82), rgba(3, 7, 18, 0.82)),
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 1000 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%230e2038' opacity='0.35' d='M150,150 Q180,120 220,140 T300,130 Q380,110 420,150 T500,160 Q600,120 700,170 T850,150 Q900,200 880,250 T800,320 Q700,380 600,350 T450,320 Q350,360 250,300 T120,220 Z'/%3E%3C/svg%3E");
-            background-size: cover;
-            background-position: center;
             color: var(--text-main);
             margin: 0;
             padding: 24px;
@@ -39,6 +32,17 @@
             align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Background Canvas for World Map Graphic */
+        #bgMapCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+            pointer-events: none;
         }
 
         /* Top Bar */
@@ -54,6 +58,7 @@
             color: var(--text-muted);
             margin-bottom: 20px;
             font-weight: 600;
+            z-index: 10;
         }
         .top-bar span { cursor: pointer; transition: color 0.2s; }
         .top-bar span:hover { color: var(--primary-accent); }
@@ -88,9 +93,10 @@
             width: 100%;
             min-height: 72vh;
             position: relative;
+            z-index: 5;
         }
 
-        .hero-section { max-width: 580px; z-index: 2; }
+        .hero-section { max-width: 580px; }
 
         .brand-header {
             display: flex;
@@ -144,7 +150,7 @@
         }
 
         /* Views & Panels */
-        .view-frame { display: none; width: 100%; justify-content: center; gap: 24px; flex-wrap: wrap; }
+        .view-frame { display: none; width: 100%; justify-content: center; gap: 24px; flex-wrap: wrap; z-index: 5; }
         .view-frame.active { display: flex; }
 
         .panel {
@@ -160,7 +166,7 @@
         }
         .btn-control:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
 
-        canvas { background-color: #030712; border: 1px solid #1e293b; border-radius: 12px; }
+        canvas#mainCanvas { background-color: #030712; border: 1px solid #1e293b; border-radius: 12px; }
 
         #game-workspace.fullscreen-active {
             position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important;
@@ -207,6 +213,9 @@
 </head>
 <body>
 
+    <!-- Dynamic World Network Map Canvas Background -->
+    <canvas id="bgMapCanvas"></canvas>
+
     <!-- Top Bar -->
     <div class="top-bar">
         <span id="profileBtn">PROFILE</span>
@@ -225,8 +234,8 @@
             <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
                 <strong>1. Remote Connection:</strong> Scan the QR code displayed on the laptop screen using your mobile phone to connect your remote controller.<br><br>
                 <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the destination target node before the 90-second countdown timer runs out.<br><br>
-                <strong>3. Strict Graph Connectivity:</strong> You must select adjacent nodes in sequence. Direct jumps between unconnected nodes (e.g. jumping from C to E without an edge) are restricted and blocked!<br><br>
-                <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to achieve maximum score efficiency compared to the AI optimal shortest path algorithm.
+                <strong>3. Strict Graph Connectivity:</strong> You must select adjacent nodes in sequence. Direct jumps between unconnected nodes (e.g. C to E without an edge) are restricted!<br><br>
+                <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to achieve maximum score efficiency compared to Dijkstra's algorithm.
             </p>
             <button class="btn-action" id="closeHelpModal">Got It</button>
         </div>
@@ -363,6 +372,76 @@
     </div>
 
     <script>
+        // --- Draw World Map & Network Graphics dynamically on background canvas ---
+        function initWorldMapBackground() {
+            const bgCanvas = document.getElementById('bgMapCanvas');
+            const ctx = bgCanvas.getContext('2d');
+
+            function resize() {
+                bgCanvas.width = window.innerWidth;
+                bgCanvas.height = window.innerHeight;
+                drawMap();
+            }
+
+            function drawMap() {
+                ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+                const w = bgCanvas.width;
+                const h = bgCanvas.height;
+
+                // Render Map Grid
+                ctx.strokeStyle = 'rgba(14, 116, 144, 0.12)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+                for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+                // World Nodes Coordinates (Right side of screen matching reference)
+                const mapNodes = [
+                    { x: w * 0.55, y: h * 0.3 }, { x: w * 0.62, y: h * 0.2 }, { x: w * 0.72, y: h * 0.45 },
+                    { x: w * 0.82, y: h * 0.5 }, { x: w * 0.88, y: h * 0.38 }, { x: w * 0.92, y: h * 0.75 },
+                    { x: w * 0.6, y: h * 0.62 }, { x: w * 0.57, y: h * 0.82 }, { x: w * 0.76, y: h * 0.68 }
+                ];
+
+                const connections = [
+                    [0,1], [1,2], [2,3], [3,4], [2,5], [4,5], [0,6], [6,7], [6,2], [7,8], [8,5]
+                ];
+
+                // Render Glowing Cables
+                connections.forEach(([i, j]) => {
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2.5;
+                    ctx.shadowColor = '#38bdf8';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(mapNodes[i].x, mapNodes[i].y);
+                    ctx.lineTo(mapNodes[j].x, mapNodes[j].y);
+                    ctx.stroke();
+                });
+                ctx.shadowBlur = 0;
+
+                // Render Server Vertices
+                mapNodes.forEach(n => {
+                    ctx.fillStyle = '#030712';
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, 14, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Inner Glow Dot
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+        }
+
+        initWorldMapBackground();
+
         // --- Modal Event Listeners ---
         document.getElementById('helpBtn').addEventListener('click', () => {
             playSound('click');
@@ -744,5 +823,3 @@
     </script>
 </body>
 </html>
-
-
