@@ -3,31 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberRoute AI - Math Fair Edition</title>
+    <title>CyberRoute AI - Algorithmic Pathfinder</title>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- PeerJS for Real-time Cross-Device Cloud Sync -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
-            --bg-gradient: radial-gradient(circle at center, #3b0764 0%, #1e1b4b 60%, #0f172a 100%);
-            --card-bg: rgba(49, 46, 129, 0.75);
-            --accent-cyan: #22d3ee;
-            --accent-gold: #fbbf24;
-            --accent-green: #34d399;
-            --accent-purple: #c084fc;
-            --text-main: #f8fafc;
-            --text-dim: #cbd5e1;
-            --border: rgba(192, 132, 252, 0.4);
-            --danger: #ef4444;
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(17, 24, 39, 0.85);
+            --card-border: rgba(56, 189, 248, 0.2);
+            --primary-accent: #38bdf8;
+            --secondary-accent: #818cf8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-gradient);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(129, 140, 248, 0.12) 0px, transparent 50%);
             color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -35,58 +38,59 @@
             box-sizing: border-box;
         }
 
-        /* Top Bar */
-        .top-bar {
+        /* Executive Header */
+        .header {
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--card-border);
         }
 
-        .game-title-header {
-            text-align: center;
-            flex: 1;
-        }
-
-        .game-title-header h1 {
+        .header-title h1 {
             margin: 0;
-            background: linear-gradient(180deg, #ffffff 0%, #fbbf24 60%, #f59e0b 100%);
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-size: 3rem;
-            font-weight: 900;
-            text-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
-            letter-spacing: 2px;
         }
 
-        .game-title-header p {
-            color: var(--accent-cyan);
+        .header-title p {
             margin: 4px 0 0 0;
-            font-size: 1.1rem;
-            font-weight: 700;
+            color: var(--primary-accent);
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
         .audio-btn {
-            background: rgba(30, 27, 75, 0.9);
-            border: 2px solid var(--border);
-            color: var(--accent-cyan);
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
+            background: rgba(31, 41, 55, 0.7);
+            border: 1px solid var(--card-border);
+            color: var(--primary-accent);
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            transition: transform 0.2s;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
         }
 
-        .audio-btn:hover { transform: scale(1.1); }
+        .audio-btn:hover {
+            border-color: var(--primary-accent);
+            background: rgba(56, 189, 248, 0.1);
+        }
 
-        /* LUDO STYLE LOBBY SCREEN MENU CARDS */
+        /* Professional Landing Menu Cards */
         #lobby-menu {
             display: flex;
             flex-direction: column;
@@ -94,48 +98,64 @@
             gap: 20px;
             max-width: 800px;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 20px;
+        }
+
+        .lobby-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-sizing: border-box;
         }
 
         .lobby-main-card {
             width: 100%;
-            height: 180px;
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #075985 100%);
-            border: 4px solid #38bdf8;
-            border-radius: 24px;
+            padding: 36px 40px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 40px;
-            box-shadow: 0 12px 35px rgba(2, 132, 199, 0.5), inset 0 3px 6px rgba(255, 255, 255, 0.4);
-            cursor: pointer;
-            transition: all 0.25s ease;
-            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lobby-main-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
         }
 
         .lobby-main-card:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 16px 45px rgba(2, 132, 199, 0.7), inset 0 3px 8px rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 25px 30px -5px rgba(56, 189, 248, 0.15);
         }
 
-        .lobby-main-card .card-text h2 {
+        .card-text h2 {
             margin: 0;
-            font-size: 2.5rem;
-            font-weight: 900;
+            font-size: 1.8rem;
+            font-weight: 700;
             color: #ffffff;
-            text-shadow: 0 3px 10px rgba(0,0,0,0.5);
         }
 
-        .lobby-main-card .card-text p {
-            margin: 6px 0 0 0;
-            color: #e0f2fe;
-            font-size: 1.1rem;
+        .card-text p {
+            margin: 8px 0 0 0;
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .card-badge {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--primary-accent);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
             font-weight: 600;
-        }
-
-        .lobby-main-card .card-icon {
-            font-size: 5rem;
-            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+            font-size: 0.9rem;
         }
 
         .lobby-sub-cards {
@@ -146,92 +166,79 @@
 
         .lobby-sub-card {
             flex: 1;
-            height: 140px;
-            background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
-            border: 3px solid #c084fc;
-            border-radius: 20px;
+            padding: 28px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            gap: 8px;
-            box-shadow: 0 10px 30px rgba(147, 51, 234, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-            cursor: pointer;
-            transition: all 0.25s ease;
-        }
-
-        .lobby-sub-card.gold-card {
-            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-            border-color: #fbbf24;
-            box-shadow: 0 10px 30px rgba(217, 119, 6, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
         }
 
         .lobby-sub-card:hover {
-            transform: translateY(-4px) scale(1.02);
+            transform: translateY(-2px);
+            border-color: rgba(129, 140, 248, 0.5);
         }
 
         .lobby-sub-card h3 {
             margin: 0;
-            font-size: 1.6rem;
-            font-weight: 900;
-            color: white;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffffff;
         }
 
-        .lobby-sub-card .sub-icon {
-            font-size: 2.5rem;
+        .lobby-sub-card p {
+            margin: 6px 0 0 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
         }
 
-        /* Generic Card Container */
-        .glossy-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(14px);
-            border: 2px solid var(--border);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        /* Generic Layout & Containers */
+        .glass-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         }
 
         .view-section { display: none; width: 100%; justify-content: center; gap: 20px; flex-wrap: wrap; }
         .view-section.active { display: flex; }
 
-        /* Back to Menu Button */
-        .btn-back-lobby {
-            background: rgba(30, 27, 75, 0.8);
-            border: 2px solid var(--accent-cyan);
-            color: var(--accent-cyan);
-            padding: 8px 18px;
-            border-radius: 12px;
-            font-weight: bold;
+        .btn-back {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
             cursor: pointer;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             transition: all 0.2s;
         }
 
-        .btn-back-lobby:hover {
-            background: var(--accent-cyan);
-            color: #0f172a;
+        .btn-back:hover {
+            color: var(--text-main);
+            border-color: var(--primary-accent);
+            background: rgba(56, 189, 248, 0.05);
         }
 
-        /* QR Code & Game Panels */
-        #qr-card { text-align: center; width: 240px; }
-        #qrcode { background: white; padding: 10px; border-radius: 14px; display: inline-block; margin: 10px 0; }
-        .url-text { font-size: 0.7rem; color: var(--accent-cyan); word-break: break-all; }
+        /* QR Code & Display Panels */
+        #qr-card { text-align: center; width: 260px; }
+        #qrcode { background: white; padding: 12px; border-radius: 12px; display: inline-block; margin: 12px 0; }
+        .url-text { font-size: 0.75rem; color: var(--text-muted); word-break: break-all; font-family: monospace; }
 
         canvas {
-            background-color: #09090b;
-            border: 2px solid rgba(34, 211, 238, 0.4);
-            border-radius: 14px;
-            box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
+            background-color: #030712;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
         }
-
-        .sidebar { display: flex; flex-direction: column; gap: 15px; width: 300px; }
 
         .leaderboard-list {
             list-style: none;
             padding: 0;
             margin: 0;
-            max-height: 320px;
+            max-height: 360px;
             overflow-y: auto;
         }
 
@@ -239,180 +246,183 @@
             display: flex;
             justify-content: space-between;
             padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.95rem;
         }
 
-        .controller-card { max-width: 380px; width: 100%; text-align: center; }
+        .controller-card { max-width: 400px; width: 100%; }
 
-        .input-group { margin-bottom: 14px; text-align: left; }
-        .input-group label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 4px; font-weight: 600; }
+        .input-group { margin-bottom: 16px; text-align: left; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
         .input-group input, .input-group select {
-            width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--border);
-            background-color: rgba(15, 23, 42, 0.8); color: var(--text-main); font-size: 1rem; box-sizing: border-box;
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--card-border);
+            background-color: rgba(3, 7, 18, 0.6); color: var(--text-main); font-size: 0.95rem; box-sizing: border-box;
+            outline: none;
+        }
+        .input-group input:focus, .input-group select:focus {
+            border-color: var(--primary-accent);
         }
 
-        .btn-play {
-            background: linear-gradient(135deg, #38bdf8, #0284c7);
-            color: #0f172a; border: none; padding: 14px 20px; border-radius: 14px;
-            font-weight: 900; font-size: 1.1rem; cursor: pointer; width: 100%;
-            transition: all 0.2s; box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+        .btn-action {
+            background: var(--primary-accent);
+            color: #030712; border: none; padding: 12px 20px; border-radius: 8px;
+            font-weight: 700; font-size: 0.95rem; cursor: pointer; width: 100%;
+            transition: all 0.2s;
         }
+        .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
 
-        .btn-ai { background: linear-gradient(135deg, #c084fc, #7e22ce); color: white; }
-        .btn-done { background: linear-gradient(135deg, #34d399, #059669); color: white; }
+        .btn-secondary { background: rgba(129, 140, 248, 0.2); color: var(--secondary-accent); border: 1px solid var(--secondary-accent); }
+        .btn-success { background: rgba(16, 185, 129, 0.2); color: var(--success-color); border: 1px solid var(--success-color); }
+        .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger-color); border: 1px solid var(--danger-color); }
 
-        .node-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; max-height: 180px; overflow-y: auto; }
+        .node-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 200px; overflow-y: auto; }
         .node-btn {
-            padding: 12px; background: rgba(30, 27, 75, 0.9); border: 2px solid var(--accent-cyan);
-            color: white; font-weight: bold; border-radius: 12px; font-size: 0.95rem; cursor: pointer;
+            padding: 12px; background: rgba(31, 41, 55, 0.6); border: 1px solid var(--card-border);
+            color: var(--text-main); font-weight: 600; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
+            transition: all 0.15s;
         }
-        .node-btn:active { background: var(--accent-cyan); color: #0f172a; }
+        .node-btn:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
 
-        .instruction-box {
-            background: rgba(34, 211, 238, 0.15); border: 1px solid rgba(34, 211, 238, 0.4);
-            padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; color: var(--accent-cyan); margin-bottom: 8px; font-weight: bold;
+        .status-box {
+            background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: var(--primary-accent); margin-bottom: 12px; font-weight: 600;
         }
 
-        .ai-stats-box {
-            background: rgba(192, 132, 252, 0.2); border: 1px solid rgba(192, 132, 252, 0.5);
-            color: #f3e8ff; padding: 10px; border-radius: 10px; font-weight: bold; font-size: 0.85rem; margin-top: 6px; width: 100%; box-sizing: border-box; text-align: center;
+        .stats-banner {
+            background: rgba(129, 140, 248, 0.1); border: 1px solid rgba(129, 140, 248, 0.3);
+            color: #c7d2fe; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; margin-top: 10px; width: 100%; box-sizing: border-box; text-align: center;
         }
 
         .timer-badge {
-            background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.6);
-            color: #fca5a5; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;
+            background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; font-family: monospace;
         }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <div style="width: 48px;"></div>
-        <div class="game-title-header">
+    <div class="header">
+        <div class="header-title">
             <h1>CyberRoute AI</h1>
-            <p>Dijkstra's Algorithm Math Fair Challenge</p>
+            <p>Dijkstra Shortest Path Simulator</p>
         </div>
-        <button class="audio-btn" id="audioToggleBtn" title="Toggle Audio">🔊</button>
+        <button class="audio-btn" id="audioToggleBtn" title="Toggle Sound Ambient">🔊</button>
     </div>
 
-    <!-- 1. INITIAL LUDO-STYLE LOBBY SCREEN -->
+    <!-- 1. EXECUTIVE LOBBY MENU -->
     <div id="lobby-menu">
-        <div class="lobby-main-card" id="lobbyPlayBtn">
+        <div class="lobby-card lobby-main-card" id="lobbyPlayBtn">
             <div class="card-text">
-                <h2>🎮 PLAY GAME</h2>
-                <p>Connect Phone Remote & Solve Graphs</p>
+                <h2>Launch Interactive Simulation</h2>
+                <p>Connect smartphone remote controller & optimize network graph paths</p>
             </div>
-            <div class="card-icon">🚀</div>
+            <div class="card-badge">Start System ➔</div>
         </div>
 
         <div class="lobby-sub-cards">
-            <div class="lobby-sub-card gold-card" id="lobbyLeaderboardBtn">
-                <div class="sub-icon">🏆</div>
-                <h3>LEADERBOARD</h3>
+            <div class="lobby-card lobby-sub-card" id="lobbyLeaderboardBtn">
+                <h3>System Analytics & Rankings</h3>
+                <p>View top benchmark scores and optimal path solver statistics</p>
             </div>
         </div>
     </div>
 
-    <!-- 2. GAME PLAY VIEW -->
+    <!-- 2. SIMULATION DISPLAY VIEW -->
     <div id="game-view" class="view-section">
         <div style="width: 100%; max-width: 1100px;">
-            <button class="btn-back-lobby" id="backToLobbyFromGame">⬅️ Back to Main Menu</button>
+            <button class="btn-back" id="backToLobbyFromGame">← Return to Control Panel</button>
         </div>
         
-        <!-- QR Code Controller Card -->
-        <div class="glossy-card" id="qr-card">
-            <h3 style="margin-top:0; color: var(--accent-cyan);">📱 Controller</h3>
-            <p style="font-size: 0.8rem; color: var(--text-dim);">Scan QR code on your phone!</p>
+        <!-- QR Controller Terminal -->
+        <div class="glass-panel" id="qr-card">
+            <h3 style="margin-top:0; color: var(--primary-accent); font-size: 1.1rem;">Controller Interface</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Scan QR code on mobile device to pair remote session:</p>
             <div id="qrcode"></div>
-            <div class="url-text" id="directUrlDisplay">Connecting to relay...</div>
+            <div class="url-text" id="directUrlDisplay">Initializing peer connection...</div>
         </div>
 
-        <!-- Canvas Area -->
-        <div class="glossy-card" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 360px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; font-weight: bold; align-items: center;">
-                <span id="displayPlayer">Player: Waiting for phone...</span>
-                <div class="timer-badge" id="displayTimer">⏱️ 01:30</div>
-                <span id="displayScore">Score: 0</span>
+        <!-- Canvas Workspace -->
+        <div class="glass-panel" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 360px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 12px; font-weight: 600; align-items: center; font-size: 0.9rem;">
+                <span id="displayPlayer" style="color: var(--text-muted);">Session: Awaiting remote device...</span>
+                <div class="timer-badge" id="displayTimer">⏱ 01:30</div>
+                <span id="displayScore" style="color: var(--primary-accent);">Score: 0</span>
             </div>
             
-            <div class="instruction-box" id="laptopInstruction">
-                🎯 Objective: Start at Node A and reach the target before 90s!
+            <div class="status-box" id="laptopInstruction">
+                🎯 Target: Connect Node A to destination node within 90 seconds.
             </div>
 
-            <canvas id="gameCanvas" width="460" height="300"></canvas>
+            <canvas id="gameCanvas" width="480" height="310"></canvas>
             
-            <div id="aiEfficiencyBanner" class="ai-stats-box" style="display: none;">
-                ⚡ AI Analysis: Calculating path efficiency...
+            <div id="aiEfficiencyBanner" class="stats-banner" style="display: none;">
+                ⚡ Dijkstra Algorithm Analysis: Processing path metrics...
             </div>
         </div>
     </div>
 
-    <!-- 3. FULL LEADERBOARD VIEW -->
+    <!-- 3. BENCHMARK LEADERBOARD VIEW -->
     <div id="leaderboard-view" class="view-section">
-        <div style="width: 100%; max-width: 600px;">
-            <button class="btn-back-lobby" id="backToLobbyFromLb">⬅️ Back to Main Menu</button>
-            <div class="glossy-card">
-                <h2 style="margin-top:0; color: var(--accent-gold); text-align: center;">🏆 Hall of Fame Leaderboard</h2>
+        <div style="width: 100%; max-width: 650px;">
+            <button class="btn-back" id="backToLobbyFromLb">← Return to Control Panel</button>
+            <div class="glass-panel">
+                <h2 style="margin-top:0; color: #ffffff; font-size: 1.4rem;">Performance Leaderboard</h2>
                 <ul class="leaderboard-list" id="fullLeaderboardList">
-                    <li><span>No scores registered yet</span><span>-</span></li>
+                    <li><span>No active run benchmarks saved</span><span>-</span></li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- 4. PHONE REMOTE CONTROLLER VIEW -->
+    <!-- 4. REMOTE CONTROLLER INTERFACE -->
     <div id="controller-view" class="view-section">
-        <div class="glossy-card controller-card">
-            <h3 style="color: var(--accent-cyan); margin-top: 0;">🎮 CyberRoute Remote</h3>
+        <div class="glass-panel controller-card">
+            <h3 style="color: var(--primary-accent); margin-top: 0; font-size: 1.2rem;">Mobile Pathfinder Remote</h3>
             
             <div id="setup-controls">
                 <div class="input-group">
-                    <label for="phonePlayerName">Participant Name</label>
-                    <input type="text" id="phonePlayerName" placeholder="Enter player name...">
+                    <label for="phonePlayerName">Participant Identifier</label>
+                    <input type="text" id="phonePlayerName" placeholder="Enter name or ID...">
                 </div>
                 <div class="input-group">
-                    <label for="phoneDifficulty">Select Difficulty (Level 1 to 5)</label>
+                    <label for="phoneDifficulty">Graph Complexity Level</label>
                     <select id="phoneDifficulty">
-                        <option value="1">Level 1: Novice (A ➔ D)</option>
-                        <option value="2">Level 2: Intermediate (A ➔ F)</option>
-                        <option value="3">Level 3: Advanced (A ➔ H)</option>
-                        <option value="4">Level 4: Expert (A ➔ I)</option>
-                        <option value="5" selected>Level 5: Master Grid (A ➔ L)</option>
+                        <option value="1">Level 1: Basic Topology (A ➔ D)</option>
+                        <option value="2">Level 2: Intermediate Mesh (A ➔ F)</option>
+                        <option value="3">Level 3: Advanced Network (A ➔ H)</option>
+                        <option value="4">Level 4: Complex Graph (A ➔ I)</option>
+                        <option value="5" selected>Level 5: Master Mesh (A ➔ L)</option>
                     </select>
                 </div>
-                <button class="btn-play" id="phoneStartBtn">Start 90s Challenge</button>
+                <button class="btn-action" id="phoneStartBtn">Initialize Session</button>
             </div>
 
-            <!-- Active Control Buttons Pad -->
             <div id="active-controls" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <div class="instruction-box" id="phoneInstructionBanner" style="margin-bottom:0; flex:1;">
-                        🎯 Start: A ➔ Target
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div class="status-box" id="phoneInstructionBanner" style="margin-bottom:0; flex:1;">
+                        🎯 Route: Node A ➔ Target
                     </div>
-                    <div class="timer-badge" id="phoneTimer" style="margin-left: 6px;">⏱️ 90s</div>
+                    <div class="timer-badge" id="phoneTimer" style="margin-left: 8px;">⏱ 90s</div>
                 </div>
                 
-                <p style="font-size: 0.8rem; color: var(--text-dim); margin: 6px 0;">Tap nodes in your custom sequence:</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 8px 0;">Select graph vertices in path sequence:</p>
 
                 <div class="node-grid" id="nodeButtons"></div>
 
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
-                    <button class="btn-play btn-ai" id="aiSolveBtn">🤖 Show AI Optimal Path</button>
-                    <button class="btn-play btn-done" id="submitPathBtn">✅ Done / Submit Route</button>
-                    <button class="btn-play" id="resetPathBtn" style="background: linear-gradient(135deg, #f87171, #dc2626); color: white;">🔄 Reset Path</button>
-                    <button class="btn-play" id="nextPlayerBtn" style="background: linear-gradient(135deg, #34d399, #059669); color: white; display: none;">👤 Next Player / Play Again</button>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px;">
+                    <button class="btn-action btn-secondary" id="aiSolveBtn">🤖 Compute Dijkstra Solution</button>
+                    <button class="btn-action btn-success" id="submitPathBtn">✅ Submit Route Sequence</button>
+                    <button class="btn-action btn-danger" id="resetPathBtn">🔄 Clear Selection</button>
+                    <button class="btn-action" id="nextPlayerBtn" style="background: #374151; color: white; display: none;">👤 Start New Player</button>
                 </div>
-
-                <div id="phoneAiEfficiency" class="ai-stats-box" style="display: none;"></div>
             </div>
 
-            <div id="controllerStatus" style="margin-top: 12px; color: var(--accent-cyan); font-size: 0.85rem;">Connecting to laptop...</div>
+            <div id="controllerStatus" style="margin-top: 14px; color: var(--primary-accent); font-size: 0.85rem;">Establishing peer protocol connection...</div>
         </div>
     </div>
 
     <script>
-        // --- Web Audio API Synth BGM & Sound FX ---
+        // --- Web Audio API: Ambient Cyberpunk Synth Sound Engine ---
         let audioCtx = null;
         let soundEnabled = true;
         let bgmInterval = null;
@@ -434,19 +444,19 @@
 
                 if (type === 'click') {
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(440, now);
-                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-                    gain.gain.setValueAtTime(0.15, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-                    osc.start(now); osc.stop(now + 0.08);
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(640, now + 0.05);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now); osc.stop(now + 0.05);
                 } else if (type === 'success') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.1);
-                    osc.frequency.setValueAtTime(783.99, now + 0.2);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                    osc.start(now); osc.stop(now + 0.4);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.08);
+                    osc.frequency.setValueAtTime(659.25, now + 0.16);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.start(now); osc.stop(now + 0.35);
                 }
             } catch(e) {}
         }
@@ -454,7 +464,8 @@
         function startBGM() {
             if (bgmInterval || !soundEnabled) return;
             initAudio();
-            const chords = [261.63, 329.63, 392.00, 523.25];
+            // Deep smooth ambient chord sequence (A minor / F major feel)
+            const chords = [220.00, 261.63, 329.63, 174.61]; 
             let step = 0;
             bgmInterval = setInterval(() => {
                 if (!soundEnabled || !audioCtx) return;
@@ -463,13 +474,13 @@
                     const gain = audioCtx.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(chords[step % chords.length], audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.8);
                     osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+                    osc.start(); osc.stop(audioCtx.currentTime + 1.8);
                     step++;
                 } catch(e) {}
-            }, 1200);
+            }, 2000);
         }
 
         document.getElementById('audioToggleBtn').addEventListener('click', () => {
@@ -482,7 +493,7 @@
             if (soundEnabled && !bgmInterval) startBGM();
         }, { once: true });
 
-        // --- Navigation Logic ---
+        // --- Core Navigation & Signaling ---
         const lobbyMenu = document.getElementById('lobby-menu');
         const gameView = document.getElementById('game-view');
         const leaderboardView = document.getElementById('leaderboard-view');
@@ -502,10 +513,10 @@
             let conn;
 
             peer.on('open', () => {
-                document.getElementById('controllerStatus').textContent = "Connecting to laptop...";
+                document.getElementById('controllerStatus').textContent = "Connecting to display terminal...";
                 conn = peer.connect(hostId);
                 conn.on('open', () => {
-                    document.getElementById('controllerStatus').textContent = "Connected to laptop screen!";
+                    document.getElementById('controllerStatus').textContent = "Connected to host session";
                     playSound('success');
                 });
             });
@@ -514,7 +525,7 @@
                 playSound('click');
                 const name = document.getElementById('phonePlayerName').value.trim();
                 const level = parseInt(document.getElementById('phoneDifficulty').value) || 1;
-                if (!name) { alert("Please enter your name!"); return; }
+                if (!name) { alert("Please enter a player identifier."); return; }
 
                 if (conn && conn.open) {
                     conn.send({ type: 'START_GAME', player: name, level: level });
@@ -523,7 +534,7 @@
                     document.getElementById('nextPlayerBtn').style.display = 'none';
                     
                     const endNodes = { 1: 'D', 2: 'F', 3: 'H', 4: 'I', 5: 'L' };
-                    document.getElementById('phoneInstructionBanner').textContent = `🎯 Start: A ➔ Target: ${endNodes[level]}`;
+                    document.getElementById('phoneInstructionBanner').textContent = `🎯 Route: Node A ➔ Target Node ${endNodes[level]}`;
                     
                     const nodeCounts = { 1: 4, 2: 6, 3: 8, 4: 10, 5: 12 };
                     renderPhoneNodeButtons(nodeCounts[level], conn);
@@ -549,7 +560,7 @@
             }
 
         } else {
-            // --- LAPTOP LOBBY DISPLAY ---
+            // --- DISPLAY HOST SYSTEM ---
             document.getElementById('lobbyPlayBtn').addEventListener('click', () => {
                 playSound('click');
                 lobbyMenu.style.display = 'none';
@@ -581,11 +592,11 @@
             let currentPath = [], aiPathToDisplay = [], currentGraph = null, gameTimer = null, timeLeft = 90;
 
             function getLevelGraph(lvl) {
-                if (lvl === 1) return { nodes: [{x: 80, y: 150, label: 'A'}, {x: 200, y: 80, label: 'B'}, {x: 200, y: 220, label: 'C'}, {x: 380, y: 150, label: 'D'}], edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 5}, {from: 'C', to: 'D', w: 1}], aiPath: ['A', 'C', 'D'], optimalWeight: 3, endNode: 'D' };
-                if (lvl === 2) return { nodes: [{x: 60, y: 150, label: 'A'}, {x: 160, y: 80, label: 'B'}, {x: 160, y: 220, label: 'C'}, {x: 280, y: 80, label: 'D'}, {x: 280, y: 220, label: 'E'}, {x: 400, y: 150, label: 'F'}], edges: [{from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 4}, {from: 'C', to: 'E', w: 3}, {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'F', w: 1}], aiPath: ['A', 'C', 'E', 'F'], optimalWeight: 6, endNode: 'F' };
-                if (lvl === 3) return { nodes: [{x: 50, y: 150, label: 'A'}, {x: 140, y: 75, label: 'B'}, {x: 140, y: 225, label: 'C'}, {x: 230, y: 75, label: 'D'}, {x: 230, y: 225, label: 'E'}, {x: 320, y: 110, label: 'F'}, {x: 320, y: 190, label: 'G'}, {x: 410, y: 150, label: 'H'}], edges: [{from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5}, {from: 'B', to: 'D', w: 3}, {from: 'C', to: 'E', w: 1}, {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'G', w: 2}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'H', w: 3}], aiPath: ['A', 'B', 'D', 'F', 'H'], optimalWeight: 8, endNode: 'H' };
-                if (lvl === 4) return { nodes: [{x: 40, y: 150, label: 'A'}, {x: 120, y: 75, label: 'B'}, {x: 120, y: 225, label: 'C'}, {x: 200, y: 120, label: 'D'}, {x: 200, y: 180, label: 'E'}, {x: 280, y: 75, label: 'F'}, {x: 280, y: 225, label: 'G'}, {x: 350, y: 150, label: 'H'}, {x: 420, y: 150, label: 'I'}], edges: [{from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5}, {from: 'B', to: 'D', w: 1}, {from: 'C', to: 'E', w: 2}, {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 1}, {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'H', w: 4}, {from: 'H', to: 'I', w: 2}], aiPath: ['A', 'B', 'D', 'F', 'H', 'I'], optimalWeight: 10, endNode: 'I' };
-                return { nodes: [{x: 40, y: 150, label: 'A'}, {x: 110, y: 75, label: 'B'}, {x: 110, y: 225, label: 'C'}, {x: 180, y: 75, label: 'D'}, {x: 180, y: 150, label: 'E'}, {x: 180, y: 225, label: 'F'}, {x: 250, y: 75, label: 'G'}, {x: 250, y: 225, label: 'H'}, {x: 320, y: 110, label: 'I'}, {x: 320, y: 190, label: 'J'}, {x: 390, y: 150, label: 'K'}, {x: 440, y: 150, label: 'L'}], edges: [{from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 4}, {from: 'A', to: 'E', w: 6}, {from: 'B', to: 'D', w: 2}, {from: 'B', to: 'E', w: 3}, {from: 'C', to: 'E', w: 1}, {from: 'C', to: 'F', w: 5}, {from: 'D', to: 'G', w: 4}, {from: 'E', to: 'G', w: 2}, {from: 'E', to: 'H', w: 3}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'I', w: 2}, {from: 'H', to: 'J', w: 3}, {from: 'I', to: 'K', w: 2}, {from: 'J', to: 'K', w: 1}, {from: 'K', to: 'L', w: 2}], aiPath: ['A', 'C', 'E', 'H', 'J', 'K', 'L'], optimalWeight: 11, endNode: 'L' };
+                if (lvl === 1) return { nodes: [{x: 90, y: 155, label: 'A'}, {x: 210, y: 85, label: 'B'}, {x: 210, y: 225, label: 'C'}, {x: 390, y: 155, label: 'D'}], edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 5}, {from: 'C', to: 'D', w: 1}], aiPath: ['A', 'C', 'D'], optimalWeight: 3, endNode: 'D' };
+                if (lvl === 2) return { nodes: [{x: 70, y: 155, label: 'A'}, {x: 170, y: 85, label: 'B'}, {x: 170, y: 225, label: 'C'}, {x: 290, y: 85, label: 'D'}, {x: 290, y: 225, label: 'E'}, {x: 410, y: 155, label: 'F'}], edges: [{from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 4}, {from: 'C', to: 'E', w: 3}, {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'F', w: 1}], aiPath: ['A', 'C', 'E', 'F'], optimalWeight: 6, endNode: 'F' };
+                if (lvl === 3) return { nodes: [{x: 55, y: 155, label: 'A'}, {x: 145, y: 80, label: 'B'}, {x: 145, y: 230, label: 'C'}, {x: 235, y: 80, label: 'D'}, {x: 235, y: 230, label: 'E'}, {x: 325, y: 115, label: 'F'}, {x: 325, y: 195, label: 'G'}, {x: 425, y: 155, label: 'H'}], edges: [{from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5}, {from: 'B', to: 'D', w: 3}, {from: 'C', to: 'E', w: 1}, {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'G', w: 2}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'H', w: 3}], aiPath: ['A', 'B', 'D', 'F', 'H'], optimalWeight: 8, endNode: 'H' };
+                if (lvl === 4) return { nodes: [{x: 45, y: 155, label: 'A'}, {x: 125, y: 80, label: 'B'}, {x: 125, y: 230, label: 'C'}, {x: 205, y: 125, label: 'D'}, {x: 205, y: 185, label: 'E'}, {x: 285, y: 80, label: 'F'}, {x: 285, y: 230, label: 'G'}, {x: 360, y: 155, label: 'H'}, {x: 435, y: 155, label: 'I'}], edges: [{from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5}, {from: 'B', to: 'D', w: 1}, {from: 'C', to: 'E', w: 2}, {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 1}, {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'H', w: 4}, {from: 'H', to: 'I', w: 2}], aiPath: ['A', 'B', 'D', 'F', 'H', 'I'], optimalWeight: 10, endNode: 'I' };
+                return { nodes: [{x: 45, y: 155, label: 'A'}, {x: 115, y: 80, label: 'B'}, {x: 115, y: 230, label: 'C'}, {x: 185, y: 80, label: 'D'}, {x: 185, y: 155, label: 'E'}, {x: 185, y: 230, label: 'F'}, {x: 255, y: 80, label: 'G'}, {x: 255, y: 230, label: 'H'}, {x: 325, y: 115, label: 'I'}, {x: 325, y: 195, label: 'J'}, {x: 395, y: 155, label: 'K'}, {x: 445, y: 155, label: 'L'}], edges: [{from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 4}, {from: 'A', to: 'E', w: 6}, {from: 'B', to: 'D', w: 2}, {from: 'B', to: 'E', w: 3}, {from: 'C', to: 'E', w: 1}, {from: 'C', to: 'F', w: 5}, {from: 'D', to: 'G', w: 4}, {from: 'E', to: 'G', w: 2}, {from: 'E', to: 'H', w: 3}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'I', w: 2}, {from: 'H', to: 'J', w: 3}, {from: 'I', to: 'K', w: 2}, {from: 'J', to: 'K', w: 1}, {from: 'K', to: 'L', w: 2}], aiPath: ['A', 'C', 'E', 'H', 'J', 'K', 'L'], optimalWeight: 11, endNode: 'L' };
             }
 
             currentGraph = getLevelGraph(activeLevel);
@@ -609,9 +620,9 @@
                         score = activeLevel * 100; currentPath = []; aiPathToDisplay = [];
                         currentGraph = getLevelGraph(activeLevel);
 
-                        document.getElementById('displayPlayer').textContent = `Player: ${activePlayer} (Lvl ${activeLevel})`;
+                        document.getElementById('displayPlayer').textContent = `Participant: ${activePlayer} (Level ${activeLevel})`;
                         document.getElementById('displayScore').textContent = `Score: ${score}`;
-                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Start at Node A and find path to Node ${currentGraph.endNode}!`;
+                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Connect Node A to Node ${currentGraph.endNode} via minimum cost weight.`;
                         document.getElementById('aiEfficiencyBanner').style.display = 'none';
                         startTimer(); drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
 
@@ -626,7 +637,7 @@
                         aiPathToDisplay = [...currentGraph.aiPath]; score += 150;
                         const userWeight = calculatePathWeight(currentGraph, currentPath);
                         const efficiency = Math.round(((userWeight - currentGraph.optimalWeight) / userWeight) * 100) || 40;
-                        document.getElementById('aiEfficiencyBanner').textContent = `⚡ AI Dijkstra Weight: ${currentGraph.optimalWeight} | AI path is ${Math.max(20, efficiency)}% more efficient! (Green = Your Path, Purple = AI Path)`;
+                        document.getElementById('aiEfficiencyBanner').textContent = `⚡ Dijkstra Weight: ${currentGraph.optimalWeight} | AI path is ${Math.max(20, efficiency)}% more efficient (Green = User, Purple = Dijkstra)`;
                         document.getElementById('aiEfficiencyBanner').style.display = 'block';
                         stopTimer(); drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveScore(activePlayer, score, activeLevel);
 
@@ -634,8 +645,8 @@
                         stopTimer(); aiPathToDisplay = [...currentGraph.aiPath];
                         const userWeight = calculatePathWeight(currentGraph, currentPath);
                         const diff = userWeight - currentGraph.optimalWeight;
-                        let msg = `Submitted! Your Weight: ${userWeight} (Optimal: ${currentGraph.optimalWeight}). `;
-                        if (diff <= 0) msg += `🎉 Perfect route!`; else msg += `⚡ AI path is ${Math.max(15, Math.round((diff / userWeight) * 100))}% more efficient.`;
+                        let msg = `Submitted Weight: ${userWeight} | Optimal Weight: ${currentGraph.optimalWeight}. `;
+                        if (diff <= 0) msg += `🎉 Perfect route matched!`; else msg += `⚡ AI path is ${Math.max(15, Math.round((diff / userWeight) * 100))}% more efficient.`;
                         document.getElementById('aiEfficiencyBanner').textContent = msg;
                         document.getElementById('aiEfficiencyBanner').style.display = 'block';
                         drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveScore(activePlayer, score, activeLevel);
@@ -650,7 +661,7 @@
 
             function startTimer() { clearInterval(gameTimer); timeLeft = 90; updateTimerDisplay(); gameTimer = setInterval(() => { timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) clearInterval(gameTimer); }, 1000); }
             function stopTimer() { clearInterval(gameTimer); }
-            function updateTimerDisplay() { document.getElementById('displayTimer').textContent = `⏱️ ${String(Math.floor(timeLeft / 60)).padStart(2, '0')}:${String(timeLeft % 60).padStart(2, '0')}`; }
+            function updateTimerDisplay() { document.getElementById('displayTimer').textContent = `⏱ ${String(Math.floor(timeLeft / 60)).padStart(2, '0')}:${String(timeLeft % 60).padStart(2, '0')}`; }
             function calculatePathWeight(graph, path) {
                 let total = 0;
                 for (let i = 0; i < path.length - 1; i++) {
@@ -663,41 +674,45 @@
             function drawComplexGraph(lvl, humanPath = [], aiPath = []) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 const graph = currentGraph;
-                ctx.fillStyle = '#22d3ee'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
-                ctx.fillText(`Lvl ${lvl} Mesh | Route: [ ${humanPath.length > 0 ? humanPath.join(' ➔ ') : 'None'} ]`, canvas.width / 2, 20);
+                ctx.fillStyle = '#94a3b8'; ctx.font = '600 12px -apple-system, sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(`Network Topology Lvl ${lvl} | Active Route: [ ${humanPath.length > 0 ? humanPath.join(' → ') : 'None'} ]`, canvas.width / 2, 22);
 
+                // Render Edges
                 graph.edges.forEach(edge => {
                     const fromN = graph.nodes.find(n => n.label === edge.from);
                     const toN = graph.nodes.find(n => n.label === edge.to);
                     if (fromN && toN) {
-                        ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(fromN.x, fromN.y); ctx.lineTo(toN.x, toN.y); ctx.stroke();
-                        ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 11px Segoe UI'; ctx.fillText(edge.w, (fromN.x + toN.x) / 2, (fromN.y + toN.y) / 2 - 4);
+                        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(fromN.x, fromN.y); ctx.lineTo(toN.x, toN.y); ctx.stroke();
+                        ctx.fillStyle = '#64748b'; ctx.font = '600 11px -apple-system, sans-serif'; ctx.fillText(edge.w, (fromN.x + toN.x) / 2, (fromN.y + toN.y) / 2 - 4);
                     }
                 });
 
+                // User Path Line (Emerald)
                 if (humanPath.length > 1) {
-                    ctx.strokeStyle = '#34d399'; ctx.lineWidth = 4; ctx.beginPath();
+                    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3.5; ctx.beginPath();
                     humanPath.forEach((label, idx) => { const n = graph.nodes.find(node => node.label === label); if (n) { if (idx === 0) ctx.moveTo(n.x, n.y); else ctx.lineTo(n.x, n.y); } });
                     ctx.stroke();
                 }
 
+                // AI Dijkstra Path Line (Indigo / Purple Dashed)
                 if (aiPath.length > 1) {
-                    ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 3; ctx.setLineDash([4, 4]); ctx.beginPath();
+                    ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 3; ctx.setLineDash([4, 4]); ctx.beginPath();
                     aiPath.forEach((label, idx) => { const n = graph.nodes.find(node => node.label === label); if (n) { if (idx === 0) ctx.moveTo(n.x + 3, n.y + 3); else ctx.lineTo(n.x + 3, n.y + 3); } });
                     ctx.stroke(); ctx.setLineDash([]);
                 }
 
+                // Render Vertices / Nodes
                 graph.nodes.forEach(n => {
                     const isHumanSelected = humanPath.includes(n.label);
                     const isAiSelected = aiPath.includes(n.label);
-                    let fillColor = '#1e1b4b', strokeColor = '#22d3ee', lineWidth = 2;
-                    if (isHumanSelected && isAiSelected) { fillColor = '#059669'; strokeColor = '#c084fc'; lineWidth = 3; }
-                    else if (isHumanSelected) { fillColor = '#34d399'; strokeColor = '#ffffff'; lineWidth = 3; }
-                    else if (isAiSelected) { fillColor = '#c084fc'; strokeColor = '#ffffff'; lineWidth = 3; }
+                    let fillColor = '#0f172a', strokeColor = '#38bdf8', lineWidth = 2;
+                    if (isHumanSelected && isAiSelected) { fillColor = '#059669'; strokeColor = '#818cf8'; lineWidth = 3; }
+                    else if (isHumanSelected) { fillColor = '#10b981'; strokeColor = '#ffffff'; lineWidth = 3; }
+                    else if (isAiSelected) { fillColor = '#818cf8'; strokeColor = '#ffffff'; lineWidth = 3; }
 
-                    ctx.fillStyle = fillColor; ctx.beginPath(); ctx.arc(n.x, n.y, 16, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = fillColor; ctx.beginPath(); ctx.arc(n.x, n.y, 15, 0, Math.PI * 2); ctx.fill();
                     ctx.strokeStyle = strokeColor; ctx.lineWidth = lineWidth; ctx.stroke();
-                    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 11px Segoe UI'; ctx.fillText(n.label, n.x, n.y + 1);
+                    ctx.fillStyle = '#f8fafc'; ctx.font = '700 11px -apple-system, sans-serif'; ctx.fillText(n.label, n.x, n.y + 4);
                 });
             }
 
@@ -711,11 +726,11 @@
             function renderFullLeaderboard() {
                 const lb = JSON.parse(localStorage.getItem('cyberroute_lb') || '[]');
                 const list = document.getElementById('fullLeaderboardList');
-                if (lb.length === 0) { list.innerHTML = '<li><span>No scores registered yet</span><span>-</span></li>'; return; }
+                if (lb.length === 0) { list.innerHTML = '<li><span>No active benchmark records saved</span><span>-</span></li>'; return; }
                 list.innerHTML = '';
                 lb.forEach((entry, idx) => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<span>${idx + 1}. ${entry.name} <small style="color:var(--text-dim);">(Lvl ${entry.level})</small></span><strong>${entry.score} pts</strong>`;
+                    li.innerHTML = `<span>${idx + 1}. ${entry.name} <small style="color:var(--text-muted);">(Level ${entry.level})</small></span><strong style="color:var(--primary-accent);">${entry.score} pts</strong>`;
                     list.appendChild(li);
                 });
             }
@@ -723,4 +738,3 @@
     </script>
 </body>
 </html>
-    
