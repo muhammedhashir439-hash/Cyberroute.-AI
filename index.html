@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
-            --bg-color: #050a14;
+            --bg-color: #070d16;
             --panel-bg: rgba(9, 16, 29, 0.95);
             --card-border: rgba(56, 189, 248, 0.4);
             --primary-accent: #38bdf8;
@@ -36,120 +36,63 @@
             position: relative;
         }
 
-        /* Background Canvas for World Map Graphic */
         #bgMapCanvas {
             position: absolute;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            z-index: 0;
-            pointer-events: none;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
         }
 
-        /* Top Bar */
         .top-bar {
-            width: 100%;
-            max-width: 1250px;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 24px;
-            font-size: 0.75rem;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-            font-weight: 600;
-            z-index: 10;
+            width: 100%; max-width: 1250px; display: flex; justify-content: flex-end;
+            align-items: center; gap: 24px; font-size: 0.75rem; letter-spacing: 0.1em;
+            color: var(--text-muted); margin-bottom: 20px; font-weight: 600; z-index: 10;
         }
         .top-bar span { cursor: pointer; transition: color 0.2s; }
         .top-bar span:hover { color: var(--primary-accent); }
 
         .sound-toggle-pill {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid var(--card-border);
-            padding: 6px 14px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--primary-accent);
-            cursor: pointer;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
+            background: rgba(15, 23, 42, 0.8); border: 1px solid var(--card-border);
+            padding: 6px 14px; border-radius: 20px; display: flex; align-items: center;
+            gap: 8px; color: var(--primary-accent); cursor: pointer; font-size: 0.75rem;
         }
         .toggle-dot {
-            width: 10px; height: 10px;
-            background-color: var(--primary-accent);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--primary-accent);
+            width: 10px; height: 10px; background-color: var(--primary-accent);
+            border-radius: 50%; box-shadow: 0 0 8px var(--primary-accent);
         }
 
-        /* Lobby Hub */
         #lobby-hub {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            max-width: 1200px;
-            width: 100%;
-            min-height: 72vh;
-            position: relative;
-            z-index: 5;
+            display: flex; flex-direction: column; justify-content: center;
+            max-width: 1200px; width: 100%; min-height: 72vh; position: relative; z-index: 5;
         }
 
         .hero-section { max-width: 580px; }
 
-        .brand-header {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            margin-bottom: 14px;
-        }
-
+        .brand-header { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; }
         .hex-logo {
             width: 56px; height: 64px;
             background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(14, 116, 144, 0.6));
             clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
             display: flex; align-items: center; justify-content: center;
-            border: 1px solid var(--primary-accent);
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            border: 1px solid var(--primary-accent); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
         }
         .hex-inner {
             width: 32px; height: 38px; background: #030712;
             clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
         }
 
-        .brand-title h1 {
-            margin: 0; font-size: 2.6rem; font-weight: 800; color: #ffffff;
-            letter-spacing: -0.5px; line-height: 1.1;
-        }
-        .brand-title h2 {
-            margin: 4px 0 0 0; font-size: 1.6rem; font-weight: 700; color: var(--primary-accent);
-            letter-spacing: 0.1em;
-        }
-
-        .hero-subtitle {
-            font-size: 1.05rem; color: #cbd5e1; font-weight: 600;
-            letter-spacing: 0.05em; margin: 20px 0 36px 0; line-height: 1.5;
-            text-transform: uppercase;
-        }
+        .brand-title h1 { margin: 0; font-size: 2.6rem; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; line-height: 1.1; }
+        .brand-title h2 { margin: 4px 0 0 0; font-size: 1.6rem; font-weight: 700; color: var(--primary-accent); letter-spacing: 0.1em; }
+        .hero-subtitle { font-size: 1.05rem; color: #cbd5e1; font-weight: 600; letter-spacing: 0.05em; margin: 20px 0 36px 0; text-transform: uppercase; }
 
         .menu-btn {
             background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(7, 13, 22, 0.95));
-            border: 1.5px solid var(--card-border);
-            color: #ffffff; padding: 18px 32px; border-radius: 12px;
-            font-size: 1.25rem; font-weight: 800; letter-spacing: 0.1em;
-            cursor: pointer; width: 100%; max-width: 440px; margin-bottom: 16px;
-            display: flex; align-items: center; gap: 16px;
-            box-shadow: 0 0 25px rgba(56, 189, 248, 0.15), inset 0 0 15px rgba(56, 189, 248, 0.05);
-            transition: all 0.25s ease;
+            border: 1.5px solid var(--card-border); color: #ffffff; padding: 18px 32px;
+            border-radius: 12px; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.1em;
+            cursor: pointer; width: 100%; max-width: 440px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.15); transition: all 0.25s ease;
         }
-        .menu-btn:hover {
-            border-color: var(--primary-accent);
-            box-shadow: 0 0 35px rgba(56, 189, 248, 0.35), inset 0 0 20px rgba(56, 189, 248, 0.15);
-            transform: translateY(-2px); color: var(--primary-accent);
-        }
+        .menu-btn:hover { border-color: var(--primary-accent); color: var(--primary-accent); transform: translateY(-2px); }
 
-        /* Views & Panels */
         .view-frame { display: none; width: 100%; justify-content: center; gap: 24px; flex-wrap: wrap; z-index: 5; }
         .view-frame.active { display: flex; }
 
@@ -162,7 +105,6 @@
         .btn-control {
             background: rgba(15, 23, 42, 0.9); border: 1px solid var(--card-border); color: var(--text-main);
             padding: 10px 18px; border-radius: 10px; font-size: 0.9rem; cursor: pointer; font-weight: 600;
-            transition: all 0.2s;
         }
         .btn-control:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
 
@@ -191,32 +133,28 @@
         .btn-action {
             width: 100%; padding: 12px; border-radius: 8px; border: none;
             background: var(--primary-accent); color: #030712; font-weight: 700;
-            font-size: 0.95rem; cursor: pointer; margin-top: 6px; transition: all 0.2s;
+            font-size: 0.95rem; cursor: pointer; margin-top: 6px;
         }
         .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
 
         .node-btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 220px; overflow-y: auto; }
         .node-btn-grid button {
             padding: 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--card-border); color: white;
-            border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+            border-radius: 8px; font-weight: 600; cursor: pointer;
         }
         .node-btn-grid button:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
 
-        /* Modal Overlays */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(3, 7, 18, 0.85); z-index: 100000; justify-content: center; align-items: center;
-            backdrop-filter: blur(6px);
+            background: rgba(3, 7, 18, 0.85); z-index: 100000; justify-content: center; align-items: center; backdrop-filter: blur(6px);
         }
         .modal-content { max-width: 520px; width: 90%; position: relative; text-align: left; }
     </style>
 </head>
 <body>
 
-    <!-- Dynamic World Network Map Canvas Background -->
     <canvas id="bgMapCanvas"></canvas>
 
-    <!-- Top Bar -->
     <div class="top-bar">
         <span id="profileBtn">PROFILE</span>
         <span id="helpBtn">HELP</span>
@@ -234,8 +172,8 @@
             <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
                 <strong>1. Remote Connection:</strong> Scan the QR code displayed on the laptop screen using your mobile phone to connect your remote controller.<br><br>
                 <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the destination target node before the 90-second countdown timer runs out.<br><br>
-                <strong>3. Strict Graph Connectivity:</strong> You must select adjacent nodes in sequence. Direct jumps between unconnected nodes (e.g. C to E without an edge) are restricted!<br><br>
-                <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to achieve maximum score efficiency compared to Dijkstra's algorithm.
+                <strong>3. Strict Graph Connectivity:</strong> You must select adjacent nodes in sequence. Direct jumps between unconnected nodes are restricted!<br><br>
+                <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to achieve maximum score efficiency.
             </p>
             <button class="btn-action" id="closeHelpModal">Got It</button>
         </div>
@@ -249,7 +187,7 @@
                 <strong>Project Title:</strong> CyberRoute AI - Algorithmic Pathfinder<br>
                 <strong>Category:</strong> Senior Division Math Fair Exhibit<br>
                 <strong>Core Algorithm:</strong> Dijkstra's Shortest Path Algorithm & Graph Theory Optimization<br>
-                <strong>Tech Stack:</strong> HTML5 Canvas, Web Audio API, PeerJS Real-Time Sync
+                <strong>Tech Stack:</strong> HTML5 Canvas, Web Audio API, PeerJS Real-Time Cloud Sync
             </p>
             <button class="btn-action" id="closeProfileModal">Close Profile</button>
         </div>
@@ -372,177 +310,103 @@
     </div>
 
     <script>
-        // --- Draw World Map & Network Graphics dynamically on background canvas ---
+        // --- World Map Background Canvas ---
         function initWorldMapBackground() {
             const bgCanvas = document.getElementById('bgMapCanvas');
             const ctx = bgCanvas.getContext('2d');
-
             function resize() {
                 bgCanvas.width = window.innerWidth;
                 bgCanvas.height = window.innerHeight;
                 drawMap();
             }
-
             function drawMap() {
                 ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-                const w = bgCanvas.width;
-                const h = bgCanvas.height;
-
-                // Render Map Grid
-                ctx.strokeStyle = 'rgba(14, 116, 144, 0.12)';
-                ctx.lineWidth = 1;
+                const w = bgCanvas.width, h = bgCanvas.height;
+                ctx.strokeStyle = 'rgba(14, 116, 144, 0.12)'; ctx.lineWidth = 1;
                 for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
                 for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
 
-                // World Nodes Coordinates (Right side of screen matching reference)
                 const mapNodes = [
                     { x: w * 0.55, y: h * 0.3 }, { x: w * 0.62, y: h * 0.2 }, { x: w * 0.72, y: h * 0.45 },
                     { x: w * 0.82, y: h * 0.5 }, { x: w * 0.88, y: h * 0.38 }, { x: w * 0.92, y: h * 0.75 },
                     { x: w * 0.6, y: h * 0.62 }, { x: w * 0.57, y: h * 0.82 }, { x: w * 0.76, y: h * 0.68 }
                 ];
+                const connections = [[0,1], [1,2], [2,3], [3,4], [2,5], [4,5], [0,6], [6,7], [6,2], [7,8], [8,5]];
 
-                const connections = [
-                    [0,1], [1,2], [2,3], [3,4], [2,5], [4,5], [0,6], [6,7], [6,2], [7,8], [8,5]
-                ];
-
-                // Render Glowing Cables
                 connections.forEach(([i, j]) => {
-                    ctx.strokeStyle = '#38bdf8';
-                    ctx.lineWidth = 2.5;
-                    ctx.shadowColor = '#38bdf8';
-                    ctx.shadowBlur = 10;
-                    ctx.beginPath();
-                    ctx.moveTo(mapNodes[i].x, mapNodes[i].y);
-                    ctx.lineTo(mapNodes[j].x, mapNodes[j].y);
-                    ctx.stroke();
+                    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5; ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 10;
+                    ctx.beginPath(); ctx.moveTo(mapNodes[i].x, mapNodes[i].y); ctx.lineTo(mapNodes[j].x, mapNodes[j].y); ctx.stroke();
                 });
                 ctx.shadowBlur = 0;
-
-                // Render Server Vertices
                 mapNodes.forEach(n => {
-                    ctx.fillStyle = '#030712';
-                    ctx.beginPath();
-                    ctx.arc(n.x, n.y, 14, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#38bdf8';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-
-                    // Inner Glow Dot
-                    ctx.fillStyle = '#38bdf8';
-                    ctx.beginPath();
-                    ctx.arc(n.x, n.y, 4, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.fillStyle = '#030712'; ctx.beginPath(); ctx.arc(n.x, n.y, 14, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(n.x, n.y, 4, 0, Math.PI * 2); ctx.fill();
                 });
             }
-
             window.addEventListener('resize', resize);
             resize();
         }
-
         initWorldMapBackground();
 
-        // --- Modal Event Listeners ---
-        document.getElementById('helpBtn').addEventListener('click', () => {
-            playSound('click');
-            document.getElementById('helpModal').style.display = 'flex';
-        });
-        document.getElementById('closeHelpModal').addEventListener('click', () => {
-            playSound('click');
-            document.getElementById('helpModal').style.display = 'none';
-        });
+        // --- Modals ---
+        document.getElementById('helpBtn').onclick = () => { playSound('click'); document.getElementById('helpModal').style.display = 'flex'; };
+        document.getElementById('closeHelpModal').onclick = () => { playSound('click'); document.getElementById('helpModal').style.display = 'none'; };
+        document.getElementById('profileBtn').onclick = () => { playSound('click'); document.getElementById('profileModal').style.display = 'flex'; };
+        document.getElementById('closeProfileModal').onclick = () => { playSound('click'); document.getElementById('profileModal').style.display = 'none'; };
 
-        document.getElementById('profileBtn').addEventListener('click', () => {
-            playSound('click');
-            document.getElementById('profileModal').style.display = 'flex';
-        });
-        document.getElementById('closeProfileModal').addEventListener('click', () => {
-            playSound('click');
-            document.getElementById('profileModal').style.display = 'none';
-        });
-
-        // --- Web Audio API Ambient Sound Engine ---
-        let audioCtx = null;
-        let soundEnabled = true;
-        let bgmInterval = null;
-
+        // --- Audio Engine ---
+        let audioCtx = null, soundEnabled = true, bgmInterval = null;
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
-
         function playSound(type) {
             if (!soundEnabled) return;
             initAudio();
             try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
                 const now = audioCtx.currentTime;
-
                 if (type === 'click') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(320, now);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(320, now);
                     osc.frequency.exponentialRampToValueAtTime(640, now + 0.05);
-                    gain.gain.setValueAtTime(0.08, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
                     osc.start(now); osc.stop(now + 0.05);
                 } else if (type === 'success') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(440, now);
-                    osc.frequency.setValueAtTime(554.37, now + 0.08);
-                    osc.frequency.setValueAtTime(659.25, now + 0.16);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.08); osc.frequency.setValueAtTime(659.25, now + 0.16);
+                    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                     osc.start(now); osc.stop(now + 0.35);
                 }
             } catch(e) {}
         }
-
         function startBGM() {
             if (bgmInterval || !soundEnabled) return;
             initAudio();
-            const chords = [220.00, 261.63, 329.63, 174.61]; 
-            let step = 0;
+            const chords = [220.00, 261.63, 329.63, 174.61]; let step = 0;
             bgmInterval = setInterval(() => {
                 if (!soundEnabled || !audioCtx) return;
                 try {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(chords[step % chords.length], audioCtx.currentTime);
+                    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(chords[step % chords.length], audioCtx.currentTime);
                     gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.8);
                     osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 1.8);
-                    step++;
+                    osc.start(); osc.stop(audioCtx.currentTime + 1.8); step++;
                 } catch(e) {}
             }, 2000);
         }
-
-        document.getElementById('audioToggle').addEventListener('click', () => {
+        document.getElementById('audioToggle').onclick = () => {
             soundEnabled = !soundEnabled;
-            const dot = document.getElementById('soundDot');
-            const textSpan = document.querySelector('#audioToggle span');
-            if (soundEnabled) {
-                dot.style.backgroundColor = 'var(--primary-accent)';
-                dot.style.boxShadow = '0 0 8px var(--primary-accent)';
-                textSpan.textContent = 'SOUND: ON';
-                startBGM();
-            } else {
-                dot.style.backgroundColor = 'var(--text-muted)';
-                dot.style.boxShadow = 'none';
-                textSpan.textContent = 'SOUND: OFF';
-            }
-        });
+            const dot = document.getElementById('soundDot'), textSpan = document.querySelector('#audioToggle span');
+            if (soundEnabled) { dot.style.backgroundColor = 'var(--primary-accent)'; dot.style.boxShadow = '0 0 8px var(--primary-accent)'; textSpan.textContent = 'SOUND: ON'; startBGM(); }
+            else { dot.style.backgroundColor = 'var(--text-muted)'; dot.style.boxShadow = 'none'; textSpan.textContent = 'SOUND: OFF'; }
+        };
+        window.addEventListener('click', () => { if (soundEnabled && !bgmInterval) startBGM(); }, { once: true });
 
-        window.addEventListener('click', () => {
-            if (soundEnabled && !bgmInterval) startBGM();
-        }, { once: true });
-
-        // --- Fullscreen Display Toggle ---
-        document.getElementById('toggleFullscreen').addEventListener('click', () => {
+        // --- Fullscreen ---
+        document.getElementById('toggleFullscreen').onclick = () => {
             const workspace = document.getElementById('game-workspace');
             if (!document.fullscreenElement) {
                 if (workspace.requestFullscreen) workspace.requestFullscreen();
@@ -551,24 +415,9 @@
                 if (document.exitFullscreen) document.exitFullscreen();
                 workspace.classList.remove('fullscreen-active');
             }
-        });
+        };
 
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                document.getElementById('game-workspace').classList.remove('fullscreen-active');
-            }
-        });
-
-        // --- Navigation & Peer Signaling ---
-        const hub = document.getElementById('lobby-hub');
-        const gameView = document.getElementById('game-view');
-        const lbView = document.getElementById('lb-view');
-        const ctrlView = document.getElementById('controller-view');
-
-        const params = new URLSearchParams(window.location.search);
-        const roomId = params.get('room');
-        const isCtrl = window.location.hash.includes('controller') && roomId;
-
+        // --- Cross-Laptop & Tab Sync (BroadcastChannel + LocalStorage Event Listener) ---
         function getGlobalLeaderboard() {
             return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]');
         }
@@ -590,18 +439,32 @@
             bc.onmessage = (event) => {
                 if (event.data.type === 'SYNC_LB') {
                     localStorage.setItem('cyberroute_global_lb', JSON.stringify(event.data.leaderboard));
+                    const lbView = document.getElementById('lb-view');
                     if (lbView.classList.contains('active')) renderLb();
                 }
             };
         }
 
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'cyberroute_global_lb') {
+                const lbView = document.getElementById('lb-view');
+                if (lbView.classList.contains('active')) renderLb();
+            }
+        });
+
+        // --- Navigation & Peer Signaling ---
+        const hub = document.getElementById('lobby-hub');
+        const gameView = document.getElementById('game-view');
+        const lbView = document.getElementById('lb-view');
+        const ctrlView = document.getElementById('controller-view');
+
+        const params = new URLSearchParams(window.location.search);
+        const roomId = params.get('room');
+        const isCtrl = window.location.hash.includes('controller') && roomId;
+
         if (isCtrl) {
-            hub.style.display = 'none';
-            ctrlView.classList.add('active');
-
-            const peer = new Peer();
-            let conn;
-
+            hub.style.display = 'none'; ctrlView.classList.add('active');
+            const peer = new Peer(); let conn;
             peer.on('open', () => {
                 conn = peer.connect(roomId);
                 conn.on('open', () => {
@@ -625,53 +488,38 @@
             document.getElementById('aiBtn').onclick = () => { playSound('click'); conn.send({ type: 'AI' }); };
             document.getElementById('resetBtn').onclick = () => { playSound('click'); conn.send({ type: 'RESET' }); };
             document.getElementById('nextPlayerBtn').onclick = () => {
-                playSound('click');
-                document.getElementById('setupForm').style.display = 'block';
-                document.getElementById('gamepadForm').style.display = 'none';
-                document.getElementById('playerNameInput').value = '';
+                playSound('click'); document.getElementById('setupForm').style.display = 'block';
+                document.getElementById('gamepadForm').style.display = 'none'; document.getElementById('playerNameInput').value = '';
             };
 
             function renderBtns(lvl, connection) {
-                const grid = document.getElementById('nodeBtnGrid');
-                grid.innerHTML = '';
+                const grid = document.getElementById('nodeBtnGrid'); grid.innerHTML = '';
                 const labels = ['A','B','C','D','E','F','G','H','I','J','K','L'].slice(0, lvl == 1 ? 4 : lvl == 2 ? 6 : lvl == 3 ? 8 : lvl == 4 ? 10 : 12);
                 labels.forEach(l => {
-                    const b = document.createElement('button');
-                    b.textContent = 'Node ' + l;
+                    const b = document.createElement('button'); b.textContent = 'Node ' + l;
                     b.onclick = () => { playSound('click'); connection.send({ type: 'NODE', node: l }); };
                     grid.appendChild(b);
                 });
             }
-
         } else {
             document.getElementById('hubPlayBtn').onclick = () => {
-                playSound('click');
-                hub.style.display = 'none';
-                gameView.classList.add('active');
+                playSound('click'); hub.style.display = 'none'; gameView.classList.add('active');
                 document.getElementById('statusIndicator').textContent = "GAME STATUS: ACTIVE";
             };
             document.getElementById('hubLbBtn').onclick = () => {
-                playSound('click');
-                hub.style.display = 'none';
-                lbView.classList.add('active');
-                renderLb();
-                document.getElementById('statusIndicator').textContent = "GAME STATUS: LEADERBOARD";
+                playSound('click'); hub.style.display = 'none'; lbView.classList.add('active');
+                renderLb(); document.getElementById('statusIndicator').textContent = "GAME STATUS: LEADERBOARD";
             };
             document.getElementById('backFromGame').onclick = () => {
-                playSound('click');
-                gameView.classList.remove('active');
-                hub.style.display = 'flex';
+                playSound('click'); gameView.classList.remove('active'); hub.style.display = 'flex';
                 document.getElementById('statusIndicator').textContent = "GAME STATUS: IDLE";
             };
             document.getElementById('backFromLb').onclick = () => {
-                playSound('click');
-                lbView.classList.remove('active');
-                hub.style.display = 'flex';
+                playSound('click'); lbView.classList.remove('active'); hub.style.display = 'flex';
                 document.getElementById('statusIndicator').textContent = "GAME STATUS: IDLE";
             };
 
-            const canvas = document.getElementById('mainCanvas');
-            const ctx = canvas.getContext('2d');
+            const canvas = document.getElementById('mainCanvas'), ctx = canvas.getContext('2d');
             let activePlayer = "Guest", activeLevel = 5, score = 500;
             let currentPath = [], aiPathToDisplay = [], currentGraph = null, gameTimer = null, timeLeft = 90;
 
@@ -702,7 +550,6 @@
                         activePlayer = data.name; activeLevel = parseInt(data.lvl) || 1;
                         score = activeLevel * 100; currentPath = []; aiPathToDisplay = [];
                         currentGraph = getLevelGraph(activeLevel);
-
                         document.getElementById('playerDisplay').textContent = `Participant: ${activePlayer} (Level ${activeLevel})`;
                         document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
                         document.getElementById('aiBanner').style.display = 'none';
@@ -711,25 +558,15 @@
                         const targetNode = data.node;
                         if (!currentPath.includes(targetNode)) {
                             if (currentPath.length === 0) {
-                                if (targetNode === 'A') {
-                                    currentPath.push(targetNode);
-                                    score += 25;
-                                } else {
-                                    alert("Route must start at Node A!");
-                                    return;
-                                }
+                                if (targetNode === 'A') { currentPath.push(targetNode); score += 25; }
+                                else { alert("Route must start at Node A!"); return; }
                             } else {
                                 const lastNode = currentPath[currentPath.length - 1];
                                 const isConnected = currentGraph.edges.some(e => 
                                     (e.from === lastNode && e.to === targetNode) || (e.from === targetNode && e.to === lastNode)
                                 );
-                                if (isConnected) {
-                                    currentPath.push(targetNode);
-                                    score += 25;
-                                } else {
-                                    alert(`Invalid move! No direct edge connection between Node ${lastNode} and Node ${targetNode}.`);
-                                    return;
-                                }
+                                if (isConnected) { currentPath.push(targetNode); score += 25; }
+                                else { alert(`Invalid move! No direct edge connection between Node ${lastNode} and Node ${targetNode}.`); return; }
                             }
                             document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
                             drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
@@ -749,8 +586,7 @@
                         let msg = `Submitted Weight: ${userW} | Optimal: ${currentGraph.optimalWeight}. `;
                         if (diff <= 0) msg += `🎉 Perfect optimal route!`; else msg += `⚡ AI path is ${Math.max(15, Math.round((diff / userW) * 100))}% more efficient.`;
                         const banner = document.getElementById('aiBanner');
-                        banner.textContent = msg;
-                        banner.style.display = 'block';
+                        banner.textContent = msg; banner.style.display = 'block';
                         drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveGlobalScore(activePlayer, score, activeLevel);
                     } else if (data.type === 'RESET') {
                         currentPath = []; aiPathToDisplay = [];
