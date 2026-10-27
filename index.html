@@ -27,8 +27,8 @@
             background-image: 
                 radial-gradient(at 15% 20%, rgba(56, 189, 248, 0.18) 0px, transparent 50%),
                 radial-gradient(at 85% 85%, rgba(14, 116, 144, 0.22) 0px, transparent 50%),
-                linear-gradient(rgba(3, 7, 18, 0.85), rgba(3, 7, 18, 0.85)),
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 1000 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%230e2038' opacity='0.3' d='M150,150 Q180,120 220,140 T300,130 Q380,110 420,150 T500,160 Q600,120 700,170 T850,150 Q900,200 880,250 T800,320 Q700,380 600,350 T450,320 Q350,360 250,300 T120,220 Z'/%3E%3C/svg%3E");
+                linear-gradient(rgba(3, 7, 18, 0.82), rgba(3, 7, 18, 0.82)),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 1000 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%230e2038' opacity='0.35' d='M150,150 Q180,120 220,140 T300,130 Q380,110 420,150 T500,160 Q600,120 700,170 T850,150 Q900,200 880,250 T800,320 Q700,380 600,350 T450,320 Q350,360 250,300 T120,220 Z'/%3E%3C/svg%3E");
             background-size: cover;
             background-position: center;
             color: var(--text-main);
@@ -195,6 +195,14 @@
             border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.15s;
         }
         .node-btn-grid button:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
+
+        /* Modal Overlays */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(3, 7, 18, 0.85); z-index: 100000; justify-content: center; align-items: center;
+            backdrop-filter: blur(6px);
+        }
+        .modal-content { max-width: 520px; width: 90%; position: relative; text-align: left; }
     </style>
 </head>
 <body>
@@ -207,6 +215,34 @@
         <div class="sound-toggle-pill" id="audioToggle">
             <div class="toggle-dot" id="soundDot"></div>
             <span>SOUND: ON</span>
+        </div>
+    </div>
+
+    <!-- HELP MODAL -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="panel modal-content">
+            <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">How to Play - CyberRoute AI</h3>
+            <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
+                <strong>1. Remote Connection:</strong> Scan the QR code displayed on the laptop screen using your mobile phone to connect your remote controller.<br><br>
+                <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the destination target node before the 90-second countdown timer runs out.<br><br>
+                <strong>3. Strict Graph Connectivity:</strong> You must select adjacent nodes in sequence. Direct jumps between unconnected nodes (e.g. jumping from C to E without an edge) are restricted and blocked!<br><br>
+                <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to achieve maximum score efficiency compared to the AI optimal shortest path algorithm.
+            </p>
+            <button class="btn-action" id="closeHelpModal">Got It</button>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="panel modal-content">
+            <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">System Profile & Exhibit Info</h3>
+            <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
+                <strong>Project Title:</strong> CyberRoute AI - Algorithmic Pathfinder<br>
+                <strong>Category:</strong> Senior Division Math Fair Exhibit<br>
+                <strong>Core Algorithm:</strong> Dijkstra's Shortest Path Algorithm & Graph Theory Optimization<br>
+                <strong>Tech Stack:</strong> HTML5 Canvas, Web Audio API, PeerJS Real-Time Sync
+            </p>
+            <button class="btn-action" id="closeProfileModal">Close Profile</button>
         </div>
     </div>
 
@@ -252,7 +288,7 @@
             </div>
 
             <div style="background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); padding:10px 14px; border-radius:8px; font-size:0.85rem; color:var(--primary-accent); margin-bottom:12px; width:100%; box-sizing:border-box; font-weight:600;">
-                🎯 Objective: Connect adjacent nodes in sequence from Node A to destination. Direct jumps are restricted!
+                🎯 Objective: Connect adjacent nodes sequentially from Node A. Direct jumps are restricted!
             </div>
 
             <canvas id="mainCanvas" width="480" height="310"></canvas>
@@ -327,6 +363,25 @@
     </div>
 
     <script>
+        // --- Modal Event Listeners ---
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            playSound('click');
+            document.getElementById('helpModal').style.display = 'flex';
+        });
+        document.getElementById('closeHelpModal').addEventListener('click', () => {
+            playSound('click');
+            document.getElementById('helpModal').style.display = 'none';
+        });
+
+        document.getElementById('profileBtn').addEventListener('click', () => {
+            playSound('click');
+            document.getElementById('profileModal').style.display = 'flex';
+        });
+        document.getElementById('closeProfileModal').addEventListener('click', () => {
+            playSound('click');
+            document.getElementById('profileModal').style.display = 'none';
+        });
+
         // --- Web Audio API Ambient Sound Engine ---
         let audioCtx = null;
         let soundEnabled = true;
