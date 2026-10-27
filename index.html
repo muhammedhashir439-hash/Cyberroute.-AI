@@ -42,10 +42,12 @@
             z-index: 0; pointer-events: none;
         }
 
+        /* Fixed Top Status Bar - Never overlaps with canvas text */
         .top-bar {
             width: 100%; max-width: 1250px; display: flex; justify-content: flex-end;
             align-items: center; gap: 24px; font-size: 0.75rem; letter-spacing: 0.1em;
-            color: var(--text-muted); margin-bottom: 20px; font-weight: 600; z-index: 10;
+            color: var(--text-muted); margin-bottom: 20px; font-weight: 600; z-index: 20;
+            position: relative;
         }
         .top-bar span { cursor: pointer; transition: color 0.2s; }
         .top-bar span:hover { color: var(--primary-accent); }
@@ -105,17 +107,20 @@
         .btn-control {
             background: rgba(15, 23, 42, 0.9); border: 1px solid var(--card-border); color: var(--text-main);
             padding: 10px 18px; border-radius: 10px; font-size: 0.9rem; cursor: pointer; font-weight: 600;
+            z-index: 1000;
         }
         .btn-control:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
 
         canvas#mainCanvas { background-color: #030712; border: 1px solid #1e293b; border-radius: 12px; }
 
+        /* Fixed Fullscreen Mode to retain controls, exit buttons, and AI optimization banner */
         #game-workspace.fullscreen-active {
             position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important;
             z-index: 99999; border-radius: 0; border: none; background-color: var(--bg-color) !important;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+            box-sizing: border-box;
         }
-        #game-workspace.fullscreen-active canvas { width: 75vw !important; max-width: 1050px; height: auto !important; }
+        #game-workspace.fullscreen-active canvas { width: 85vw !important; max-width: 1100px; height: auto !important; }
 
         .lb-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         .lb-table th, .lb-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid #1e293b; font-size: 0.95rem; }
@@ -216,7 +221,7 @@
     <!-- DISPLAY SCREEN (LAPTOP) -->
     <div id="game-view" class="view-frame">
         <div style="width:100%; max-width:1200px; display:flex; justify-content:space-between; margin-bottom:12px;">
-            <button class="btn-control" id="backFromGame">← Exit to Menu</button>
+            <button class="btn-control" id="backFromGame">← Exit to Main Menu</button>
             <button class="btn-control" id="toggleFullscreen" style="color:var(--primary-accent);">⛶ Fullscreen Simulation Mode</button>
         </div>
 
@@ -228,6 +233,9 @@
         </div>
 
         <div class="panel" id="game-workspace" style="flex:1; min-width:400px; display:flex; flex-direction:column; align-items:center;">
+            <!-- Exit Fullscreen Button visible when in Fullscreen Mode -->
+            <button class="btn-control" id="exitFsBtn" style="display:none; align-self:flex-start; margin-bottom:10px;">← Exit Fullscreen</button>
+            
             <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:12px; font-size:0.9rem; font-weight:600;">
                 <span id="playerDisplay" style="color:var(--text-muted);">Session: Awaiting remote device...</span>
                 <span id="timerDisplay" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px; border:1px solid rgba(239,68,68,0.3);">⏱ 01:30</span>
@@ -240,14 +248,15 @@
 
             <canvas id="mainCanvas" width="480" height="310"></canvas>
 
-            <div id="aiBanner" style="display:none; margin-top:12px; padding:12px; background:rgba(129,140,248,0.1); border:1px solid rgba(129,140,248,0.3); border-radius:8px; font-size:0.85rem; text-align:center; color:#c7d2fe; font-weight:600; width:100%; box-sizing:border-box;"></div>
+            <!-- Prominent AI Optimization Banner -->
+            <div id="aiBanner" style="display:none; margin-top:12px; padding:12px; background:rgba(129,140,248,0.2); border:1px solid rgba(129,140,248,0.5); border-radius:8px; font-size:0.95rem; text-align:center; color:#c7d2fe; font-weight:700; width:100%; box-sizing:border-box; box-shadow:0 0 15px rgba(129,140,248,0.2);"></div>
         </div>
     </div>
 
     <!-- LEADERBOARD FRAME -->
     <div id="lb-view" class="view-frame">
         <div style="width:100%; max-width:650px;">
-            <button class="btn-control" id="backFromLb" style="margin-bottom:12px;">← Exit to Menu</button>
+            <button class="btn-control" id="backFromLb" style="margin-bottom:12px;">← Exit to Main Menu</button>
             <div class="panel">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                     <h2 style="margin:0; font-size:1.3rem; color:#ffffff;">Global Benchmark Leaderboard</h2>
@@ -407,19 +416,37 @@
         };
         window.addEventListener('click', () => { if (soundEnabled && !bgmInterval) startBGM(); }, { once: true });
 
-        // --- Fullscreen ---
-        document.getElementById('toggleFullscreen').onclick = () => {
-            const workspace = document.getElementById('game-workspace');
+        // --- Fullscreen Engine ---
+        const workspace = document.getElementById('game-workspace');
+        const exitFsBtn = document.getElementById('exitFsBtn');
+
+        function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 if (workspace.requestFullscreen) workspace.requestFullscreen();
                 workspace.classList.add('fullscreen-active');
+                exitFsBtn.style.display = 'block';
             } else {
                 if (document.exitFullscreen) document.exitFullscreen();
                 workspace.classList.remove('fullscreen-active');
+                exitFsBtn.style.display = 'none';
             }
+        }
+
+        document.getElementById('toggleFullscreen').onclick = toggleFullscreen;
+        exitFsBtn.onclick = () => {
+            if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+            workspace.classList.remove('fullscreen-active');
+            exitFsBtn.style.display = 'none';
         };
 
-        // --- Cross-Device Leaderboard Sync Protocol ---
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                workspace.classList.remove('fullscreen-active');
+                exitFsBtn.style.display = 'none';
+            }
+        });
+
+        // --- Leaderboard Cross-Device Synchronization ---
         function getGlobalLeaderboard() {
             return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]');
         }
@@ -431,12 +458,10 @@
             lb = lb.slice(0, 15);
             localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
             
-            // Sync locally across windows/tabs
             if (window.lbChannel) {
                 window.lbChannel.postMessage({ type: 'SYNC_LB', leaderboard: lb });
             }
 
-            // Sync remotely over PeerJS to connected devices
             if (activePeerConn && activePeerConn.open) {
                 activePeerConn.send({ type: 'SYNC_LEADERBOARD', leaderboard: lb });
             }
@@ -517,6 +542,7 @@
                 });
             }
         } else {
+            // Reliable Home Navigation Buttons
             document.getElementById('hubPlayBtn').onclick = () => {
                 playSound('click'); hub.style.display = 'none'; gameView.classList.add('active');
                 document.getElementById('statusIndicator').textContent = "GAME STATUS: ACTIVE";
@@ -526,7 +552,9 @@
                 renderLb(); document.getElementById('statusIndicator').textContent = "GAME STATUS: LEADERBOARD";
             };
             document.getElementById('backFromGame').onclick = () => {
-                playSound('click'); gameView.classList.remove('active'); hub.style.display = 'flex';
+                playSound('click');
+                if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+                gameView.classList.remove('active'); hub.style.display = 'flex';
                 document.getElementById('statusIndicator').textContent = "GAME STATUS: IDLE";
             };
             document.getElementById('backFromLb').onclick = () => {
@@ -590,17 +618,18 @@
                     } else if (data.type === 'AI') {
                         aiPathToDisplay = [...currentGraph.aiPath]; score += 150;
                         const userW = calcWeight(currentGraph, currentPath);
-                        const eff = Math.round(((userW - currentGraph.optimalWeight) / userW) * 100) || 40;
+                        const eff = Math.round(((userW - currentGraph.optimalWeight) / (userW || 1)) * 100) || 35;
                         const banner = document.getElementById('aiBanner');
-                        banner.textContent = `⚡ Dijkstra Optimal Weight: ${currentGraph.optimalWeight} | AI path is ${Math.max(20, eff)}% more efficient`;
+                        banner.textContent = `⚡ Dijkstra Optimal Weight: ${currentGraph.optimalWeight} | AI Path Efficiency: ${Math.max(20, eff)}% Higher Optimization!`;
                         banner.style.display = 'block';
                         stopTimer(); drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveGlobalScore(activePlayer, score, activeLevel);
                     } else if (data.type === 'SUBMIT') {
                         stopTimer(); aiPathToDisplay = [...currentGraph.aiPath];
                         const userW = calcWeight(currentGraph, currentPath);
                         const diff = userW - currentGraph.optimalWeight;
-                        let msg = `Submitted Weight: ${userW} | Optimal: ${currentGraph.optimalWeight}. `;
-                        if (diff <= 0) msg += `🎉 Perfect optimal route!`; else msg += `⚡ AI path is ${Math.max(15, Math.round((diff / userW) * 100))}% more efficient.`;
+                        let msg = `Submitted Path Weight: ${userW} | Optimal Dijkstra Weight: ${currentGraph.optimalWeight}. `;
+                        if (diff <= 0) msg += `🎉 Perfect Optimal Route Achieved!`; 
+                        else msg += `⚡ AI Shortest Path is ${Math.max(15, Math.round((diff / userW) * 100))}% More Efficient!`;
                         const banner = document.getElementById('aiBanner');
                         banner.textContent = msg; banner.style.display = 'block';
                         drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveGlobalScore(activePlayer, score, activeLevel);
@@ -630,8 +659,10 @@
             function drawComplexGraph(lvl, humanPath = [], aiPath = []) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 const graph = currentGraph;
+                
+                // Moved title slightly higher to completely prevent overlapping with the top status bar
                 ctx.fillStyle = '#94a3b8'; ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText(`Network Topology Lvl ${lvl} | Active Route: [ ${humanPath.length > 0 ? humanPath.join(' → ') : 'None'} ]`, canvas.width / 2, 22);
+                ctx.fillText(`Network Topology Lvl ${lvl}`, canvas.width / 2, 16);
 
                 graph.edges.forEach(edge => {
                     const fromN = graph.nodes.find(n => n.label === edge.from);
