@@ -310,6 +310,8 @@
     </div>
 
     <script>
+        let activePeerConn = null;
+
         // --- World Map Background Canvas ---
         function initWorldMapBackground() {
             const bgCanvas = document.getElementById('bgMapCanvas');
@@ -417,7 +419,7 @@
             }
         };
 
-        // --- Cross-Laptop & Tab Sync (BroadcastChannel + LocalStorage Event Listener) ---
+        // --- Cross-Device Leaderboard Sync Protocol ---
         function getGlobalLeaderboard() {
             return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]');
         }
@@ -428,8 +430,15 @@
             lb.sort((a, b) => b.score - a.score);
             lb = lb.slice(0, 15);
             localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
+            
+            // Sync locally across windows/tabs
             if (window.lbChannel) {
                 window.lbChannel.postMessage({ type: 'SYNC_LB', leaderboard: lb });
+            }
+
+            // Sync remotely over PeerJS to connected devices
+            if (activePeerConn && activePeerConn.open) {
+                activePeerConn.send({ type: 'SYNC_LEADERBOARD', leaderboard: lb });
             }
         }
 
@@ -467,9 +476,15 @@
             const peer = new Peer(); let conn;
             peer.on('open', () => {
                 conn = peer.connect(roomId);
+                activePeerConn = conn;
                 conn.on('open', () => {
                     document.getElementById('connStatus').textContent = "Connected to display host session.";
                     playSound('success');
+                });
+                conn.on('data', data => {
+                    if (data.type === 'SYNC_LEADERBOARD') {
+                        localStorage.setItem('cyberroute_global_lb', JSON.stringify(data.leaderboard));
+                    }
                 });
             });
 
@@ -545,6 +560,7 @@
             });
 
             peer.on('connection', conn => {
+                activePeerConn = conn;
                 conn.on('data', data => {
                     if (data.type === 'START') {
                         activePlayer = data.name; activeLevel = parseInt(data.lvl) || 1;
@@ -592,6 +608,9 @@
                         currentPath = []; aiPathToDisplay = [];
                         document.getElementById('aiBanner').style.display = 'none';
                         drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
+                    } else if (data.type === 'SYNC_LEADERBOARD') {
+                        localStorage.setItem('cyberroute_global_lb', JSON.stringify(data.leaderboard));
+                        if (lbView.classList.contains('active')) renderLb();
                     }
                 });
             });
