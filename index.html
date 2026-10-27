@@ -3,30 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberRoute AI - Algorithmic Pathfinder</title>
+    <title>CyberRoute Strategy Game</title>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- PeerJS for Real-time Cross-Device Cloud Sync -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --panel-bg: rgba(17, 24, 39, 0.92);
-            --card-border: rgba(56, 189, 248, 0.25);
+            --bg-color: #070d16;
+            --panel-bg: rgba(9, 16, 29, 0.95);
+            --card-border: rgba(56, 189, 248, 0.4);
             --primary-accent: #38bdf8;
             --secondary-accent: #818cf8;
             --success-color: #10b981;
             --danger-color: #ef4444;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
+            --text-main: #f0fdf4;
+            --text-muted: #64748b;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             background-image: 
-                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(129, 140, 248, 0.12) 0px, transparent 50%);
+                radial-gradient(at 10% 20%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(14, 116, 144, 0.2) 0px, transparent 50%),
+                linear-gradient(rgba(3, 7, 18, 0.85), rgba(3, 7, 18, 0.85));
             color: var(--text-main);
             margin: 0;
             padding: 24px;
@@ -37,294 +38,298 @@
             box-sizing: border-box;
         }
 
-        .header {
+        /* Top Status Bar matching reference */
+        .top-bar {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1250px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--card-border);
+            gap: 24px;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-weight: 600;
         }
 
-        .header-title h1 {
-            margin: 0;
-            font-size: 2.2rem;
-            font-weight: 800;
-            letter-spacing: -0.025em;
-            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .top-bar span { cursor: pointer; transition: color 0.2s; }
+        .top-bar span:hover { color: var(--primary-accent); }
 
-        .header-title p {
-            margin: 4px 0 0 0;
+        .sound-toggle-pill {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--card-border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             color: var(--primary-accent);
-            font-size: 0.95rem;
-            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.75rem;
             letter-spacing: 0.05em;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
+        }
+
+        .toggle-dot {
+            width: 10px; height: 10px;
+            background-color: var(--primary-accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--primary-accent);
+        }
+
+        /* Main Lobby Hub matching the reference image layout */
+        #lobby-hub {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+            min-height: 72vh;
+            position: relative;
+        }
+
+        .hero-section {
+            max-width: 580px;
+            z-index: 2;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 14px;
+        }
+
+        .hex-logo {
+            width: 56px; height: 64px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(14, 116, 144, 0.6));
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid var(--primary-accent);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+        .hex-inner {
+            width: 32px; height: 38px; background: #030712;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+
+        .brand-title h1 {
+            margin: 0; font-size: 2.6rem; font-weight: 800; color: #ffffff;
+            letter-spacing: -0.5px; line-height: 1.1;
+        }
+        .brand-title h2 {
+            margin: 4px 0 0 0; font-size: 1.6rem; font-weight: 700; color: var(--primary-accent);
+            letter-spacing: 0.1em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.05rem; color: #cbd5e1; font-weight: 600;
+            letter-spacing: 0.05em; margin: 20px 0 36px 0; line-height: 1.5;
             text-transform: uppercase;
         }
 
-        .audio-btn {
-            background: rgba(31, 41, 55, 0.7);
-            border: 1px solid var(--card-border);
-            color: var(--primary-accent);
-            width: 44px;
-            height: 44px;
+        /* Exact Neon Buttons matching reference */
+        .menu-btn {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(7, 13, 22, 0.95));
+            border: 1.5px solid var(--card-border);
+            color: #ffffff;
+            padding: 18px 32px;
             border-radius: 12px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
             cursor: pointer;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
-        }
-
-        .audio-btn:hover {
-            border-color: var(--primary-accent);
-            background: rgba(56, 189, 248, 0.1);
-        }
-
-        /* Lobby Menu */
-        #lobby-menu {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            max-width: 800px;
             width: 100%;
-            margin-top: 20px;
-        }
-
-        .lobby-card {
-            background: var(--panel-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            max-width: 440px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.15), inset 0 0 15px rgba(56, 189, 248, 0.05);
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            box-sizing: border-box;
         }
-
-        .lobby-main-card {
-            width: 100%;
-            padding: 36px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .lobby-main-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
-        }
-
-        .lobby-main-card:hover {
+        .menu-btn:hover {
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.35), inset 0 0 20px rgba(56, 189, 248, 0.15);
             transform: translateY(-2px);
-            border-color: rgba(56, 189, 248, 0.5);
-            box-shadow: 0 25px 30px -5px rgba(56, 189, 248, 0.15);
+            color: var(--primary-accent);
         }
 
-        .card-text h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #ffffff; }
-        .card-text p { margin: 8px 0 0 0; color: var(--text-muted); font-size: 1rem; }
-        .card-badge {
-            background: rgba(56, 189, 248, 0.1); color: var(--primary-accent);
-            border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; border-radius: 8px; font-weight: 600;
-        }
+        /* Panels & Views */
+        .view-frame { display: none; width: 100%; justify-content: center; gap: 24px; flex-wrap: wrap; }
+        .view-frame.active { display: flex; }
 
-        .lobby-sub-cards { display: flex; gap: 20px; width: 100%; }
-        .lobby-sub-card { flex: 1; padding: 28px; display: flex; flex-direction: column; justify-content: center; }
-        .lobby-sub-card:hover { transform: translateY(-2px); border-color: rgba(129, 140, 248, 0.5); }
-        .lobby-sub-card h3 { margin: 0; font-size: 1.3rem; font-weight: 700; color: #ffffff; }
-        .lobby-sub-card p { margin: 6px 0 0 0; color: var(--text-muted); font-size: 0.85rem; }
-
-        .glass-panel {
+        .panel {
             background: var(--panel-bg);
             border: 1px solid var(--card-border);
             border-radius: 16px;
             padding: 24px;
             backdrop-filter: blur(12px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.6);
         }
 
-        .view-section { display: none; width: 100%; justify-content: center; gap: 20px; flex-wrap: wrap; }
-        .view-section.active { display: flex; }
-
-        .btn-back {
-            background: transparent; border: 1px solid var(--card-border); color: var(--text-muted);
-            padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 12px;
+        .btn-control {
+            background: rgba(15, 23, 42, 0.9); border: 1px solid var(--card-border); color: var(--text-main);
+            padding: 10px 18px; border-radius: 10px; font-size: 0.9rem; cursor: pointer; font-weight: 600;
             transition: all 0.2s;
         }
-        .btn-back:hover { color: var(--text-main); border-color: var(--primary-accent); }
+        .btn-control:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
 
-        #qr-card { text-align: center; width: 280px; }
-        #qrcode { background: white; padding: 12px; border-radius: 12px; display: inline-block; margin: 12px 0; }
-        .url-text { font-size: 0.75rem; color: var(--text-muted); word-break: break-all; font-family: monospace; }
-
+        /* Canvas Workspace & Fullscreen */
         canvas {
             background-color: #030712;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #1e293b;
             border-radius: 12px;
-            max-width: 100%;
         }
 
-        /* Fullscreen Game Panel Styling */
-        #game-area.fullscreen-mode {
+        #game-workspace.fullscreen-active {
             position: fixed !important;
             top: 0; left: 0; width: 100vw !important; height: 100vh !important;
-            z-index: 9999; border-radius: 0; border: none; padding: 40px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background-color: #030712 !important; box-sizing: border-box;
+            z-index: 99999; border-radius: 0; border: none;
+            background-color: var(--bg-color) !important;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px;
         }
-        #game-area.fullscreen-mode canvas {
-            width: 70vw !important; max-width: 950px; height: auto !important;
-        }
-
-        .leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 360px; overflow-y: auto; }
-        .leaderboard-list li {
-            display: flex; justify-content: space-between; padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.95rem;
+        #game-workspace.fullscreen-active canvas {
+            width: 75vw !important; max-width: 1050px; height: auto !important;
         }
 
-        .controller-card { max-width: 400px; width: 100%; }
-        .input-group { margin-bottom: 16px; text-align: left; }
-        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
-        .input-group input, .input-group select {
+        /* Leaderboard Table */
+        .lb-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .lb-table th, .lb-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid #1e293b; font-size: 0.95rem; }
+        .lb-table th { color: var(--text-muted); font-weight: 600; }
+
+        /* Mobile Controller Form */
+        .controller-form { max-width: 400px; width: 100%; text-align: left; }
+        .form-field { margin-bottom: 16px; }
+        .form-field label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        .form-field input, .form-field select {
             width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--card-border);
-            background-color: rgba(3, 7, 18, 0.6); color: var(--text-main); font-size: 0.95rem; box-sizing: border-box; outline: none;
+            background: rgba(3, 7, 18, 0.7); color: white; font-size: 0.95rem; box-sizing: border-box; outline: none;
         }
-        .input-group input:focus, .input-group select:focus { border-color: var(--primary-accent); }
+        .form-field input:focus, .form-field select:focus { border-color: var(--primary-accent); }
 
         .btn-action {
-            background: var(--primary-accent); color: #030712; border: none; padding: 12px 20px;
-            border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; width: 100%; transition: all 0.2s;
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            background: var(--primary-accent); color: #030712; font-weight: 700;
+            font-size: 0.95rem; cursor: pointer; margin-top: 6px; transition: all 0.2s;
         }
         .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-secondary { background: rgba(129, 140, 248, 0.2); color: var(--secondary-accent); border: 1px solid var(--secondary-accent); }
-        .btn-success { background: rgba(16, 185, 129, 0.2); color: var(--success-color); border: 1px solid var(--success-color); }
-        .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger-color); border: 1px solid var(--danger-color); }
 
-        .node-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 200px; overflow-y: auto; }
-        .node-btn {
-            padding: 12px; background: rgba(31, 41, 55, 0.6); border: 1px solid var(--card-border);
-            color: var(--text-main); font-weight: 600; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
+        .node-btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 220px; overflow-y: auto; }
+        .node-btn-grid button {
+            padding: 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--card-border); color: white;
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.15s;
         }
-        .node-btn:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
-
-        .status-box {
-            background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2);
-            padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: var(--primary-accent); margin-bottom: 12px; font-weight: 600;
-        }
-        .stats-banner {
-            background: rgba(129, 140, 248, 0.1); border: 1px solid rgba(129, 140, 248, 0.3);
-            color: #c7d2fe; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; margin-top: 10px; width: 100%; box-sizing: border-box; text-align: center;
-        }
-        .timer-badge {
-            background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; font-family: monospace;
-        }
+        .node-btn-grid button:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="header-title">
-            <h1>CyberRoute AI</h1>
-            <p>Dijkstra Shortest Path Simulator</p>
-        </div>
-        <button class="audio-btn" id="audioToggleBtn" title="Toggle Ambient Audio">🔊</button>
-    </div>
-
-    <!-- LOBBY MENU -->
-    <div id="lobby-menu">
-        <div class="lobby-card lobby-main-card" id="lobbyPlayBtn">
-            <div class="card-text">
-                <h2>Launch Interactive Simulation</h2>
-                <p>Pair smartphone remote controller & optimize network graph topologies</p>
-            </div>
-            <div class="card-badge">Start System ➔</div>
-        </div>
-
-        <div class="lobby-sub-cards">
-            <div class="lobby-card lobby-sub-card" id="lobbyLeaderboardBtn">
-                <h3>Global Benchmark Rankings</h3>
-                <p>View synchronized high-score analytics across all connected terminals</p>
-            </div>
+    <!-- Top Status Bar matching reference -->
+    <div class="top-bar">
+        <span id="profileBtn">PROFILE</span>
+        <span id="helpBtn">HELP</span>
+        <span id="statusIndicator">GAME STATUS: IDLE</span>
+        <div class="sound-toggle-pill" id="audioToggle">
+            <div class="toggle-dot" id="soundDot"></div>
+            <span>SOUND: ON</span>
         </div>
     </div>
 
-    <!-- GAME PLAY VIEW -->
-    <div id="game-view" class="view-section">
-        <div style="width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;">
-            <button class="btn-back" id="backToLobbyFromGame">← Return to Control Panel</button>
-            <button class="btn-back" id="fullscreenToggleBtn" style="color: var(--primary-accent); border-color: var(--primary-accent);">⛶ Toggle Fullscreen Game</button>
-        </div>
-        
-        <!-- QR Terminal Card -->
-        <div class="glass-panel" id="qr-card">
-            <h3 style="margin-top:0; color: var(--primary-accent); font-size: 1.1rem;">Controller Interface</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted);">Scan QR code on mobile device:</p>
-            <div id="qrcode"></div>
-            <div class="url-text" id="directUrlDisplay">Initializing peer relay...</div>
-        </div>
-
-        <!-- Canvas Game Panel -->
-        <div class="glass-panel" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 380px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 12px; font-weight: 600; align-items: center; font-size: 0.9rem;">
-                <span id="displayPlayer" style="color: var(--text-muted);">Session: Awaiting remote device...</span>
-                <div class="timer-badge" id="displayTimer">⏱ 01:30</div>
-                <span id="displayScore" style="color: var(--primary-accent);">Score: 0</span>
-            </div>
-            
-            <div class="status-box" id="laptopInstruction">
-                🎯 Target: Connect Node A to destination node within 90 seconds.
-            </div>
-
-            <canvas id="gameCanvas" width="480" height="310"></canvas>
-            
-            <div id="aiEfficiencyBanner" class="stats-banner" style="display: none;">
-                ⚡ Dijkstra Algorithm Analysis: Processing path metrics...
-            </div>
-        </div>
-    </div>
-
-    <!-- LEADERBOARD VIEW -->
-    <div id="leaderboard-view" class="view-section">
-        <div style="width: 100%; max-width: 650px;">
-            <button class="btn-back" id="backToLobbyFromLb">← Return to Control Panel</button>
-            <div class="glass-panel">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2 style="margin:0; color: #ffffff; font-size: 1.4rem;">Global Benchmark Leaderboard</h2>
-                    <span style="font-size: 0.75rem; color: var(--success-color);" id="syncStatus">● Live Cloud Sync Active</span>
+    <!-- MAIN LOBBY HUB MATCHING REFERENCE UI -->
+    <div id="lobby-hub">
+        <div class="hero-section">
+            <div class="brand-header">
+                <div class="hex-logo">
+                    <div class="hex-inner"></div>
                 </div>
-                <ul class="leaderboard-list" id="fullLeaderboardList">
-                    <li><span>No active benchmark records saved</span><span>-</span></li>
-                </ul>
+                <div class="brand-title">
+                    <h1>CYBERROUTE</h1>
+                    <h2>STRATEGY GAME</h2>
+                </div>
+            </div>
+            
+            <div class="hero-subtitle">
+                ROUTE & OPTIMIZE DATA PACKETS ACROSS THE GLOBAL NETWORK.
+            </div>
+
+            <button class="menu-btn" id="hubPlayBtn">
+                ▶ PLAY GAME
+            </button>
+            <button class="menu-btn" id="hubLbBtn">
+                🏆 LEADERBOARD
+            </button>
+        </div>
+    </div>
+
+    <!-- DISPLAY SCREEN (LAPTOP) -->
+    <div id="game-view" class="view-frame">
+        <div style="width:100%; max-width:1200px; display:flex; justify-content:space-between; margin-bottom:12px;">
+            <button class="btn-control" id="backFromGame">← Exit to Menu</button>
+            <button class="btn-control" id="toggleFullscreen" style="color:var(--primary-accent);">⛶ Fullscreen Simulation Mode</button>
+        </div>
+
+        <div class="panel" style="width: 280px; text-align: center;">
+            <h3 style="margin-top:0; font-size:1.1rem; color:var(--primary-accent);">Mobile Controller</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Scan QR code to pair remote session:</p>
+            <div id="qrcode" style="background:white; padding:10px; border-radius:12px; display:inline-block; margin:8px 0;"></div>
+            <div id="urlText" style="font-size:0.7rem; color:var(--text-muted); word-break:break-all; font-family:monospace;">Initializing peer relay...</div>
+        </div>
+
+        <div class="panel" id="game-workspace" style="flex:1; min-width:400px; display:flex; flex-direction:column; align-items:center;">
+            <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:12px; font-size:0.9rem; font-weight:600;">
+                <span id="playerDisplay" style="color:var(--text-muted);">Session: Awaiting remote device...</span>
+                <span id="timerDisplay" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px; border:1px solid rgba(239,68,68,0.3);">⏱ 01:30</span>
+                <span id="scoreDisplay" style="color:var(--primary-accent);">Score: 0</span>
+            </div>
+
+            <div style="background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); padding:10px 14px; border-radius:8px; font-size:0.85rem; color:var(--primary-accent); margin-bottom:12px; width:100%; box-sizing:border-box; font-weight:600;">
+                🎯 Objective: Connect Node A to destination node via minimum cost edge weight.
+            </div>
+
+            <canvas id="mainCanvas" width="480" height="310"></canvas>
+
+            <div id="aiBanner" style="display:none; margin-top:12px; padding:12px; background:rgba(129,140,248,0.1); border:1px solid rgba(129,140,248,0.3); border-radius:8px; font-size:0.85rem; text-align:center; color:#c7d2fe; font-weight:600; width:100%; box-sizing:border-box;"></div>
+        </div>
+    </div>
+
+    <!-- LEADERBOARD FRAME -->
+    <div id="lb-view" class="view-frame">
+        <div style="width:100%; max-width:650px;">
+            <button class="btn-control" id="backFromLb" style="margin-bottom:12px;">← Exit to Menu</button>
+            <div class="panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <h2 style="margin:0; font-size:1.3rem; color:#ffffff;">Global Benchmark Leaderboard</h2>
+                    <span style="font-size:0.75rem; color:var(--success-color);">● Live Cloud Sync Active</span>
+                </div>
+                <table class="lb-table">
+                    <thead>
+                        <tr><th>Rank</th><th>Participant</th><th>Complexity</th><th>Score</th></tr>
+                    </thead>
+                    <tbody id="lbTableBody">
+                        <tr><td colspan="4">No active benchmark records saved.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- CONTROLLER VIEW -->
-    <div id="controller-view" class="view-section">
-        <div class="glass-panel controller-card">
-            <h3 style="color: var(--primary-accent); margin-top: 0; font-size: 1.2rem;">Mobile Pathfinder Remote</h3>
+    <!-- PHONE CONTROLLER -->
+    <div id="controller-view" class="view-frame">
+        <div class="panel controller-form">
+            <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.2rem;">Mobile Pathfinder Remote</h3>
             
-            <div id="setup-controls">
-                <div class="input-group">
-                    <label for="phonePlayerName">Participant Identifier</label>
-                    <input type="text" id="phonePlayerName" placeholder="Enter name or ID...">
+            <div id="setupForm">
+                <div class="form-field">
+                    <label>Participant Identifier</label>
+                    <input type="text" id="playerNameInput" placeholder="Enter name or ID...">
                 </div>
-                <div class="input-group">
-                    <label for="phoneDifficulty">Graph Complexity Level</label>
-                    <select id="phoneDifficulty">
+                <div class="form-field">
+                    <label>Graph Complexity Level</label>
+                    <select id="levelSelect">
                         <option value="1">Level 1: Basic Topology (A ➔ D)</option>
                         <option value="2">Level 2: Intermediate Mesh (A ➔ F)</option>
                         <option value="3">Level 3: Advanced Network (A ➔ H)</option>
@@ -332,30 +337,27 @@
                         <option value="5" selected>Level 5: Master Mesh (A ➔ L)</option>
                     </select>
                 </div>
-                <button class="btn-action" id="phoneStartBtn">Initialize Session</button>
+                <button class="btn-action" id="startSessionBtn">Initialize Session</button>
             </div>
 
-            <div id="active-controls" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div class="status-box" id="phoneInstructionBanner" style="margin-bottom:0; flex:1;">
-                        🎯 Route: Node A ➔ Target
-                    </div>
-                    <div class="timer-badge" id="phoneTimer" style="margin-left: 8px;">⏱ 90s</div>
+            <div id="gamepadForm" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span id="ctrlTargetBanner" style="font-size:0.85rem; font-weight:600; color:var(--primary-accent);">Route: Node A ➔ Target</span>
+                    <span id="ctrlTimer" style="font-size:0.85rem; font-family:monospace; color:#fca5a5;">⏱ 90s</span>
                 </div>
-                
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 8px 0;">Select graph vertices in path sequence:</p>
 
-                <div class="node-grid" id="nodeButtons"></div>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin:6px 0;">Select graph vertices in path sequence:</p>
+                <div class="node-btn-grid" id="nodeBtnGrid"></div>
 
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px;">
-                    <button class="btn-action btn-secondary" id="aiSolveBtn">🤖 Compute Dijkstra Solution</button>
-                    <button class="btn-action btn-success" id="submitPathBtn">✅ Submit Route Sequence</button>
-                    <button class="btn-action btn-danger" id="resetPathBtn">🔄 Clear Selection</button>
-                    <button class="btn-action" id="nextPlayerBtn" style="background: #374151; color: white; display: none;">👤 Start New Player</button>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+                    <button class="btn-action" id="submitBtn" style="background:rgba(16,185,129,0.2); color:var(--success-color); border:1px solid var(--success-color);">✅ Submit Route Sequence</button>
+                    <button class="btn-action" id="aiBtn" style="background:rgba(129,140,248,0.2); color:var(--secondary-accent); border:1px solid var(--secondary-accent);">🤖 Compute Dijkstra Solution</button>
+                    <button class="btn-action" id="resetBtn" style="background:rgba(239,68,68,0.2); color:var(--danger-color); border:1px solid var(--danger-color);">🔄 Clear Selection</button>
+                    <button class="btn-action" id="nextPlayerBtn" style="background:#374151; color:white; display:none;">👤 Start New Participant</button>
                 </div>
             </div>
 
-            <div id="controllerStatus" style="margin-top: 14px; color: var(--primary-accent); font-size: 0.85rem;">Establishing peer protocol connection...</div>
+            <div id="connStatus" style="font-size:0.8rem; color:var(--primary-accent); margin-top:12px; font-weight:600;">Establishing peer protocol connection...</div>
         </div>
     </div>
 
@@ -420,53 +422,54 @@
             }, 2000);
         }
 
-        document.getElementById('audioToggleBtn').addEventListener('click', () => {
+        document.getElementById('audioToggle').addEventListener('click', () => {
             soundEnabled = !soundEnabled;
-            document.getElementById('audioToggleBtn').textContent = soundEnabled ? '🔊' : '🔇';
-            if (soundEnabled) startBGM();
+            const dot = document.getElementById('soundDot');
+            const textSpan = document.querySelector('#audioToggle span');
+            if (soundEnabled) {
+                dot.style.backgroundColor = 'var(--primary-accent)';
+                dot.style.boxShadow = '0 0 8px var(--primary-accent)';
+                textSpan.textContent = 'SOUND: ON';
+                startBGM();
+            } else {
+                dot.style.backgroundColor = 'var(--text-muted)';
+                dot.style.boxShadow = 'none';
+                textSpan.textContent = 'SOUND: OFF';
+            }
         });
 
         window.addEventListener('click', () => {
             if (soundEnabled && !bgmInterval) startBGM();
         }, { once: true });
 
-        // --- Fullscreen Toggle Logic ---
-        document.getElementById('fullscreenToggleBtn').addEventListener('click', () => {
-            const gameArea = document.getElementById('game-area');
+        // --- Fullscreen Display Toggle ---
+        document.getElementById('toggleFullscreen').addEventListener('click', () => {
+            const workspace = document.getElementById('game-workspace');
             if (!document.fullscreenElement) {
-                if (gameArea.requestFullscreen) {
-                    gameArea.requestFullscreen();
-                } else if (gameArea.webkitRequestFullscreen) {
-                    gameArea.webkitRequestFullscreen();
-                }
-                gameArea.classList.add('fullscreen-mode');
+                if (workspace.requestFullscreen) workspace.requestFullscreen();
+                workspace.classList.add('fullscreen-active');
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
-                gameArea.classList.remove('fullscreen-mode');
+                if (document.exitFullscreen) document.exitFullscreen();
+                workspace.classList.remove('fullscreen-active');
             }
         });
 
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement) {
-                document.getElementById('game-area').classList.remove('fullscreen-mode');
+                document.getElementById('game-workspace').classList.remove('fullscreen-active');
             }
         });
 
-        // --- Core Navigation & Signaling ---
-        const lobbyMenu = document.getElementById('lobby-menu');
+        // --- Navigation & Peer Signaling ---
+        const hub = document.getElementById('lobby-hub');
         const gameView = document.getElementById('game-view');
-        const leaderboardView = document.getElementById('leaderboard-view');
-        const controllerView = document.getElementById('controller-view');
+        const lbView = document.getElementById('lb-view');
+        const ctrlView = document.getElementById('controller-view');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const hostId = urlParams.get('room');
-        const isController = window.location.hash.includes('controller') && hostId;
+        const params = new URLSearchParams(window.location.search);
+        const roomId = params.get('room');
+        const isCtrl = window.location.hash.includes('controller') && roomId;
 
-        // Shared Global Leaderboard Manager using BroadcastChannel & localStorage event sync across laptops
         function getGlobalLeaderboard() {
             return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]');
         }
@@ -475,113 +478,100 @@
             let lb = getGlobalLeaderboard();
             lb.push({ name, score: finalScore, level: lvl, timestamp: Date.now() });
             lb.sort((a, b) => b.score - a.score);
-            lb = lb.slice(0, 15); // Top 15
+            lb = lb.slice(0, 15);
             localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
-            
-            // Broadcast across windows/tabs/laptops if using shared sync channel
-            if (window.leaderboardChannel) {
-                window.leaderboardChannel.postMessage({ type: 'SYNC_LEADERBOARD', leaderboard: lb });
+            if (window.lbChannel) {
+                window.lbChannel.postMessage({ type: 'SYNC_LB', leaderboard: lb });
             }
         }
 
-        // Setup cross-tab / cross-window sync channel
         if (window.BroadcastChannel) {
             const bc = new BroadcastChannel('cyberroute_sync_channel');
-            window.leaderboardChannel = bc;
+            window.lbChannel = bc;
             bc.onmessage = (event) => {
-                if (event.data.type === 'SYNC_LEADERBOARD') {
+                if (event.data.type === 'SYNC_LB') {
                     localStorage.setItem('cyberroute_global_lb', JSON.stringify(event.data.leaderboard));
-                    if (leaderboardView.classList.contains('active')) {
-                        renderFullLeaderboard();
-                    }
+                    if (lbView.classList.contains('active')) renderLb();
                 }
             };
         }
 
-        if (isController) {
-            lobbyMenu.style.display = 'none';
-            gameView.classList.remove('active');
-            leaderboardView.classList.remove('active');
-            controllerView.classList.add('active');
+        if (isCtrl) {
+            hub.style.display = 'none';
+            ctrlView.classList.add('active');
 
             const peer = new Peer();
             let conn;
 
             peer.on('open', () => {
-                document.getElementById('controllerStatus').textContent = "Connecting to display terminal...";
-                conn = peer.connect(hostId);
+                conn = peer.connect(roomId);
                 conn.on('open', () => {
-                    document.getElementById('controllerStatus').textContent = "Connected to host session";
+                    document.getElementById('connStatus').textContent = "Connected to display host session.";
                     playSound('success');
                 });
             });
 
-            document.getElementById('phoneStartBtn').addEventListener('click', () => {
+            document.getElementById('startSessionBtn').onclick = () => {
                 playSound('click');
-                const name = document.getElementById('phonePlayerName').value.trim();
-                const level = parseInt(document.getElementById('phoneDifficulty').value) || 1;
-                if (!name) { alert("Please enter a player identifier."); return; }
+                const name = document.getElementById('playerNameInput').value.trim();
+                const lvl = document.getElementById('levelSelect').value;
+                if (!name) { alert("Please enter a participant identifier."); return; }
+                conn.send({ type: 'START', name, lvl });
+                document.getElementById('setupForm').style.display = 'none';
+                document.getElementById('gamepadForm').style.display = 'block';
+                renderBtns(lvl, conn);
+            };
 
-                if (conn && conn.open) {
-                    conn.send({ type: 'START_GAME', player: name, level: level });
-                    document.getElementById('setup-controls').style.display = 'none';
-                    document.getElementById('active-controls').style.display = 'block';
-                    document.getElementById('nextPlayerBtn').style.display = 'none';
-                    
-                    const endNodes = { 1: 'D', 2: 'F', 3: 'H', 4: 'I', 5: 'L' };
-                    document.getElementById('phoneInstructionBanner').textContent = `🎯 Route: Node A ➔ Target Node ${endNodes[level]}`;
-                    
-                    const nodeCounts = { 1: 4, 2: 6, 3: 8, 4: 10, 5: 12 };
-                    renderPhoneNodeButtons(nodeCounts[level], conn);
-                }
-            });
+            document.getElementById('submitBtn').onclick = () => { playSound('success'); conn.send({ type: 'SUBMIT' }); document.getElementById('nextPlayerBtn').style.display = 'block'; };
+            document.getElementById('aiBtn').onclick = () => { playSound('click'); conn.send({ type: 'AI' }); };
+            document.getElementById('resetBtn').onclick = () => { playSound('click'); conn.send({ type: 'RESET' }); };
+            document.getElementById('nextPlayerBtn').onclick = () => {
+                playSound('click');
+                document.getElementById('setupForm').style.display = 'block';
+                document.getElementById('gamepadForm').style.display = 'none';
+                document.getElementById('playerNameInput').value = '';
+            };
 
-            document.getElementById('aiSolveBtn').addEventListener('click', () => { playSound('click'); if (conn && conn.open) conn.send({ type: 'AI_SOLVE' }); });
-            document.getElementById('submitPathBtn').addEventListener('click', () => { playSound('success'); if (conn && conn.open) { conn.send({ type: 'SUBMIT_ROUTE' }); document.getElementById('nextPlayerBtn').style.display = 'block'; } });
-            document.getElementById('nextPlayerBtn').addEventListener('click', () => { playSound('click'); document.getElementById('setup-controls').style.display = 'block'; document.getElementById('active-controls').style.display = 'none'; document.getElementById('phonePlayerName').value = ''; });
-            document.getElementById('resetPathBtn').addEventListener('click', () => { playSound('click'); if (conn && conn.open) conn.send({ type: 'RESET_PATH' }); });
-
-            function renderPhoneNodeButtons(count, connection) {
-                const container = document.getElementById('nodeButtons');
-                container.innerHTML = "";
-                const allLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
-                allLabels.slice(0, count).forEach(label => {
-                    const btn = document.createElement('button');
-                    btn.className = 'node-btn';
-                    btn.textContent = `Node ${label}`;
-                    btn.onclick = () => { playSound('click'); connection.send({ type: 'SELECT_NODE', node: label }); };
-                    container.appendChild(btn);
+            function renderBtns(lvl, connection) {
+                const grid = document.getElementById('nodeBtnGrid');
+                grid.innerHTML = '';
+                const labels = ['A','B','C','D','E','F','G','H','I','J','K','L'].slice(0, lvl == 1 ? 4 : lvl == 2 ? 6 : lvl == 3 ? 8 : lvl == 4 ? 10 : 12);
+                labels.forEach(l => {
+                    const b = document.createElement('button');
+                    b.textContent = 'Node ' + l;
+                    b.onclick = () => { playSound('click'); connection.send({ type: 'NODE', node: l }); };
+                    grid.appendChild(b);
                 });
             }
 
         } else {
-            // --- DISPLAY HOST SYSTEM ---
-            document.getElementById('lobbyPlayBtn').addEventListener('click', () => {
+            document.getElementById('hubPlayBtn').onclick = () => {
                 playSound('click');
-                lobbyMenu.style.display = 'none';
+                hub.style.display = 'none';
                 gameView.classList.add('active');
-            });
-
-            document.getElementById('lobbyLeaderboardBtn').addEventListener('click', () => {
+                document.getElementById('statusIndicator').textContent = "GAME STATUS: ACTIVE";
+            };
+            document.getElementById('hubLbBtn').onclick = () => {
                 playSound('click');
-                lobbyMenu.style.display = 'none';
-                leaderboardView.classList.add('active');
-                renderFullLeaderboard();
-            });
-
-            document.getElementById('backToLobbyFromGame').addEventListener('click', () => {
+                hub.style.display = 'none';
+                lbView.classList.add('active');
+                renderLb();
+                document.getElementById('statusIndicator').textContent = "GAME STATUS: LEADERBOARD";
+            };
+            document.getElementById('backFromGame').onclick = () => {
                 playSound('click');
                 gameView.classList.remove('active');
-                lobbyMenu.style.display = 'flex';
-            });
-
-            document.getElementById('backToLobbyFromLb').addEventListener('click', () => {
+                hub.style.display = 'flex';
+                document.getElementById('statusIndicator').textContent = "GAME STATUS: IDLE";
+            };
+            document.getElementById('backFromLb').onclick = () => {
                 playSound('click');
-                leaderboardView.classList.remove('active');
-                lobbyMenu.style.display = 'flex';
-            });
+                lbView.classList.remove('active');
+                hub.style.display = 'flex';
+                document.getElementById('statusIndicator').textContent = "GAME STATUS: IDLE";
+            };
 
-            const canvas = document.getElementById('gameCanvas');
+            const canvas = document.getElementById('mainCanvas');
             const ctx = canvas.getContext('2d');
             let activePlayer = "Guest", activeLevel = 5, score = 500;
             let currentPath = [], aiPathToDisplay = [], currentGraph = null, gameTimer = null, timeLeft = 90;
@@ -597,67 +587,63 @@
             currentGraph = getLevelGraph(activeLevel);
             drawComplexGraph(activeLevel, [], []);
 
-            const roomId = 'cyberroute-' + Math.floor(1000 + Math.random() * 9000);
-            const peer = new Peer(roomId);
+            const peerId = 'cyberroute-' + Math.floor(1000 + Math.random() * 9000);
+            const peer = new Peer(peerId);
 
-            peer.on('open', (id) => {
-                const baseUrl = window.location.href.split('#')[0].split('?')[0];
-                const controllerUrl = `${baseUrl}?room=${id}#controller`;
-                document.getElementById('directUrlDisplay').textContent = controllerUrl;
+            peer.on('open', id => {
+                const url = `${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;
+                document.getElementById('urlText').textContent = url;
                 document.getElementById('qrcode').innerHTML = "";
-                new QRCode(document.getElementById('qrcode'), { text: controllerUrl, width: 140, height: 140 });
+                new QRCode(document.getElementById('qrcode'), { text: url, width: 130, height: 130 });
             });
 
-            peer.on('connection', (conn) => {
-                conn.on('data', (data) => {
-                    if (data.type === 'START_GAME') {
-                        activePlayer = data.player; activeLevel = parseInt(data.level) || 1;
+            peer.on('connection', conn => {
+                conn.on('data', data => {
+                    if (data.type === 'START') {
+                        activePlayer = data.name; activeLevel = parseInt(data.lvl) || 1;
                         score = activeLevel * 100; currentPath = []; aiPathToDisplay = [];
                         currentGraph = getLevelGraph(activeLevel);
 
-                        document.getElementById('displayPlayer').textContent = `Participant: ${activePlayer} (Level ${activeLevel})`;
-                        document.getElementById('displayScore').textContent = `Score: ${score}`;
-                        document.getElementById('laptopInstruction').textContent = `🎯 Objective: Connect Node A to Node ${currentGraph.endNode} via minimum cost weight.`;
-                        document.getElementById('aiEfficiencyBanner').style.display = 'none';
+                        document.getElementById('playerDisplay').textContent = `Participant: ${activePlayer} (Level ${activeLevel})`;
+                        document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
+                        document.getElementById('aiBanner').style.display = 'none';
                         startTimer(); drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
-
-                    } else if (data.type === 'SELECT_NODE') {
+                    } else if (data.type === 'NODE') {
                         if (!currentPath.includes(data.node)) {
                             currentPath.push(data.node); score += 25;
-                            document.getElementById('displayScore').textContent = `Score: ${score}`;
+                            document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
                             drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
                         }
-
-                    } else if (data.type === 'AI_SOLVE') {
+                    } else if (data.type === 'AI') {
                         aiPathToDisplay = [...currentGraph.aiPath]; score += 150;
-                        const userWeight = calculatePathWeight(currentGraph, currentPath);
-                        const efficiency = Math.round(((userWeight - currentGraph.optimalWeight) / userWeight) * 100) || 40;
-                        document.getElementById('aiEfficiencyBanner').textContent = `⚡ Dijkstra Weight: ${currentGraph.optimalWeight} | AI path is ${Math.max(20, efficiency)}% more efficient`;
-                        document.getElementById('aiEfficiencyBanner').style.display = 'block';
+                        const userW = calcWeight(currentGraph, currentPath);
+                        const eff = Math.round(((userW - currentGraph.optimalWeight) / userW) * 100) || 40;
+                        const banner = document.getElementById('aiBanner');
+                        banner.textContent = `⚡ Dijkstra Optimal Weight: ${currentGraph.optimalWeight} | AI path is ${Math.max(20, eff)}% more efficient (Green = User, Purple = Dijkstra)`;
+                        banner.style.display = 'block';
                         stopTimer(); drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveGlobalScore(activePlayer, score, activeLevel);
-
-                    } else if (data.type === 'SUBMIT_ROUTE') {
+                    } else if (data.type === 'SUBMIT') {
                         stopTimer(); aiPathToDisplay = [...currentGraph.aiPath];
-                        const userWeight = calculatePathWeight(currentGraph, currentPath);
-                        const diff = userWeight - currentGraph.optimalWeight;
-                        let msg = `Submitted Weight: ${userWeight} | Optimal Weight: ${currentGraph.optimalWeight}. `;
-                        if (diff <= 0) msg += `🎉 Perfect route matched!`; else msg += `⚡ AI path is ${Math.max(15, Math.round((diff / userWeight) * 100))}% more efficient.`;
-                        document.getElementById('aiEfficiencyBanner').textContent = msg;
-                        document.getElementById('aiEfficiencyBanner').style.display = 'block';
+                        const userW = calcWeight(currentGraph, currentPath);
+                        const diff = userW - currentGraph.optimalWeight;
+                        let msg = `Submitted Weight: ${userW} | Optimal: ${currentGraph.optimalWeight}. `;
+                        if (diff <= 0) msg += `🎉 Perfect optimal route!`; else msg += `⚡ AI path is ${Math.max(15, Math.round((diff / userW) * 100))}% more efficient.`;
+                        const banner = document.getElementById('aiBanner');
+                        banner.textContent = msg;
+                        banner.style.display = 'block';
                         drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveGlobalScore(activePlayer, score, activeLevel);
-
-                    } else if (data.type === 'RESET_PATH') {
+                    } else if (data.type === 'RESET') {
                         currentPath = []; aiPathToDisplay = [];
-                        document.getElementById('aiEfficiencyBanner').style.display = 'none';
+                        document.getElementById('aiBanner').style.display = 'none';
                         drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
                     }
                 });
             });
 
-            function startTimer() { clearInterval(gameTimer); timeLeft = 90; updateTimerDisplay(); gameTimer = setInterval(() => { timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) clearInterval(gameTimer); }, 1000); }
+            function startTimer() { clearInterval(gameTimer); timeLeft = 90; updateTimer(); gameTimer = setInterval(() => { timeLeft--; updateTimer(); if (timeLeft <= 0) clearInterval(gameTimer); }, 1000); }
             function stopTimer() { clearInterval(gameTimer); }
-            function updateTimerDisplay() { document.getElementById('displayTimer').textContent = `⏱ ${String(Math.floor(timeLeft / 60)).padStart(2, '0')}:${String(timeLeft % 60).padStart(2, '0')}`; }
-            function calculatePathWeight(graph, path) {
+            function updateTimer() { document.getElementById('timerDisplay').textContent = `⏱ ${String(Math.floor(timeLeft / 60)).padStart(2, '0')}:${String(timeLeft % 60).padStart(2, '0')}`; }
+            function calcWeight(graph, path) {
                 let total = 0;
                 for (let i = 0; i < path.length - 1; i++) {
                     const edge = graph.edges.find(e => (e.from === path[i] && e.to === path[i+1]) || (e.from === path[i+1] && e.to === path[i]));
@@ -669,7 +655,7 @@
             function drawComplexGraph(lvl, humanPath = [], aiPath = []) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 const graph = currentGraph;
-                ctx.fillStyle = '#94a3b8'; ctx.font = '600 12px -apple-system, sans-serif'; ctx.textAlign = 'center';
+                ctx.fillStyle = '#94a3b8'; ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText(`Network Topology Lvl ${lvl} | Active Route: [ ${humanPath.length > 0 ? humanPath.join(' → ') : 'None'} ]`, canvas.width / 2, 22);
 
                 graph.edges.forEach(edge => {
@@ -677,7 +663,7 @@
                     const toN = graph.nodes.find(n => n.label === edge.to);
                     if (fromN && toN) {
                         ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(fromN.x, fromN.y); ctx.lineTo(toN.x, toN.y); ctx.stroke();
-                        ctx.fillStyle = '#64748b'; ctx.font = '600 11px -apple-system, sans-serif'; ctx.fillText(edge.w, (fromN.x + toN.x) / 2, (fromN.y + toN.y) / 2 - 4);
+                        ctx.fillStyle = '#64748b'; ctx.font = '600 11px sans-serif'; ctx.fillText(edge.w, (fromN.x + toN.x) / 2, (fromN.y + toN.y) / 2 - 4);
                     }
                 });
 
@@ -694,29 +680,24 @@
                 }
 
                 graph.nodes.forEach(n => {
-                    const isHumanSelected = humanPath.includes(n.label);
-                    const isAiSelected = aiPath.includes(n.label);
-                    let fillColor = '#0f172a', strokeColor = '#38bdf8', lineWidth = 2;
-                    if (isHumanSelected && isAiSelected) { fillColor = '#059669'; strokeColor = '#818cf8'; lineWidth = 3; }
-                    else if (isHumanSelected) { fillColor = '#10b981'; strokeColor = '#ffffff'; lineWidth = 3; }
-                    else if (isAiSelected) { fillColor = '#818cf8'; strokeColor = '#ffffff'; lineWidth = 3; }
+                    const isHuman = humanPath.includes(n.label);
+                    const isAi = aiPath.includes(n.label);
+                    let fill = '#0f172a', stroke = '#38bdf8', lw = 2;
+                    if (isHuman && isAi) { fill = '#059669'; stroke = '#818cf8'; lw = 3; }
+                    else if (isHuman) { fill = '#10b981'; stroke = '#ffffff'; lw = 3; }
+                    else if (isAi) { fill = '#818cf8'; stroke = '#ffffff'; lw = 3; }
 
-                    ctx.fillStyle = fillColor; ctx.beginPath(); ctx.arc(n.x, n.y, 15, 0, Math.PI * 2); ctx.fill();
-                    ctx.strokeStyle = strokeColor; ctx.lineWidth = lineWidth; ctx.stroke();
-                    ctx.fillStyle = '#f8fafc'; ctx.font = '700 11px -apple-system, sans-serif'; ctx.fillText(n.label, n.x, n.y + 4);
+                    ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(n.x, n.y, 15, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke();
+                    ctx.fillStyle = '#f8fafc'; ctx.font = '700 11px sans-serif'; ctx.fillText(n.label, n.x, n.y + 4);
                 });
             }
 
-            function renderFullLeaderboard() {
-                const lb = getGlobalLeaderboard();
-                const list = document.getElementById('fullLeaderboardList');
-                if (lb.length === 0) { list.innerHTML = '<li><span>No active benchmark records saved</span><span>-</span></li>'; return; }
-                list.innerHTML = '';
-                lb.forEach((entry, idx) => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<span>${idx + 1}. ${entry.name} <small style="color:var(--text-muted);">(Level ${entry.level})</small></span><strong style="color:var(--primary-accent);">${entry.score} pts</strong>`;
-                    list.appendChild(li);
-                });
+            function renderLb() {
+                const data = getGlobalLeaderboard();
+                const body = document.getElementById('lbTableBody');
+                if (!data.length) { body.innerHTML = '<tr><td colspan="4">No active benchmark records saved.</td></tr>'; return; }
+                body.innerHTML = data.map((d, i) => `<tr><td>#${i+1}</td><td>${d.name}</td><td>Level ${d.level}</td><td style="color:var(--primary-accent); font-weight:700;">${d.score} pts</td></tr>`).join('');
             }
         }
     </script>
