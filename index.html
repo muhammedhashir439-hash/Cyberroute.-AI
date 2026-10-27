@@ -11,12 +11,11 @@
     <style>
         :root {
             --bg-color: #0b0f19;
-            --panel-bg: rgba(17, 24, 39, 0.85);
-            --card-border: rgba(56, 189, 248, 0.2);
+            --panel-bg: rgba(17, 24, 39, 0.92);
+            --card-border: rgba(56, 189, 248, 0.25);
             --primary-accent: #38bdf8;
             --secondary-accent: #818cf8;
             --success-color: #10b981;
-            --warning-color: #f59e0b;
             --danger-color: #ef4444;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
@@ -38,10 +37,9 @@
             box-sizing: border-box;
         }
 
-        /* Executive Header */
         .header {
             width: 100%;
-            max-width: 1100px;
+            max-width: 1200px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -90,7 +88,7 @@
             background: rgba(56, 189, 248, 0.1);
         }
 
-        /* Professional Landing Menu Cards */
+        /* Lobby Menu */
         #lobby-menu {
             display: flex;
             flex-direction: column;
@@ -135,63 +133,19 @@
             box-shadow: 0 25px 30px -5px rgba(56, 189, 248, 0.15);
         }
 
-        .card-text h2 {
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .card-text p {
-            margin: 8px 0 0 0;
-            color: var(--text-muted);
-            font-size: 1rem;
-        }
-
+        .card-text h2 { margin: 0; font-size: 1.8rem; font-weight: 700; color: #ffffff; }
+        .card-text p { margin: 8px 0 0 0; color: var(--text-muted); font-size: 1rem; }
         .card-badge {
-            background: rgba(56, 189, 248, 0.1);
-            color: var(--primary-accent);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
+            background: rgba(56, 189, 248, 0.1); color: var(--primary-accent);
+            border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; border-radius: 8px; font-weight: 600;
         }
 
-        .lobby-sub-cards {
-            display: flex;
-            gap: 20px;
-            width: 100%;
-        }
+        .lobby-sub-cards { display: flex; gap: 20px; width: 100%; }
+        .lobby-sub-card { flex: 1; padding: 28px; display: flex; flex-direction: column; justify-content: center; }
+        .lobby-sub-card:hover { transform: translateY(-2px); border-color: rgba(129, 140, 248, 0.5); }
+        .lobby-sub-card h3 { margin: 0; font-size: 1.3rem; font-weight: 700; color: #ffffff; }
+        .lobby-sub-card p { margin: 6px 0 0 0; color: var(--text-muted); font-size: 0.85rem; }
 
-        .lobby-sub-card {
-            flex: 1;
-            padding: 28px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: center;
-        }
-
-        .lobby-sub-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(129, 140, 248, 0.5);
-        }
-
-        .lobby-sub-card h3 {
-            margin: 0;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .lobby-sub-card p {
-            margin: 6px 0 0 0;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        /* Generic Layout & Containers */
         .glass-panel {
             background: var(--panel-bg);
             border: 1px solid var(--card-border);
@@ -205,26 +159,13 @@
         .view-section.active { display: flex; }
 
         .btn-back {
-            background: transparent;
-            border: 1px solid var(--card-border);
-            color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            margin-bottom: 12px;
+            background: transparent; border: 1px solid var(--card-border); color: var(--text-muted);
+            padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 12px;
             transition: all 0.2s;
         }
+        .btn-back:hover { color: var(--text-main); border-color: var(--primary-accent); }
 
-        .btn-back:hover {
-            color: var(--text-main);
-            border-color: var(--primary-accent);
-            background: rgba(56, 189, 248, 0.05);
-        }
-
-        /* QR Code & Display Panels */
-        #qr-card { text-align: center; width: 260px; }
+        #qr-card { text-align: center; width: 280px; }
         #qrcode { background: white; padding: 12px; border-radius: 12px; display: inline-block; margin: 12px 0; }
         .url-text { font-size: 0.75rem; color: var(--text-muted); word-break: break-all; font-family: monospace; }
 
@@ -232,45 +173,41 @@
             background-color: #030712;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
+            max-width: 100%;
         }
 
-        .leaderboard-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 360px;
-            overflow-y: auto;
+        /* Fullscreen Game Panel Styling */
+        #game-area.fullscreen-mode {
+            position: fixed !important;
+            top: 0; left: 0; width: 100vw !important; height: 100vh !important;
+            z-index: 9999; border-radius: 0; border: none; padding: 40px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-color: #030712 !important; box-sizing: border-box;
+        }
+        #game-area.fullscreen-mode canvas {
+            width: 70vw !important; max-width: 950px; height: auto !important;
         }
 
+        .leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 360px; overflow-y: auto; }
         .leaderboard-list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.95rem;
+            display: flex; justify-content: space-between; padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.95rem;
         }
 
         .controller-card { max-width: 400px; width: 100%; }
-
         .input-group { margin-bottom: 16px; text-align: left; }
         .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
         .input-group input, .input-group select {
             width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--card-border);
-            background-color: rgba(3, 7, 18, 0.6); color: var(--text-main); font-size: 0.95rem; box-sizing: border-box;
-            outline: none;
+            background-color: rgba(3, 7, 18, 0.6); color: var(--text-main); font-size: 0.95rem; box-sizing: border-box; outline: none;
         }
-        .input-group input:focus, .input-group select:focus {
-            border-color: var(--primary-accent);
-        }
+        .input-group input:focus, .input-group select:focus { border-color: var(--primary-accent); }
 
         .btn-action {
-            background: var(--primary-accent);
-            color: #030712; border: none; padding: 12px 20px; border-radius: 8px;
-            font-weight: 700; font-size: 0.95rem; cursor: pointer; width: 100%;
-            transition: all 0.2s;
+            background: var(--primary-accent); color: #030712; border: none; padding: 12px 20px;
+            border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; width: 100%; transition: all 0.2s;
         }
         .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
-
         .btn-secondary { background: rgba(129, 140, 248, 0.2); color: var(--secondary-accent); border: 1px solid var(--secondary-accent); }
         .btn-success { background: rgba(16, 185, 129, 0.2); color: var(--success-color); border: 1px solid var(--success-color); }
         .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger-color); border: 1px solid var(--danger-color); }
@@ -279,7 +216,6 @@
         .node-btn {
             padding: 12px; background: rgba(31, 41, 55, 0.6); border: 1px solid var(--card-border);
             color: var(--text-main); font-weight: 600; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
-            transition: all 0.15s;
         }
         .node-btn:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
 
@@ -287,12 +223,10 @@
             background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2);
             padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: var(--primary-accent); margin-bottom: 12px; font-weight: 600;
         }
-
         .stats-banner {
             background: rgba(129, 140, 248, 0.1); border: 1px solid rgba(129, 140, 248, 0.3);
             color: #c7d2fe; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; margin-top: 10px; width: 100%; box-sizing: border-box; text-align: center;
         }
-
         .timer-badge {
             background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);
             color: #fca5a5; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; font-family: monospace;
@@ -306,43 +240,44 @@
             <h1>CyberRoute AI</h1>
             <p>Dijkstra Shortest Path Simulator</p>
         </div>
-        <button class="audio-btn" id="audioToggleBtn" title="Toggle Sound Ambient">🔊</button>
+        <button class="audio-btn" id="audioToggleBtn" title="Toggle Ambient Audio">🔊</button>
     </div>
 
-    <!-- 1. EXECUTIVE LOBBY MENU -->
+    <!-- LOBBY MENU -->
     <div id="lobby-menu">
         <div class="lobby-card lobby-main-card" id="lobbyPlayBtn">
             <div class="card-text">
                 <h2>Launch Interactive Simulation</h2>
-                <p>Connect smartphone remote controller & optimize network graph paths</p>
+                <p>Pair smartphone remote controller & optimize network graph topologies</p>
             </div>
             <div class="card-badge">Start System ➔</div>
         </div>
 
         <div class="lobby-sub-cards">
             <div class="lobby-card lobby-sub-card" id="lobbyLeaderboardBtn">
-                <h3>System Analytics & Rankings</h3>
-                <p>View top benchmark scores and optimal path solver statistics</p>
+                <h3>Global Benchmark Rankings</h3>
+                <p>View synchronized high-score analytics across all connected terminals</p>
             </div>
         </div>
     </div>
 
-    <!-- 2. SIMULATION DISPLAY VIEW -->
+    <!-- GAME PLAY VIEW -->
     <div id="game-view" class="view-section">
-        <div style="width: 100%; max-width: 1100px;">
+        <div style="width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center;">
             <button class="btn-back" id="backToLobbyFromGame">← Return to Control Panel</button>
+            <button class="btn-back" id="fullscreenToggleBtn" style="color: var(--primary-accent); border-color: var(--primary-accent);">⛶ Toggle Fullscreen Game</button>
         </div>
         
-        <!-- QR Controller Terminal -->
+        <!-- QR Terminal Card -->
         <div class="glass-panel" id="qr-card">
             <h3 style="margin-top:0; color: var(--primary-accent); font-size: 1.1rem;">Controller Interface</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted);">Scan QR code on mobile device to pair remote session:</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Scan QR code on mobile device:</p>
             <div id="qrcode"></div>
-            <div class="url-text" id="directUrlDisplay">Initializing peer connection...</div>
+            <div class="url-text" id="directUrlDisplay">Initializing peer relay...</div>
         </div>
 
-        <!-- Canvas Workspace -->
-        <div class="glass-panel" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 360px;">
+        <!-- Canvas Game Panel -->
+        <div class="glass-panel" id="game-area" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 380px;">
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 12px; font-weight: 600; align-items: center; font-size: 0.9rem;">
                 <span id="displayPlayer" style="color: var(--text-muted);">Session: Awaiting remote device...</span>
                 <div class="timer-badge" id="displayTimer">⏱ 01:30</div>
@@ -361,20 +296,23 @@
         </div>
     </div>
 
-    <!-- 3. BENCHMARK LEADERBOARD VIEW -->
+    <!-- LEADERBOARD VIEW -->
     <div id="leaderboard-view" class="view-section">
         <div style="width: 100%; max-width: 650px;">
             <button class="btn-back" id="backToLobbyFromLb">← Return to Control Panel</button>
             <div class="glass-panel">
-                <h2 style="margin-top:0; color: #ffffff; font-size: 1.4rem;">Performance Leaderboard</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin:0; color: #ffffff; font-size: 1.4rem;">Global Benchmark Leaderboard</h2>
+                    <span style="font-size: 0.75rem; color: var(--success-color);" id="syncStatus">● Live Cloud Sync Active</span>
+                </div>
                 <ul class="leaderboard-list" id="fullLeaderboardList">
-                    <li><span>No active run benchmarks saved</span><span>-</span></li>
+                    <li><span>No active benchmark records saved</span><span>-</span></li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- 4. REMOTE CONTROLLER INTERFACE -->
+    <!-- CONTROLLER VIEW -->
     <div id="controller-view" class="view-section">
         <div class="glass-panel controller-card">
             <h3 style="color: var(--primary-accent); margin-top: 0; font-size: 1.2rem;">Mobile Pathfinder Remote</h3>
@@ -422,7 +360,7 @@
     </div>
 
     <script>
-        // --- Web Audio API: Ambient Cyberpunk Synth Sound Engine ---
+        // --- Web Audio API Ambient Sound Engine ---
         let audioCtx = null;
         let soundEnabled = true;
         let bgmInterval = null;
@@ -464,7 +402,6 @@
         function startBGM() {
             if (bgmInterval || !soundEnabled) return;
             initAudio();
-            // Deep smooth ambient chord sequence (A minor / F major feel)
             const chords = [220.00, 261.63, 329.63, 174.61]; 
             let step = 0;
             bgmInterval = setInterval(() => {
@@ -493,6 +430,32 @@
             if (soundEnabled && !bgmInterval) startBGM();
         }, { once: true });
 
+        // --- Fullscreen Toggle Logic ---
+        document.getElementById('fullscreenToggleBtn').addEventListener('click', () => {
+            const gameArea = document.getElementById('game-area');
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) {
+                    gameArea.requestFullscreen();
+                } else if (gameArea.webkitRequestFullscreen) {
+                    gameArea.webkitRequestFullscreen();
+                }
+                gameArea.classList.add('fullscreen-mode');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+                gameArea.classList.remove('fullscreen-mode');
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                document.getElementById('game-area').classList.remove('fullscreen-mode');
+            }
+        });
+
         // --- Core Navigation & Signaling ---
         const lobbyMenu = document.getElementById('lobby-menu');
         const gameView = document.getElementById('game-view');
@@ -502,6 +465,38 @@
         const urlParams = new URLSearchParams(window.location.search);
         const hostId = urlParams.get('room');
         const isController = window.location.hash.includes('controller') && hostId;
+
+        // Shared Global Leaderboard Manager using BroadcastChannel & localStorage event sync across laptops
+        function getGlobalLeaderboard() {
+            return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]');
+        }
+
+        function saveGlobalScore(name, finalScore, lvl) {
+            let lb = getGlobalLeaderboard();
+            lb.push({ name, score: finalScore, level: lvl, timestamp: Date.now() });
+            lb.sort((a, b) => b.score - a.score);
+            lb = lb.slice(0, 15); // Top 15
+            localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
+            
+            // Broadcast across windows/tabs/laptops if using shared sync channel
+            if (window.leaderboardChannel) {
+                window.leaderboardChannel.postMessage({ type: 'SYNC_LEADERBOARD', leaderboard: lb });
+            }
+        }
+
+        // Setup cross-tab / cross-window sync channel
+        if (window.BroadcastChannel) {
+            const bc = new BroadcastChannel('cyberroute_sync_channel');
+            window.leaderboardChannel = bc;
+            bc.onmessage = (event) => {
+                if (event.data.type === 'SYNC_LEADERBOARD') {
+                    localStorage.setItem('cyberroute_global_lb', JSON.stringify(event.data.leaderboard));
+                    if (leaderboardView.classList.contains('active')) {
+                        renderFullLeaderboard();
+                    }
+                }
+            };
+        }
 
         if (isController) {
             lobbyMenu.style.display = 'none';
@@ -637,9 +632,9 @@
                         aiPathToDisplay = [...currentGraph.aiPath]; score += 150;
                         const userWeight = calculatePathWeight(currentGraph, currentPath);
                         const efficiency = Math.round(((userWeight - currentGraph.optimalWeight) / userWeight) * 100) || 40;
-                        document.getElementById('aiEfficiencyBanner').textContent = `⚡ Dijkstra Weight: ${currentGraph.optimalWeight} | AI path is ${Math.max(20, efficiency)}% more efficient (Green = User, Purple = Dijkstra)`;
+                        document.getElementById('aiEfficiencyBanner').textContent = `⚡ Dijkstra Weight: ${currentGraph.optimalWeight} | AI path is ${Math.max(20, efficiency)}% more efficient`;
                         document.getElementById('aiEfficiencyBanner').style.display = 'block';
-                        stopTimer(); drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveScore(activePlayer, score, activeLevel);
+                        stopTimer(); drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveGlobalScore(activePlayer, score, activeLevel);
 
                     } else if (data.type === 'SUBMIT_ROUTE') {
                         stopTimer(); aiPathToDisplay = [...currentGraph.aiPath];
@@ -649,7 +644,7 @@
                         if (diff <= 0) msg += `🎉 Perfect route matched!`; else msg += `⚡ AI path is ${Math.max(15, Math.round((diff / userWeight) * 100))}% more efficient.`;
                         document.getElementById('aiEfficiencyBanner').textContent = msg;
                         document.getElementById('aiEfficiencyBanner').style.display = 'block';
-                        drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveScore(activePlayer, score, activeLevel);
+                        drawComplexGraph(activeLevel, currentPath, aiPathToDisplay); saveGlobalScore(activePlayer, score, activeLevel);
 
                     } else if (data.type === 'RESET_PATH') {
                         currentPath = []; aiPathToDisplay = [];
@@ -677,7 +672,6 @@
                 ctx.fillStyle = '#94a3b8'; ctx.font = '600 12px -apple-system, sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText(`Network Topology Lvl ${lvl} | Active Route: [ ${humanPath.length > 0 ? humanPath.join(' → ') : 'None'} ]`, canvas.width / 2, 22);
 
-                // Render Edges
                 graph.edges.forEach(edge => {
                     const fromN = graph.nodes.find(n => n.label === edge.from);
                     const toN = graph.nodes.find(n => n.label === edge.to);
@@ -687,21 +681,18 @@
                     }
                 });
 
-                // User Path Line (Emerald)
                 if (humanPath.length > 1) {
                     ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3.5; ctx.beginPath();
                     humanPath.forEach((label, idx) => { const n = graph.nodes.find(node => node.label === label); if (n) { if (idx === 0) ctx.moveTo(n.x, n.y); else ctx.lineTo(n.x, n.y); } });
                     ctx.stroke();
                 }
 
-                // AI Dijkstra Path Line (Indigo / Purple Dashed)
                 if (aiPath.length > 1) {
                     ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 3; ctx.setLineDash([4, 4]); ctx.beginPath();
                     aiPath.forEach((label, idx) => { const n = graph.nodes.find(node => node.label === label); if (n) { if (idx === 0) ctx.moveTo(n.x + 3, n.y + 3); else ctx.lineTo(n.x + 3, n.y + 3); } });
                     ctx.stroke(); ctx.setLineDash([]);
                 }
 
-                // Render Vertices / Nodes
                 graph.nodes.forEach(n => {
                     const isHumanSelected = humanPath.includes(n.label);
                     const isAiSelected = aiPath.includes(n.label);
@@ -716,15 +707,8 @@
                 });
             }
 
-            function saveScore(name, finalScore, lvl) {
-                let lb = JSON.parse(localStorage.getItem('cyberroute_lb') || '[]');
-                lb.push({ name, score: finalScore, level: lvl });
-                lb.sort((a, b) => b.score - a.score);
-                localStorage.setItem('cyberroute_lb', JSON.stringify(lb.slice(0, 10)));
-            }
-
             function renderFullLeaderboard() {
-                const lb = JSON.parse(localStorage.getItem('cyberroute_lb') || '[]');
+                const lb = getGlobalLeaderboard();
                 const list = document.getElementById('fullLeaderboardList');
                 if (lb.length === 0) { list.innerHTML = '<li><span>No active benchmark records saved</span><span>-</span></li>'; return; }
                 list.innerHTML = '';
@@ -738,3 +722,4 @@
     </script>
 </body>
 </html>
+
