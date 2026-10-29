@@ -1,16 +1,3 @@
-To make the leaderboard sync instantly between **two separate laptops** without needing a complicated cloud database (like Firebase), we can use PeerJS to link the two laptops together over the internet.
-
-Here is how you can set it up so that when a game is played and submitted, **both laptops update their leaderboards in real time**.
-
-### How to connect two laptops:
-
-1. **Laptop 1 (The Main Display):** Open the website normally. It will generate a Room ID (e.g., `cyberroute-4829`).
-2. **Laptop 2 (The Second Display / Leaderboard Screen):** You can open the exact same website on Laptop 2, but add `?sync=LAPTOPTWO` to the URL.
-3. **Peer-to-Peer Data Relay:** We can configure the code so that Laptop 1 and Laptop 2 automatically handshake and share every score submission packet through PeerJS.
-
-Here is the updated, complete single-file `index.html` code with **Direct Laptop-to-Laptop Peer Leaderboard Sync** added. Replace your code with this:
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
