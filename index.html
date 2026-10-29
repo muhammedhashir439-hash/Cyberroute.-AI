@@ -182,7 +182,7 @@
         <div class="panel modal-content">
             <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">How to Play - CyberRoute AI</h3>
             <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
-                <strong>1. Solo or Versus Mode:</strong> Choose Single Player or 2-Player Versus mode from the main menu.<br><br>
+                <strong>1. Solo or Versus Mode:</strong> Choose Single Player or 2-Player Versus mode (with 3 difficulty levels) from the main menu.<br><br>
                 <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the target node within the 50-second timer.<br><br>
                 <strong>3. Strict Graph Connectivity:</strong> Select adjacent nodes sequentially. Direct jumps between unconnected nodes are blocked!<br><br>
                 <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to beat your opponent or the AI!
@@ -202,6 +202,23 @@
                 <strong>Tech Stack:</strong> HTML5 Canvas, Web Audio API, PeerJS Dual-Controller Sync
             </p>
             <button class="btn-action" id="closeProfileModal">Close Profile</button>
+        </div>
+    </div>
+
+    <!-- VERSUS SETUP MODAL FOR SELECTING MULTIPLAYER LEVEL -->
+    <div class="modal-overlay" id="versusSetupModal">
+        <div class="panel modal-content">
+            <h3 style="margin-top:0; color:var(--secondary-accent); font-size:1.3rem;">Configure 2-Player Versus</h3>
+            <div class="form-field" style="margin-top:14px;">
+                <label>Select Multiplayer Complexity Tier</label>
+                <select id="versusLevelSelect">
+                    <option value="1">Versus Level 1: Standard Mesh (A ➔ D)</option>
+                    <option value="2">Versus Level 2: Advanced Interlock (A ➔ I)</option>
+                    <option value="3" selected>Versus Level 3: Master Matrix (A ➔ L - Extreme)</option>
+                </select>
+            </div>
+            <button class="btn-action" id="confirmVersusBtn" style="background:var(--secondary-accent); color:#030712;">Start Versus Match</button>
+            <button class="btn-action" id="cancelVersusBtn" style="background:#374151; color:white; margin-top:8px;">Cancel</button>
         </div>
     </div>
 
@@ -288,12 +305,12 @@
 
             <div class="split-canvas-container">
                 <div class="canvas-box">
-                    <span style="font-size:0.8rem; color:var(--success-color); font-weight:700; margin-bottom:6px;">PLAYER 1 NETWORK</span>
+                    <span style="font-size:0.8rem; color:var(--success-color); font-weight:700; margin-bottom:6px;" id="p1TitleLabel">PLAYER 1 NETWORK</span>
                     <canvas id="canvasP1" width="420" height="280" class="gameCanvas"></canvas>
                     <span id="scoreP1" style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Score: 0 | Weight: 0</span>
                 </div>
                 <div class="canvas-box">
-                    <span style="font-size:0.8rem; color:var(--secondary-accent); font-weight:700; margin-bottom:6px;">PLAYER 2 NETWORK</span>
+                    <span style="font-size:0.8rem; color:var(--secondary-accent); font-weight:700; margin-bottom:6px;" id="p2TitleLabel">PLAYER 2 NETWORK</span>
                     <canvas id="canvasP2" width="420" height="280" class="gameCanvas"></canvas>
                     <span id="scoreP2" style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Score: 0 | Weight: 0</span>
                 </div>
@@ -346,7 +363,7 @@
                     <label>Participant Identifier</label>
                     <input type="text" id="playerNameInput" placeholder="Enter name or ID...">
                 </div>
-                <div class="form-field">
+                <div class="form-field" id="soloLevelGroup">
                     <label>Graph Complexity Level</label>
                     <select id="levelSelect">
                         <option value="1">Level 1: Basic Topology (A ➔ D)</option>
@@ -542,10 +559,19 @@
                 initSoloGame();
             };
             document.getElementById('hubVersusBtn').onclick = () => {
+                document.getElementById('versusSetupModal').style.display = 'flex';
+            };
+            document.getElementById('cancelVersusBtn').onclick = () => {
+                document.getElementById('versusSetupModal').style.display = 'none';
+            };
+            document.getElementById('confirmVersusBtn').onclick = () => {
+                document.getElementById('versusSetupModal').style.display = 'none';
                 hub.style.display = 'none'; versusView.classList.add('active');
                 document.getElementById('statusIndicator').textContent = "GAME STATUS: VERSUS ACTIVE";
-                initVersusGame();
+                const selectedVersusLvl = document.getElementById('versusLevelSelect').value;
+                initVersusGame(selectedVersusLvl);
             };
+
             document.getElementById('hubLbBtn').onclick = () => {
                 hub.style.display = 'none'; lbView.classList.add('active');
                 renderLb(); document.getElementById('statusIndicator').textContent = "GAME STATUS: LEADERBOARD";
@@ -554,10 +580,30 @@
             document.getElementById('backFromVersus').onclick = () => { versusView.classList.remove('active'); hub.style.display = 'flex'; };
             document.getElementById('backFromLb').onclick = () => { lbView.classList.remove('active'); hub.style.display = 'flex'; };
 
-            // Graph structure generator helper
+            // 3 Levels for Multiplayer / Solo Graphs
             function getGraph(lvl) {
-                if (lvl === 1) return { nodes: [{x: 80, y: 140, label: 'A'}, {x: 180, y: 70, label: 'B'}, {x: 180, y: 210, label: 'C'}, {x: 340, y: 140, label: 'D'}], edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 5}, {from: 'C', to: 'D', w: 1}], aiPath: ['A', 'C', 'D'], optimalWeight: 3 };
-                return { nodes: [{x: 40, y: 140, label: 'A'}, {x: 100, y: 70, label: 'B'}, {x: 100, y: 210, label: 'C'}, {x: 160, y: 70, label: 'D'}, {x: 160, y: 140, label: 'E'}, {x: 160, y: 210, label: 'F'}, {x: 230, y: 70, label: 'G'}, {x: 230, y: 210, label: 'H'}, {x: 290, y: 100, label: 'I'}, {x: 290, y: 180, label: 'J'}, {x: 350, y: 140, label: 'K'}, {x: 400, y: 140, label: 'L'}], edges: [{from: 'A', to: 'B', w: 5}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 1}, {from: 'C', to: 'F', w: 6}, {from: 'D', to: 'G', w: 2}, {from: 'E', to: 'H', w: 5}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'I', w: 4}, {from: 'H', to: 'J', w: 2}, {from: 'I', to: 'K', w: 1}, {from: 'J', to: 'K', w: 3}, {from: 'K', to: 'L', w: 2}], aiPath: ['A', 'C', 'F', 'H', 'J', 'K', 'L'], optimalWeight: 14 };
+                if (lvl == 1) {
+                    // Level 1: Simple & Clean Mesh (A to D)
+                    return { 
+                        nodes: [{x: 80, y: 140, label: 'A'}, {x: 180, y: 70, label: 'B'}, {x: 180, y: 210, label: 'C'}, {x: 340, y: 140, label: 'D'}], 
+                        edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 5}, {from: 'C', to: 'D', w: 1}], 
+                        aiPath: ['A', 'C', 'D'], optimalWeight: 3, endNode: 'D' 
+                    };
+                } else if (lvl == 2) {
+                    // Level 2: Advanced Interlock (A to I) - Complex Cross-links
+                    return { 
+                        nodes: [{x: 45, y: 140, label: 'A'}, {x: 120, y: 75, label: 'B'}, {x: 120, y: 205, label: 'C'}, {x: 195, y: 110, label: 'D'}, {x: 195, y: 170, label: 'E'}, {x: 270, y: 75, label: 'F'}, {x: 270, y: 205, label: 'G'}, {x: 350, y: 140, label: 'H'}, {x: 410, y: 140, label: 'I'}], 
+                        edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 7}, {from: 'B', to: 'D', w: 2}, {from: 'B', to: 'F', w: 5}, {from: 'C', to: 'E', w: 1}, {from: 'C', to: 'G', w: 4}, {from: 'D', to: 'E', w: 2}, {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 3}, {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'H', w: 3}, {from: 'H', to: 'I', w: 4}, {from: 'D', to: 'H', w: 6}], 
+                        aiPath: ['A', 'B', 'D', 'F', 'H', 'I'], optimalWeight: 14, endNode: 'I' 
+                    };
+                } else {
+                    // Level 3: Master Matrix (A to L - Extreme Spider Web Mesh)
+                    return { 
+                        nodes: [{x: 40, y: 140, label: 'A'}, {x: 105, y: 70, label: 'B'}, {x: 105, y: 210, label: 'C'}, {x: 170, y: 70, label: 'D'}, {x: 170, y: 140, label: 'E'}, {x: 170, y: 210, label: 'F'}, {x: 235, y: 70, label: 'G'}, {x: 235, y: 210, label: 'H'}, {x: 300, y: 100, label: 'I'}, {x: 300, y: 180, label: 'J'}, {x: 360, y: 140, label: 'K'}, {x: 410, y: 140, label: 'L'}], 
+                        edges: [{from: 'A', to: 'B', w: 5}, {from: 'A', to: 'C', w: 2}, {from: 'A', to: 'E', w: 8}, {from: 'B', to: 'D', w: 1}, {from: 'B', to: 'E', w: 4}, {from: 'C', to: 'E', w: 3}, {from: 'C', to: 'F', w: 6}, {from: 'D', to: 'G', w: 2}, {from: 'E', to: 'D', w: 2}, {from: 'E', to: 'F', w: 2}, {from: 'E', to: 'H', w: 5}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'I', w: 4}, {from: 'H', to: 'J', w: 2}, {from: 'E', to: 'G', w: 3}, {from: 'F', to: 'J', w: 4}, {from: 'I', to: 'K', w: 1}, {from: 'J', to: 'K', w: 3}, {from: 'K', to: 'L', w: 2}, {from: 'I', to: 'L', w: 7}], 
+                        aiPath: ['A', 'C', 'F', 'H', 'J', 'K', 'L'], optimalWeight: 14, endNode: 'L' 
+                    };
+                }
             }
 
             function drawGraphOnCanvas(canvas, lvl, path) {
@@ -595,7 +641,7 @@
 
             // --- Solo Game Logic ---
             function initSoloGame() {
-                const canvas = document.getElementById('mainCanvas'), ctx = canvas.getContext('2d');
+                const canvas = document.getElementById('mainCanvas');
                 let path = [], score = 500, lvl = 5, graph = getGraph(5);
                 drawGraphOnCanvas(canvas, lvl, path);
 
@@ -612,10 +658,12 @@
                     conn.on('data', data => {
                         if (data.type === 'START') {
                             lvl = parseInt(data.lvl) || 5; graph = getGraph(lvl); path = ['A']; score = lvl * 100;
-                            document.getElementById('playerDisplay').textContent = `Player: ${data.name}`;
+                            document.getElementById('playerDisplay').textContent = `Player: ${data.name} (Lvl ${lvl})`;
                             drawGraphOnCanvas(canvas, lvl, path);
                         } else if (data.type === 'NODE') {
-                            if (!path.includes(data.node)) {
+                            const last = path[path.length - 1];
+                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
+                            if (!path.includes(data.node) && (path.length === 0 || connValid)) {
                                 path.push(data.node); score += 25;
                                 document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
                                 drawGraphOnCanvas(canvas, lvl, path);
@@ -629,10 +677,15 @@
                 });
             }
 
-            // --- Versus Game Logic (Option C: Dual Phone Controllers & Split Screen) ---
-            function initVersusGame() {
+            // --- Versus Game Logic (Option C with 3 Complexity Tiers) ---
+            function initVersusGame(selectedLvl) {
                 const c1 = document.getElementById('canvasP1'), c2 = document.getElementById('canvasP2');
-                let p1Path = ['A'], p2Path = ['A'], p1Score = 500, p2Score = 500, lvl = 5;
+                let p1Path = ['A'], p2Path = ['A'], p1Score = 500, p2Score = 500, lvl = parseInt(selectedLvl) || 3;
+                let graph = getGraph(lvl);
+
+                document.getElementById('p1TitleLabel').textContent = `PLAYER 1 NETWORK (Tier ${lvl})`;
+                document.getElementById('p2TitleLabel').textContent = `PLAYER 2 NETWORK (Tier ${lvl})`;
+
                 drawGraphOnCanvas(c1, lvl, p1Path); drawGraphOnCanvas(c2, lvl, p2Path);
 
                 const id1 = 'cyberroute-p1-' + Math.floor(1000 + Math.random()*9000);
@@ -651,7 +704,11 @@
                             document.getElementById('p1StatusHeader').textContent = `P1: ${data.name} (Active)`;
                             document.getElementById('versusStatus').textContent = "P1 Ready! Waiting for P2...";
                         } else if (data.type === 'NODE') {
-                            if (!p1Path.includes(data.node)) { p1Path.push(data.node); p1Score += 25; }
+                            const last = p1Path[p1Path.length - 1];
+                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
+                            if (!p1Path.includes(data.node) && connValid) { 
+                                p1Path.push(data.node); p1Score += 25; 
+                            }
                             drawGraphOnCanvas(c1, lvl, p1Path);
                             document.getElementById('scoreP1').textContent = `Score: ${p1Score}`;
                         } else if (data.type === 'SUBMIT') {
@@ -675,7 +732,11 @@
                             document.getElementById('p2StatusHeader').textContent = `P2: ${data.name} (Active)`;
                             document.getElementById('versusStatus').textContent = "Both players connected! Race underway!";
                         } else if (data.type === 'NODE') {
-                            if (!p2Path.includes(data.node)) { p2Path.push(data.node); p2Score += 25; }
+                            const last = p2Path[p2Path.length - 1];
+                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
+                            if (!p2Path.includes(data.node) && connValid) { 
+                                p2Path.push(data.node); p2Score += 25; 
+                            }
                             drawGraphOnCanvas(c2, lvl, p2Path);
                             document.getElementById('scoreP2').textContent = `Score: ${p2Score}`;
                         } else if (data.type === 'SUBMIT') {
