@@ -6,7 +6,7 @@
     <title>CyberRoute AI - Algorithmic Pathfinder</title>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- PeerJS for Real-time Cross-Device Cloud Sync -->
+    <!-- PeerJS for Real-time Connection -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -124,6 +124,28 @@
         .lb-table th, .lb-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid #1e293b; font-size: 0.95rem; }
         .lb-table th { color: var(--text-muted); font-weight: 600; }
 
+        .admin-box {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px dashed var(--primary-accent);
+            border-radius: 12px;
+        }
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .admin-grid input, .admin-grid select {
+            padding: 10px;
+            background: rgba(3, 7, 18, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
         .controller-form { max-width: 400px; width: 100%; text-align: left; }
         .form-field { margin-bottom: 16px; }
         .form-field label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
@@ -139,6 +161,16 @@
             font-size: 0.95rem; cursor: pointer; margin-top: 6px;
         }
         .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
 
         .node-btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 220px; overflow-y: auto; }
         .node-btn-grid button {
@@ -249,23 +281,42 @@
         </div>
     </div>
 
-    <!-- LEADERBOARD FRAME -->
+    <!-- LEADERBOARD FRAME WITH MANUAL ENTRY ADMIN PANEL -->
     <div id="lb-view" class="view-frame">
-        <div style="width:100%; max-width:650px;">
+        <div style="width:100%; max-width:750px;">
             <button class="btn-control" id="backFromLb" style="margin-bottom:12px;">← Exit to Main Menu</button>
             <div class="panel">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                     <h2 style="margin:0; font-size:1.3rem; color:#ffffff;">Global Benchmark Leaderboard</h2>
-                    <span style="font-size:0.75rem; color:var(--success-color);" id="syncStatusIndicator">● Live Cloud Sync Active</span>
+                    <span style="font-size:0.75rem; color:var(--success-color);">● Manual Admin Mode Active</span>
                 </div>
+                
                 <table class="lb-table">
                     <thead>
-                        <tr><th>Rank</th><th>Participant</th><th>Complexity</th><th>Score</th></tr>
+                        <tr><th>Rank</th><th>Participant</th><th>Complexity</th><th>Score</th><th>Action</th></tr>
                     </thead>
                     <tbody id="lbTableBody">
-                        <tr><td colspan="4">No active benchmark records saved.</td></tr>
+                        <tr><td colspan="5">No active benchmark records saved.</td></tr>
                     </tbody>
                 </table>
+
+                <!-- MANUAL LEADERBOARD ENTRY CONTROLS -->
+                <div class="admin-box">
+                    <h4 style="margin:0; color:var(--primary-accent); font-size:0.9rem;">➕ Manual Score Entry (Exhibit Admin)</h4>
+                    <div class="admin-grid">
+                        <input type="text" id="manualName" placeholder="Participant Name">
+                        <select id="manualLevel">
+                            <option value="1">Lvl 1</option>
+                            <option value="2">Lvl 2</option>
+                            <option value="3">Lvl 3</option>
+                            <option value="4">Lvl 4</option>
+                            <option value="5" selected>Lvl 5</option>
+                        </select>
+                        <input type="number" id="manualScore" placeholder="Score (pts)">
+                        <button class="btn-action" id="addManualScoreBtn" style="margin-top:0;">Add Entry</button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -443,48 +494,52 @@
             }
         });
 
-        // --- Leaderboard Cross-Device Synchronization ---
+        // --- Leaderboard Storage & Manual Controls ---
         function getGlobalLeaderboard() {
             return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]');
         }
 
         function saveGlobalScore(name, finalScore, lvl) {
             let lb = getGlobalLeaderboard();
-            lb.push({ name, score: finalScore, level: lvl, timestamp: Date.now() });
+            lb.push({ name, score: parseInt(finalScore) || 0, level: lvl, id: Date.now() });
             lb.sort((a, b) => b.score - a.score);
             lb = lb.slice(0, 15);
             localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
-            
-            if (window.lbChannel) {
-                window.lbChannel.postMessage({ type: 'SYNC_LB', leaderboard: lb });
-            }
-
-            // Broadcast to all connected peers (phones & spectator laptop)
-            connectedPeers.forEach(c => {
-                if (c && c.open) {
-                    c.send({ type: 'SYNC_LEADERBOARD', leaderboard: lb });
-                }
-            });
+            renderLb();
         }
 
-        if (window.BroadcastChannel) {
-            const bc = new BroadcastChannel('cyberroute_sync_channel');
-            window.lbChannel = bc;
-            bc.onmessage = (event) => {
-                if (event.data.type === 'SYNC_LB') {
-                    localStorage.setItem('cyberroute_global_lb', JSON.stringify(event.data.leaderboard));
-                    const lbView = document.getElementById('lb-view');
-                    if (lbView.classList.contains('active')) renderLb();
-                }
-            };
+        function deleteScore(id) {
+            let lb = getGlobalLeaderboard();
+            lb = lb.filter(item => item.id !== id);
+            localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
+            renderLb();
         }
 
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'cyberroute_global_lb') {
-                const lbView = document.getElementById('lb-view');
-                if (lbView.classList.contains('active')) renderLb();
-            }
-        });
+        document.getElementById('addManualScoreBtn').onclick = () => {
+            playSound('click');
+            const name = document.getElementById('manualName').value.trim();
+            const lvl = document.getElementById('manualLevel').value;
+            const score = document.getElementById('manualScore').value;
+            if (!name || !score) { alert("Please enter both a participant name and a score."); return; }
+            saveGlobalScore(name, score, lvl);
+            document.getElementById('manualName').value = '';
+            document.getElementById('manualScore').value = '';
+        };
+
+        function renderLb() {
+            const data = getGlobalLeaderboard();
+            const body = document.getElementById('lbTableBody');
+            if (!data.length) { body.innerHTML = '<tr><td colspan="5">No active benchmark records saved.</td></tr>'; return; }
+            body.innerHTML = data.map((d, i) => `
+                <tr>
+                    <td>#${i+1}</td>
+                    <td>${d.name}</td>
+                    <td>Level ${d.level}</td>
+                    <td style="color:var(--primary-accent); font-weight:700;">${d.score} pts</td>
+                    <td><button class="btn-danger" onclick="deleteScore(${d.id})">Remove</button></td>
+                </tr>
+            `).join('');
+        }
 
         // --- Navigation & Peer Signaling ---
         const hub = document.getElementById('lobby-hub');
@@ -495,7 +550,6 @@
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('room');
         const isCtrl = window.location.hash.includes('controller') && roomId;
-        const isSpectator = window.location.hash.includes('spectator') && roomId;
 
         if (isCtrl) {
             hub.style.display = 'none'; ctrlView.classList.add('active');
@@ -506,11 +560,6 @@
                 conn.on('open', () => {
                     document.getElementById('connStatus').textContent = "Connected to display host session.";
                     playSound('success');
-                });
-                conn.on('data', data => {
-                    if (data.type === 'SYNC_LEADERBOARD') {
-                        localStorage.setItem('cyberroute_global_lb', JSON.stringify(data.leaderboard));
-                    }
                 });
             });
 
@@ -542,26 +591,6 @@
                     grid.appendChild(b);
                 });
             }
-        } else if (isSpectator) {
-            // Second Laptop configured purely as a live Leaderboard Display Screen
-            hub.style.display = 'none'; lbView.classList.add('active');
-            document.getElementById('backFromLb').style.display = 'none'; // Hide exit back to hub on spectator screen
-            document.getElementById('syncStatusIndicator').textContent = "● Connected to Host Room: " + roomId;
-            renderLb();
-
-            const peer = new Peer();
-            peer.on('open', () => {
-                const specConn = peer.connect(roomId);
-                specConn.on('open', () => {
-                    specConn.send({ type: 'REGISTER_SPECTATOR' });
-                });
-                specConn.on('data', data => {
-                    if (data.type === 'SYNC_LEADERBOARD') {
-                        localStorage.setItem('cyberroute_global_lb', JSON.stringify(data.leaderboard));
-                        renderLb();
-                    }
-                });
-            });
         } else {
             document.getElementById('hubPlayBtn').onclick = () => {
                 playSound('click'); hub.style.display = 'none'; gameView.classList.add('active');
@@ -622,13 +651,9 @@
             });
 
             peer.on('connection', conn => {
-                connectedPeers.push(conn);
                 activePeerConn = conn;
                 conn.on('data', data => {
-                    if (data.type === 'REGISTER_SPECTATOR') {
-                        // Immediately send current leaderboard to the second laptop spectator screen
-                        conn.send({ type: 'SYNC_LEADERBOARD', leaderboard: getGlobalLeaderboard() });
-                    } else if (data.type === 'START') {
+                    if (data.type === 'START') {
                         activePlayer = data.name; activeLevel = parseInt(data.lvl) || 1;
                         score = activeLevel * 100; currentPath = []; aiPathToDisplay = [];
                         currentGraph = getLevelGraph(activeLevel);
@@ -675,9 +700,6 @@
                         currentPath = []; aiPathToDisplay = [];
                         document.getElementById('aiBanner').style.display = 'none';
                         drawComplexGraph(activeLevel, currentPath, aiPathToDisplay);
-                    } else if (data.type === 'SYNC_LEADERBOARD') {
-                        localStorage.setItem('cyberroute_global_lb', JSON.stringify(data.leaderboard));
-                        if (lbView.classList.contains('active')) renderLb();
                     }
                 });
             });
@@ -734,13 +756,6 @@
                     ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke();
                     ctx.fillStyle = '#f8fafc'; ctx.font = '700 11px sans-serif'; ctx.fillText(n.label, n.x, n.y + 4);
                 });
-            }
-
-            function renderLb() {
-                const data = getGlobalLeaderboard();
-                const body = document.getElementById('lbTableBody');
-                if (!data.length) { body.innerHTML = '<tr><td colspan="4">No active benchmark records saved.</td></tr>'; return; }
-                body.innerHTML = data.map((d, i) => `<tr><td>#${i+1}</td><td>${d.name}</td><td>Level ${d.level}</td><td style="color:var(--primary-accent); font-weight:700;">${d.score} pts</td></tr>`).join('');
             }
         }
     </script>
