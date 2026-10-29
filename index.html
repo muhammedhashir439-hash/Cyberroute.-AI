@@ -256,7 +256,7 @@
             <div class="panel">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                     <h2 style="margin:0; font-size:1.3rem; color:#ffffff;">Global Benchmark Leaderboard</h2>
-                    <span style="font-size:0.75rem; color:var(--success-color);">● Live Cloud Sync Active</span>
+                    <span style="font-size:0.75rem; color:var(--success-color);" id="syncStatusIndicator">● Live Cloud Sync Active</span>
                 </div>
                 <table class="lb-table">
                     <thead>
@@ -459,7 +459,7 @@
                 window.lbChannel.postMessage({ type: 'SYNC_LB', leaderboard: lb });
             }
 
-            // Broadcast to all connected peers (phones & second laptop)
+            // Broadcast to all connected peers (phones & spectator laptop)
             connectedPeers.forEach(c => {
                 if (c && c.open) {
                     c.send({ type: 'SYNC_LEADERBOARD', leaderboard: lb });
@@ -495,6 +495,7 @@
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('room');
         const isCtrl = window.location.hash.includes('controller') && roomId;
+        const isSpectator = window.location.hash.includes('spectator') && roomId;
 
         if (isCtrl) {
             hub.style.display = 'none'; ctrlView.classList.add('active');
@@ -509,8 +510,6 @@
                 conn.on('data', data => {
                     if (data.type === 'SYNC_LEADERBOARD') {
                         localStorage.setItem('cyberroute_global_lb', JSON.stringify(data.leaderboard));
-                        const lbView = document.getElementById('lb-view');
-                        if (lbView.classList.contains('active')) renderLb();
                     }
                 });
             });
@@ -543,6 +542,26 @@
                     grid.appendChild(b);
                 });
             }
+        } else if (isSpectator) {
+            // Second Laptop configured purely as a live Leaderboard Display Screen
+            hub.style.display = 'none'; lbView.classList.add('active');
+            document.getElementById('backFromLb').style.display = 'none'; // Hide exit back to hub on spectator screen
+            document.getElementById('syncStatusIndicator').textContent = "● Connected to Host Room: " + roomId;
+            renderLb();
+
+            const peer = new Peer();
+            peer.on('open', () => {
+                const specConn = peer.connect(roomId);
+                specConn.on('open', () => {
+                    specConn.send({ type: 'REGISTER_SPECTATOR' });
+                });
+                specConn.on('data', data => {
+                    if (data.type === 'SYNC_LEADERBOARD') {
+                        localStorage.setItem('cyberroute_global_lb', JSON.stringify(data.leaderboard));
+                        renderLb();
+                    }
+                });
+            });
         } else {
             document.getElementById('hubPlayBtn').onclick = () => {
                 playSound('click'); hub.style.display = 'none'; gameView.classList.add('active');
@@ -606,7 +625,10 @@
                 connectedPeers.push(conn);
                 activePeerConn = conn;
                 conn.on('data', data => {
-                    if (data.type === 'START') {
+                    if (data.type === 'REGISTER_SPECTATOR') {
+                        // Immediately send current leaderboard to the second laptop spectator screen
+                        conn.send({ type: 'SYNC_LEADERBOARD', leaderboard: getGlobalLeaderboard() });
+                    } else if (data.type === 'START') {
                         activePlayer = data.name; activeLevel = parseInt(data.lvl) || 1;
                         score = activeLevel * 100; currentPath = []; aiPathToDisplay = [];
                         currentGraph = getLevelGraph(activeLevel);
@@ -724,5 +746,3 @@
     </script>
 </body>
 </html>
-
-```
