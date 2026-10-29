@@ -1,3 +1,16 @@
+To make the leaderboard sync instantly between **two separate laptops** without needing a complicated cloud database (like Firebase), we can use PeerJS to link the two laptops together over the internet.
+
+Here is how you can set it up so that when a game is played and submitted, **both laptops update their leaderboards in real time**.
+
+### How to connect two laptops:
+
+1. **Laptop 1 (The Main Display):** Open the website normally. It will generate a Room ID (e.g., `cyberroute-4829`).
+2. **Laptop 2 (The Second Display / Leaderboard Screen):** You can open the exact same website on Laptop 2, but add `?sync=LAPTOPTWO` to the URL.
+3. **Peer-to-Peer Data Relay:** We can configure the code so that Laptop 1 and Laptop 2 automatically handshake and share every score submission packet through PeerJS.
+
+Here is the updated, complete single-file `index.html` code with **Direct Laptop-to-Laptop Peer Leaderboard Sync** added. Replace your code with this:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,7 +55,6 @@
             z-index: 0; pointer-events: none;
         }
 
-        /* Fixed Top Status Bar - Never overlaps with canvas text */
         .top-bar {
             width: 100%; max-width: 1250px; display: flex; justify-content: flex-end;
             align-items: center; gap: 24px; font-size: 0.75rem; letter-spacing: 0.1em;
@@ -113,7 +125,6 @@
 
         canvas#mainCanvas { background-color: #030712; border: 1px solid #1e293b; border-radius: 12px; }
 
-        /* Fixed Fullscreen Mode to retain controls, exit buttons, and AI optimization banner */
         #game-workspace.fullscreen-active {
             position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important;
             z-index: 99999; border-radius: 0; border: none; background-color: var(--bg-color) !important;
@@ -176,9 +187,9 @@
             <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">How to Play - CyberRoute AI</h3>
             <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
                 <strong>1. Remote Connection:</strong> Scan the QR code displayed on the laptop screen using your mobile phone to connect your remote controller.<br><br>
-                <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the destination target node before the 90-second countdown timer runs out.<br><br>
+                <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the destination target node within the 50-second timer.<br><br>
                 <strong>3. Strict Graph Connectivity:</strong> You must select adjacent nodes in sequence. Direct jumps between unconnected nodes are restricted!<br><br>
-                <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to achieve maximum score efficiency.
+                <strong>4. Dijkstra Optimization:</strong> Levels 3 to 5 feature complex web meshes. Minimize total edge weights to beat the AI.
             </p>
             <button class="btn-action" id="closeHelpModal">Got It</button>
         </div>
@@ -233,12 +244,11 @@
         </div>
 
         <div class="panel" id="game-workspace" style="flex:1; min-width:400px; display:flex; flex-direction:column; align-items:center;">
-            <!-- Exit Fullscreen Button visible when in Fullscreen Mode -->
             <button class="btn-control" id="exitFsBtn" style="display:none; align-self:flex-start; margin-bottom:10px;">← Exit Fullscreen</button>
             
             <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:12px; font-size:0.9rem; font-weight:600;">
                 <span id="playerDisplay" style="color:var(--text-muted);">Session: Awaiting remote device...</span>
-                <span id="timerDisplay" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px; border:1px solid rgba(239,68,68,0.3);">⏱ 01:30</span>
+                <span id="timerDisplay" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px; border:1px solid rgba(239,68,68,0.3);">⏱ 00:50</span>
                 <span id="scoreDisplay" style="color:var(--primary-accent);">Score: 0</span>
             </div>
 
@@ -248,7 +258,6 @@
 
             <canvas id="mainCanvas" width="480" height="310"></canvas>
 
-            <!-- Prominent AI Optimization Banner -->
             <div id="aiBanner" style="display:none; margin-top:12px; padding:12px; background:rgba(129,140,248,0.2); border:1px solid rgba(129,140,248,0.5); border-radius:8px; font-size:0.95rem; text-align:center; color:#c7d2fe; font-weight:700; width:100%; box-sizing:border-box; box-shadow:0 0 15px rgba(129,140,248,0.2);"></div>
         </div>
     </div>
@@ -289,9 +298,9 @@
                     <select id="levelSelect">
                         <option value="1">Level 1: Basic Topology (A ➔ D)</option>
                         <option value="2">Level 2: Intermediate Mesh (A ➔ F)</option>
-                        <option value="3">Level 3: Advanced Network (A ➔ H)</option>
-                        <option value="4">Level 4: Complex Graph (A ➔ I)</option>
-                        <option value="5" selected>Level 5: Master Mesh (A ➔ L)</option>
+                        <option value="3">Level 3: Complex Web (A ➔ H)</option>
+                        <option value="4">Level 4: Advanced Interlock (A ➔ I)</option>
+                        <option value="5" selected>Level 5: Master Matrix (A ➔ L)</option>
                     </select>
                 </div>
                 <button class="btn-action" id="startSessionBtn">Initialize Session</button>
@@ -300,7 +309,7 @@
             <div id="gamepadForm" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <span id="ctrlTargetBanner" style="font-size:0.85rem; font-weight:600; color:var(--primary-accent);">Route: Node A ➔ Target</span>
-                    <span id="ctrlTimer" style="font-size:0.85rem; font-family:monospace; color:#fca5a5;">⏱ 90s</span>
+                    <span id="ctrlTimer" style="font-size:0.85rem; font-family:monospace; color:#fca5a5;">⏱ 50s</span>
                 </div>
 
                 <p style="font-size:0.8rem; color:var(--text-muted); margin:6px 0;">Select adjacent nodes in valid sequence:</p>
@@ -319,6 +328,7 @@
     </div>
 
     <script>
+        let connectedPeers = [];
         let activePeerConn = null;
 
         // --- World Map Background Canvas ---
@@ -462,9 +472,12 @@
                 window.lbChannel.postMessage({ type: 'SYNC_LB', leaderboard: lb });
             }
 
-            if (activePeerConn && activePeerConn.open) {
-                activePeerConn.send({ type: 'SYNC_LEADERBOARD', leaderboard: lb });
-            }
+            // Broadcast to all connected peers (phones & second laptop)
+            connectedPeers.forEach(c => {
+                if (c && c.open) {
+                    c.send({ type: 'SYNC_LEADERBOARD', leaderboard: lb });
+                }
+            });
         }
 
         if (window.BroadcastChannel) {
@@ -509,6 +522,8 @@
                 conn.on('data', data => {
                     if (data.type === 'SYNC_LEADERBOARD') {
                         localStorage.setItem('cyberroute_global_lb', JSON.stringify(data.leaderboard));
+                        const lbView = document.getElementById('lb-view');
+                        if (lbView.classList.contains('active')) renderLb();
                     }
                 });
             });
@@ -542,7 +557,6 @@
                 });
             }
         } else {
-            // Reliable Home Navigation Buttons
             document.getElementById('hubPlayBtn').onclick = () => {
                 playSound('click'); hub.style.display = 'none'; gameView.classList.add('active');
                 document.getElementById('statusIndicator').textContent = "GAME STATUS: ACTIVE";
@@ -564,14 +578,28 @@
 
             const canvas = document.getElementById('mainCanvas'), ctx = canvas.getContext('2d');
             let activePlayer = "Guest", activeLevel = 5, score = 500;
-            let currentPath = [], aiPathToDisplay = [], currentGraph = null, gameTimer = null, timeLeft = 90;
+            let currentPath = [], aiPathToDisplay = [], currentGraph = null, gameTimer = null, timeLeft = 50;
 
             function getLevelGraph(lvl) {
                 if (lvl === 1) return { nodes: [{x: 90, y: 155, label: 'A'}, {x: 210, y: 85, label: 'B'}, {x: 210, y: 225, label: 'C'}, {x: 390, y: 155, label: 'D'}], edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 5}, {from: 'C', to: 'D', w: 1}], aiPath: ['A', 'C', 'D'], optimalWeight: 3, endNode: 'D' };
                 if (lvl === 2) return { nodes: [{x: 70, y: 155, label: 'A'}, {x: 170, y: 85, label: 'B'}, {x: 170, y: 225, label: 'C'}, {x: 290, y: 85, label: 'D'}, {x: 290, y: 225, label: 'E'}, {x: 410, y: 155, label: 'F'}], edges: [{from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 4}, {from: 'C', to: 'E', w: 3}, {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'F', w: 1}], aiPath: ['A', 'C', 'E', 'F'], optimalWeight: 6, endNode: 'F' };
-                if (lvl === 3) return { nodes: [{x: 55, y: 155, label: 'A'}, {x: 145, y: 80, label: 'B'}, {x: 145, y: 230, label: 'C'}, {x: 235, y: 80, label: 'D'}, {x: 235, y: 230, label: 'E'}, {x: 325, y: 115, label: 'F'}, {x: 325, y: 195, label: 'G'}, {x: 425, y: 155, label: 'H'}], edges: [{from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5}, {from: 'B', to: 'D', w: 3}, {from: 'C', to: 'E', w: 1}, {from: 'D', to: 'F', w: 2}, {from: 'E', to: 'G', w: 2}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'H', w: 3}], aiPath: ['A', 'B', 'D', 'F', 'H'], optimalWeight: 8, endNode: 'H' };
-                if (lvl === 4) return { nodes: [{x: 45, y: 155, label: 'A'}, {x: 125, y: 80, label: 'B'}, {x: 125, y: 230, label: 'C'}, {x: 205, y: 125, label: 'D'}, {x: 205, y: 185, label: 'E'}, {x: 285, y: 80, label: 'F'}, {x: 285, y: 230, label: 'G'}, {x: 360, y: 155, label: 'H'}, {x: 435, y: 155, label: 'I'}], edges: [{from: 'A', to: 'B', w: 2}, {from: 'A', to: 'C', w: 5}, {from: 'B', to: 'D', w: 1}, {from: 'C', to: 'E', w: 2}, {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 1}, {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'H', w: 4}, {from: 'H', to: 'I', w: 2}], aiPath: ['A', 'B', 'D', 'F', 'H', 'I'], optimalWeight: 10, endNode: 'I' };
-                return { nodes: [{x: 45, y: 155, label: 'A'}, {x: 115, y: 80, label: 'B'}, {x: 115, y: 230, label: 'C'}, {x: 185, y: 80, label: 'D'}, {x: 185, y: 155, label: 'E'}, {x: 185, y: 230, label: 'F'}, {x: 255, y: 80, label: 'G'}, {x: 255, y: 230, label: 'H'}, {x: 325, y: 115, label: 'I'}, {x: 325, y: 195, label: 'J'}, {x: 395, y: 155, label: 'K'}, {x: 445, y: 155, label: 'L'}], edges: [{from: 'A', to: 'B', w: 3}, {from: 'A', to: 'C', w: 4}, {from: 'A', to: 'E', w: 6}, {from: 'B', to: 'D', w: 2}, {from: 'B', to: 'E', w: 3}, {from: 'C', to: 'E', w: 1}, {from: 'C', to: 'F', w: 5}, {from: 'D', to: 'G', w: 4}, {from: 'E', to: 'G', w: 2}, {from: 'E', to: 'H', w: 3}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'I', w: 2}, {from: 'H', to: 'J', w: 3}, {from: 'I', to: 'K', w: 2}, {from: 'J', to: 'K', w: 1}, {from: 'K', to: 'L', w: 2}], aiPath: ['A', 'C', 'E', 'H', 'J', 'K', 'L'], optimalWeight: 11, endNode: 'L' };
+                
+                if (lvl === 3) return { 
+                    nodes: [{x: 50, y: 155, label: 'A'}, {x: 140, y: 70, label: 'B'}, {x: 140, y: 240, label: 'C'}, {x: 230, y: 110, label: 'D'}, {x: 230, y: 200, label: 'E'}, {x: 320, y: 70, label: 'F'}, {x: 320, y: 240, label: 'G'}, {x: 430, y: 155, label: 'H'}], 
+                    edges: [{from: 'A', to: 'B', w: 6}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 3}, {from: 'B', to: 'C', w: 4}, {from: 'C', to: 'E', w: 1}, {from: 'D', to: 'E', w: 2}, {from: 'D', to: 'F', w: 5}, {from: 'E', to: 'G', w: 3}, {from: 'F', to: 'G', w: 1}, {from: 'F', to: 'H', w: 7}, {from: 'G', to: 'H', w: 2}, {from: 'E', to: 'F', w: 4}], 
+                    aiPath: ['A', 'C', 'E', 'G', 'H'], optimalWeight: 8, endNode: 'H' 
+                };
+                if (lvl === 4) return { 
+                    nodes: [{x: 45, y: 155, label: 'A'}, {x: 120, y: 75, label: 'B'}, {x: 120, y: 235, label: 'C'}, {x: 195, y: 130, label: 'D'}, {x: 195, y: 180, label: 'E'}, {x: 270, y: 75, label: 'F'}, {x: 270, y: 235, label: 'G'}, {x: 350, y: 155, label: 'H'}, {x: 435, y: 155, label: 'I'}], 
+                    edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 8}, {from: 'B', to: 'D', w: 2}, {from: 'B', to: 'F', w: 6}, {from: 'C', to: 'E', w: 1}, {from: 'C', to: 'G', w: 5}, {from: 'D', to: 'E', w: 2}, {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 4}, {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'H', w: 3}, {from: 'H', to: 'I', w: 5}, {from: 'D', to: 'H', w: 7}, {from: 'E', to: 'H', w: 6}], 
+                    aiPath: ['A', 'B', 'D', 'F', 'H', 'I'], optimalWeight: 14, endNode: 'I' 
+                };
+                
+                return { 
+                    nodes: [{x: 40, y: 155, label: 'A'}, {x: 110, y: 75, label: 'B'}, {x: 110, y: 235, label: 'C'}, {x: 175, y: 75, label: 'D'}, {x: 175, y: 155, label: 'E'}, {x: 175, y: 235, label: 'F'}, {x: 245, y: 75, label: 'G'}, {x: 245, y: 235, label: 'H'}, {x: 315, y: 110, label: 'I'}, {x: 315, y: 200, label: 'J'}, {x: 385, y: 155, label: 'K'}, {x: 445, y: 155, label: 'L'}], 
+                    edges: [{from: 'A', to: 'B', w: 5}, {from: 'A', to: 'C', w: 2}, {from: 'A', to: 'E', w: 9}, {from: 'B', to: 'D', w: 1}, {from: 'B', to: 'E', w: 4}, {from: 'C', to: 'E', w: 3}, {from: 'C', to: 'F', w: 6}, {from: 'D', to: 'G', w: 2}, {from: 'E', to: 'D', w: 2}, {from: 'E', to: 'F', w: 2}, {from: 'E', to: 'H', w: 5}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'I', w: 4}, {from: 'H', to: 'J', w: 2}, {from: 'E', to: 'G', w: 3}, {from: 'F', to: 'J', w: 4}, {from: 'I', to: 'K', w: 1}, {from: 'J', to: 'K', w: 3}, {from: 'K', to: 'L', w: 2}, {from: 'I', to: 'L', w: 8}], 
+                    aiPath: ['A', 'C', 'F', 'H', 'J', 'K', 'L'], optimalWeight: 14, endNode: 'L' 
+                };
             }
 
             currentGraph = getLevelGraph(activeLevel);
@@ -588,6 +616,7 @@
             });
 
             peer.on('connection', conn => {
+                connectedPeers.push(conn);
                 activePeerConn = conn;
                 conn.on('data', data => {
                     if (data.type === 'START') {
@@ -644,7 +673,7 @@
                 });
             });
 
-            function startTimer() { clearInterval(gameTimer); timeLeft = 90; updateTimer(); gameTimer = setInterval(() => { timeLeft--; updateTimer(); if (timeLeft <= 0) clearInterval(gameTimer); }, 1000); }
+            function startTimer() { clearInterval(gameTimer); timeLeft = 50; updateTimer(); gameTimer = setInterval(() => { timeLeft--; updateTimer(); if (timeLeft <= 0) clearInterval(gameTimer); }, 1000); }
             function stopTimer() { clearInterval(gameTimer); }
             function updateTimer() { document.getElementById('timerDisplay').textContent = `⏱ ${String(Math.floor(timeLeft / 60)).padStart(2, '0')}:${String(timeLeft % 60).padStart(2, '0')}`; }
             function calcWeight(graph, path) {
@@ -660,7 +689,6 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 const graph = currentGraph;
                 
-                // Moved title slightly higher to completely prevent overlapping with the top status bar
                 ctx.fillStyle = '#94a3b8'; ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText(`Network Topology Lvl ${lvl}`, canvas.width / 2, 16);
 
@@ -709,3 +737,5 @@
     </script>
 </body>
 </html>
+
+```
