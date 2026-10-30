@@ -112,7 +112,7 @@
 
         .split-canvas-container { display: flex; gap: 16px; width: 100%; justify-content: center; flex-wrap: wrap; }
         .canvas-box { display: flex; flex-direction: column; align-items: center; background: rgba(3, 7, 18, 0.6); border: 1px solid #1e293b; border-radius: 12px; padding: 12px; }
-        canvas.gameCanvas { background-color: #030712; border: 1px solid #1e293b; border-radius: 8px; width: 420px; height: 280px; }
+        canvas.gameCanvas { background-color: #030712; border: 1px solid #1e293b; border-radius: 8px; width: min(420px, 100%); height: auto; aspect-ratio: 3 / 2; }
 
         .lb-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         .lb-table th, .lb-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid #1e293b; font-size: 0.95rem; }
@@ -183,7 +183,7 @@
             <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">How to Play - CyberRoute AI</h3>
             <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
                 <strong>1. Solo or Versus Mode:</strong> Choose Single Player or 2-Player Versus mode (with 3 difficulty levels) from the main menu.<br><br>
-                <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the target node within the 50-second timer.<br><br>
+                <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the target node within the 40-second timer.<br><br>
                 <strong>3. Strict Graph Connectivity:</strong> Select adjacent nodes sequentially. Direct jumps between unconnected nodes are blocked!<br><br>
                 <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to beat your opponent or the AI!
             </p>
@@ -210,13 +210,11 @@
         <div class="panel modal-content">
             <h3 style="margin-top:0; color:var(--secondary-accent); font-size:1.3rem;">Configure 2-Player Versus</h3>
             <div class="form-field" style="margin-top:14px;">
-                <label>Select Multiplayer Complexity Tier</label>
+                <label>Select Multiplayer Difficulty (3 tiers)</label>
                 <select id="versusLevelSelect">
-                 <option value="1">Versus Level 1: Basic Topology (A → D)</option>
-                 <option value="2">Versus Level 2: Intermediate Mesh (A → I)</option>
-                 <option value="3">Versus Level 3: Master Matrix (A → L)</option>
-                 <option value="4">Versus Level 4: Complex Network (A → L)</option>
-                 <option value="5" selected>Versus Level 5: Extreme Network (A → L)</option>
+                    <option value="1">Versus Level 1: Standard Mesh (A ➔ D)</option>
+                    <option value="2">Versus Level 2: Advanced Interlock (A ➔ I)</option>
+                    <option value="3" selected>Versus Level 3: Master Matrix (A ➔ L - Extreme)</option>
                 </select>
             </div>
             <button class="btn-action" id="confirmVersusBtn" style="background:var(--secondary-accent); color:#030712;">Start Versus Match</button>
@@ -368,11 +366,11 @@
                 <div class="form-field" id="soloLevelGroup">
                     <label>Graph Complexity Level</label>
                     <select id="levelSelect">
-                       <option value="1">Level 1: Basic Topology (A → D)</option>
-                       <option value="2">Level 2: Intermediate Mesh (A → I)</option>
-                       <option value="3">Level 3: Master Matrix (A → L)</option>
-                       <option value="4">Level 4: Complex Network (A → L)</option>
-                       <option value="5" selected>Level 5: Extreme Network (A → L)</option>
+                        <option value="1">Level 1: Basic Topology (A ➔ D)</option>
+                        <option value="2">Level 2: Intermediate Mesh (A ➔ I)</option>
+                        <option value="3">Level 3: Complex Web (A ➔ L)</option>
+                        <option value="4">Level 4: Advanced Interlock (A ➔ J)</option>
+                        <option value="5" selected>Level 5: Master Matrix (A ➔ L)</option>
                     </select>
                 </div>
                 <button class="btn-action" id="startSessionBtn">Initialize Session</button>
@@ -381,7 +379,7 @@
             <div id="gamepadForm" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <span id="ctrlTargetBanner" style="font-size:0.85rem; font-weight:600; color:var(--primary-accent);">Route: Node A ➔ Target</span>
-                    <span id="ctrlTimer" style="font-size:0.85rem; font-family:monospace; color:#fca5a5;">⏱ 50s</span>
+                    <span id="ctrlTimer" style="font-size:0.85rem; font-family:monospace; color:#fca5a5;">⏱ 40s</span>
                 </div>
 
                 <p style="font-size:0.8rem; color:var(--text-muted); margin:6px 0;">Select adjacent nodes in valid sequence:</p>
@@ -399,12 +397,6 @@
     </div>
 
     <script>
-conn.on('data', data => {
-    if (data.type === 'TIMER') {
-        document.getElementById('ctrlTimer').textContent =
-            `⏱ ${data.time}s`;
-    }
-});
         // --- World Map Background Canvas ---
         function initWorldMapBackground() {
             const bgCanvas = document.getElementById('bgMapCanvas');
@@ -533,15 +525,14 @@ conn.on('data', data => {
             const peer = new Peer(); let conn;
             peer.on('open', () => {
                 conn = peer.connect(roomId);
-                conn.on('open', () => {
-                    document.getElementById('connStatus').textContent = "Connected to host session.";
-                    playSound('click');
-                });
+                conn.on('open', () => { document.getElementById('connStatus').textContent = 'Connected to host session.'; playSound('click'); });
+                conn.on('data', data => { if(data.type==='CONFIG'){ renderBtns(1,conn,data.labels); document.getElementById('ctrlTargetBanner').textContent=`Route: Node A ➔ ${data.target}`; document.getElementById('ctrlTimer').textContent='⏱ 40s'; } else if(data.type==='TIMER'){ document.getElementById('ctrlTimer').textContent=`⏱ ${data.seconds}s`; } else if(data.type==='NOTICE'){ document.getElementById('connStatus').textContent=data.message; } });
             });
             document.getElementById('startSessionBtn').onclick = () => {
                 const name = document.getElementById('playerNameInput').value.trim();
                 const lvl = document.getElementById('levelSelect').value;
                 if (!name) { alert("Enter participant name."); return; }
+                if (!conn || !conn.open) { alert('Controller is not connected yet. Please wait a moment and try again.'); return; }
                 conn.send({ type: 'START', name, lvl });
                 document.getElementById('setupForm').style.display = 'none';
                 document.getElementById('gamepadForm').style.display = 'block';
@@ -551,15 +542,20 @@ conn.on('data', data => {
             document.getElementById('aiBtn').onclick = () => { conn.send({ type: 'AI' }); };
             document.getElementById('resetBtn').onclick = () => { conn.send({ type: 'RESET' }); };
 
-            function renderBtns(lvl, connection) {
-                const grid = document.getElementById('nodeBtnGrid'); grid.innerHTML = '';
-               const labels = ['A','B','C','D','E','F','G','H','I','J','K','L'].slice(0, lvl == 1 ? 4 : lvl == 2 ? 9 : 12);
-                labels.forEach(l => {
-                    const b = document.createElement('button'); b.textContent = 'Node ' + l;
-                    b.onclick = () => { playSound('click'); connection.send({ type: 'NODE', node: l }); };
+            function renderBtns(lvl, connection, labelsOverride) {
+                const grid = document.getElementById('nodeBtnGrid');
+                grid.innerHTML = '';
+                const counts = {1:4, 2:9, 3:12, 4:10, 5:12};
+                const all = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+                const labels = labelsOverride || all.slice(0, counts[Number(lvl)] || 12);
+                labels.forEach(label => {
+                    const b = document.createElement('button');
+                    b.type = 'button'; b.textContent = 'Node ' + label;
+                    b.onclick = () => { playSound('click'); if (connection && connection.open) connection.send({type:'NODE', node:label}); };
                     grid.appendChild(b);
                 });
             }
+
         } else {
             document.getElementById('hubPlayBtn').onclick = () => {
                 hub.style.display = 'none'; gameView.classList.add('active');
@@ -590,202 +586,35 @@ conn.on('data', data => {
 
             // 3 Levels for Multiplayer / Solo Graphs
             function getGraph(lvl) {
-                function getGraph(lvl) {
-
-    // LEVEL 1 — SIMPLE NETWORK (A to D)
-    if (lvl == 1) {
-        return {
-            nodes: [
-                {x:80,y:140,label:'A'},
-                {x:180,y:70,label:'B'},
-                {x:180,y:210,label:'C'},
-                {x:340,y:140,label:'D'}
-            ],
-            edges: [
-                {from:'A',to:'B',w:4},
-                {from:'A',to:'C',w:2},
-                {from:'B',to:'D',w:5},
-                {from:'C',to:'D',w:1}
-            ],
-            aiPath:['A','C','D'],
-            optimalWeight:3,
-            endNode:'D'
-        };
-    }
-
-    // LEVEL 2 — ADVANCED INTERLOCK (A to I)
-    else if (lvl == 2) {
-        return {
-            nodes: [
-                {x:45,y:140,label:'A'},
-                {x:120,y:75,label:'B'},
-                {x:120,y:205,label:'C'},
-                {x:195,y:110,label:'D'},
-                {x:195,y:170,label:'E'},
-                {x:270,y:75,label:'F'},
-                {x:270,y:205,label:'G'},
-                {x:350,y:140,label:'H'},
-                {x:410,y:140,label:'I'}
-            ],
-            edges: [
-                {from:'A',to:'B',w:4},
-                {from:'A',to:'C',w:7},
-                {from:'B',to:'D',w:2},
-                {from:'B',to:'F',w:5},
-                {from:'C',to:'E',w:1},
-                {from:'C',to:'G',w:4},
-                {from:'D',to:'E',w:2},
-                {from:'D',to:'F',w:3},
-                {from:'E',to:'G',w:3},
-                {from:'F',to:'H',w:2},
-                {from:'G',to:'H',w:3},
-                {from:'H',to:'I',w:4},
-                {from:'D',to:'H',w:6}
-            ],
-            aiPath:['A','B','D','F','H','I'],
-            optimalWeight:14,
-            endNode:'I'
-        };
-    }
-
-    // LEVEL 3 — MASTER MATRIX (A to L)
-    else if (lvl == 3) {
-        return {
-            nodes: [
-                {x:40,y:140,label:'A'},
-                {x:105,y:70,label:'B'},
-                {x:105,y:210,label:'C'},
-                {x:170,y:70,label:'D'},
-                {x:170,y:140,label:'E'},
-                {x:170,y:210,label:'F'},
-                {x:235,y:70,label:'G'},
-                {x:235,y:210,label:'H'},
-                {x:300,y:100,label:'I'},
-                {x:300,y:180,label:'J'},
-                {x:360,y:140,label:'K'},
-                {x:410,y:140,label:'L'}
-            ],
-            edges: [
-                {from:'A',to:'B',w:5},
-                {from:'A',to:'C',w:2},
-                {from:'A',to:'E',w:8},
-                {from:'B',to:'D',w:1},
-                {from:'B',to:'E',w:4},
-                {from:'C',to:'E',w:3},
-                {from:'C',to:'F',w:6},
-                {from:'D',to:'G',w:2},
-                {from:'E',to:'D',w:2},
-                {from:'E',to:'F',w:2},
-                {from:'E',to:'H',w:5},
-                {from:'F',to:'H',w:1},
-                {from:'G',to:'I',w:4},
-                {from:'H',to:'J',w:2},
-                {from:'E',to:'G',w:3},
-                {from:'F',to:'J',w:4},
-                {from:'I',to:'K',w:1},
-                {from:'J',to:'K',w:3},
-                {from:'K',to:'L',w:2},
-                {from:'I',to:'L',w:7}
-            ],
-            aiPath:['A','B','D','G','I','K','L'],
-            optimalWeight:15,
-            endNode:'L'
-        };
-    }
-
-    // LEVEL 4 — COMPLEX NETWORK (A to L)
-    else if (lvl == 4) {
-        return {
-            nodes: [
-                {x:40,y:140,label:'A'},
-                {x:105,y:55,label:'B'},
-                {x:105,y:140,label:'C'},
-                {x:105,y:225,label:'D'},
-                {x:180,y:55,label:'E'},
-                {x:180,y:140,label:'F'},
-                {x:180,y:225,label:'G'},
-                {x:260,y:55,label:'H'},
-                {x:260,y:140,label:'I'},
-                {x:260,y:225,label:'J'},
-                {x:340,y:100,label:'K'},
-                {x:410,y:140,label:'L'}
-            ],
-            edges: [
-                {from:'A',to:'B',w:6},
-                {from:'A',to:'C',w:3},
-                {from:'A',to:'D',w:7},
-                {from:'B',to:'E',w:2},
-                {from:'B',to:'F',w:5},
-                {from:'C',to:'E',w:4},
-                {from:'C',to:'F',w:6},
-                {from:'C',to:'G',w:3},
-                {from:'D',to:'F',w:4},
-                {from:'D',to:'G',w:2},
-                {from:'E',to:'H',w:5},
-                {from:'E',to:'I',w:3},
-                {from:'F',to:'H',w:4},
-                {from:'F',to:'I',w:2},
-                {from:'F',to:'J',w:5},
-                {from:'G',to:'I',w:4},
-                {from:'G',to:'J',w:3},
-                {from:'H',to:'K',w:3},
-                {from:'I',to:'K',w:2},
-                {from:'J',to:'K',w:5},
-                {from:'K',to:'L',w:4}
-            ],
-            aiPath:['A','C','G','J','K','L'],
-            optimalWeight:17,
-            endNode:'L'
-        };
-    }
-
-    // LEVEL 5 — EXTREME NETWORK (A to L)
-    else {
-        return {
-            nodes: [
-                {x:40,y:140,label:'A'},
-                {x:105,y:50,label:'B'},
-                {x:105,y:140,label:'C'},
-                {x:105,y:230,label:'D'},
-                {x:175,y:50,label:'E'},
-                {x:175,y:140,label:'F'},
-                {x:175,y:230,label:'G'},
-                {x:250,y:50,label:'H'},
-                {x:250,y:140,label:'I'},
-                {x:250,y:230,label:'J'},
-                {x:340,y:90,label:'K'},
-                {x:410,y:140,label:'L'}
-            ],
-            edges: [
-                {from:'A',to:'B',w:2},
-                {from:'A',to:'C',w:6},
-                {from:'A',to:'D',w:5},
-                {from:'B',to:'E',w:2},
-                {from:'B',to:'F',w:7},
-                {from:'C',to:'E',w:3},
-                {from:'C',to:'F',w:5},
-                {from:'C',to:'G',w:4},
-                {from:'D',to:'F',w:6},
-                {from:'D',to:'G',w:2},
-                {from:'E',to:'H',w:3},
-                {from:'E',to:'I',w:6},
-                {from:'F',to:'H',w:4},
-                {from:'F',to:'I',w:5},
-                {from:'F',to:'J',w:3},
-                {from:'G',to:'I',w:4},
-                {from:'G',to:'J',w:2},
-                {from:'H',to:'K',w:4},
-                {from:'I',to:'K',w:3},
-                {from:'I',to:'L',w:8},
-                {from:'J',to:'K',w:5},
-                {from:'K',to:'L',w:2}
-            ],
-            aiPath:['A','B','E','H','K','L'],
-            optimalWeight:13,
-            endNode:'L'
-        };
-    }
-}
+                const graphs = {
+                    1: {
+                        nodes:[{x:80,y:140,label:'A'},{x:180,y:70,label:'B'},{x:180,y:210,label:'C'},{x:340,y:140,label:'D'}],
+                        edges:[{from:'A',to:'B',w:4},{from:'A',to:'C',w:2},{from:'B',to:'D',w:5},{from:'C',to:'D',w:1}],
+                        aiPath:['A','C','D'],optimalWeight:3,endNode:'D'
+                    },
+                    2: {
+                        nodes:[{x:45,y:140,label:'A'},{x:105,y:65,label:'B'},{x:105,y:215,label:'C'},{x:175,y:65,label:'D'},{x:175,y:215,label:'E'},{x:245,y:65,label:'F'},{x:245,y:215,label:'G'},{x:330,y:140,label:'H'},{x:420,y:140,label:'I'}],
+                        edges:[{from:'A',to:'B',w:4},{from:'A',to:'C',w:7},{from:'B',to:'D',w:2},{from:'B',to:'F',w:5},{from:'C',to:'E',w:1},{from:'C',to:'G',w:4},{from:'D',to:'E',w:2},{from:'D',to:'F',w:3},{from:'E',to:'G',w:3},{from:'F',to:'H',w:2},{from:'G',to:'H',w:3},{from:'H',to:'I',w:4},{from:'D',to:'H',w:6}],
+                        aiPath:['A','B','D','F','H','I'],optimalWeight:15,endNode:'I'
+                    },
+                    3: {
+                        nodes:[{x:40,y:140,label:'A'},{x:105,y:70,label:'B'},{x:105,y:210,label:'C'},{x:170,y:70,label:'D'},{x:170,y:140,label:'E'},{x:170,y:210,label:'F'},{x:235,y:70,label:'G'},{x:235,y:210,label:'H'},{x:300,y:100,label:'I'},{x:300,y:180,label:'J'},{x:360,y:140,label:'K'},{x:410,y:140,label:'L'}],
+                        edges:[{from:'A',to:'B',w:5},{from:'A',to:'C',w:2},{from:'A',to:'E',w:8},{from:'B',to:'D',w:1},{from:'B',to:'E',w:4},{from:'C',to:'E',w:3},{from:'C',to:'F',w:6},{from:'D',to:'G',w:2},{from:'E',to:'D',w:2},{from:'E',to:'F',w:2},{from:'E',to:'H',w:5},{from:'F',to:'H',w:1},{from:'G',to:'I',w:4},{from:'H',to:'J',w:2},{from:'E',to:'G',w:3},{from:'F',to:'J',w:4},{from:'I',to:'K',w:1},{from:'J',to:'K',w:3},{from:'K',to:'L',w:2},{from:'I',to:'L',w:7}],
+                        aiPath:['A','C','F','H','J','K','L'],optimalWeight:14,endNode:'L'
+                    },
+                    4: {
+                        nodes:[{x:45,y:140,label:'A'},{x:105,y:55,label:'B'},{x:105,y:225,label:'C'},{x:175,y:55,label:'D'},{x:175,y:140,label:'E'},{x:175,y:225,label:'F'},{x:255,y:55,label:'G'},{x:255,y:225,label:'H'},{x:335,y:90,label:'I'},{x:410,y:140,label:'J'}],
+                        edges:[{from:'A',to:'B',w:3},{from:'A',to:'C',w:6},{from:'B',to:'D',w:2},{from:'B',to:'E',w:5},{from:'C',to:'E',w:2},{from:'C',to:'F',w:4},{from:'D',to:'E',w:1},{from:'D',to:'G',w:6},{from:'E',to:'F',w:3},{from:'E',to:'G',w:2},{from:'E',to:'H',w:5},{from:'F',to:'H',w:1},{from:'G',to:'I',w:3},{from:'H',to:'I',w:4},{from:'I',to:'J',w:2}],
+                        aiPath:['A','B','D','E','G','I','J'],optimalWeight:13,endNode:'J'
+                    },
+                    5: {
+                        nodes:[{x:35,y:140,label:'A'},{x:90,y:55,label:'B'},{x:90,y:225,label:'C'},{x:150,y:55,label:'D'},{x:150,y:140,label:'E'},{x:150,y:225,label:'F'},{x:220,y:55,label:'G'},{x:220,y:140,label:'H'},{x:220,y:225,label:'I'},{x:300,y:70,label:'J'},{x:300,y:210,label:'K'},{x:410,y:140,label:'L'}],
+                        edges:[{from:'A',to:'B',w:6},{from:'A',to:'C',w:2},{from:'A',to:'E',w:5},{from:'B',to:'D',w:2},{from:'B',to:'E',w:3},{from:'C',to:'E',w:2},{from:'C',to:'F',w:5},{from:'D',to:'G',w:3},{from:'D',to:'H',w:4},{from:'E',to:'H',w:2},{from:'E',to:'F',w:4},{from:'F',to:'I',w:2},{from:'G',to:'J',w:2},{from:'H',to:'J',w:3},{from:'H',to:'K',w:4},{from:'I',to:'K',w:2},{from:'J',to:'L',w:5},{from:'K',to:'L',w:2}],
+                        aiPath:['A','C','E','H','K','L'],optimalWeight:10,endNode:'L'
+                    }
+                };
+                return graphs[Math.max(1,Math.min(5,Number(lvl)||1))];
+            }
 
             function drawGraphOnCanvas(canvas, lvl, path) {
                 const ctx = canvas.getContext('2d');
@@ -823,147 +652,101 @@ conn.on('data', data => {
             // --- Solo Game Logic ---
             function initSoloGame() {
                 const canvas = document.getElementById('mainCanvas');
-                let path = [], score = 500, lvl = 5, graph = getGraph(5);
-                let timeLeft = 40;
-let timerInterval = null;
-let gameOver = false;
-
-function startTimer(connection) {
-    clearInterval(timerInterval);
-
-    timeLeft = 40;
-    gameOver = false;
-
-    function updateTimer() {
-        const display = `⏱ 00:${String(timeLeft).padStart(2, '0')}`;
-
-        document.getElementById('timerDisplay').textContent = display;
-
-        if (connection && connection.open) {
-            connection.send({ type: 'TIMER', time: timeLeft });
-        }
-
-        if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            gameOver = true;
-            document.getElementById('aiBanner').textContent = '⏰ TIME UP! Game Over.';
-            document.getElementById('aiBanner').style.display = 'block';
-            return;
-        }
-
-        timeLeft--;
-    }
-
-    updateTimer();
-    timerInterval = setInterval(updateTimer, 1000);
-}
-                drawGraphOnCanvas(canvas, lvl, path);
-
+                let path = [], score = 0, lvl = 1, graph = getGraph(1), seconds = 40, timer = null, finished = false, activeConn = null;
+                const timerEl = document.getElementById('timerDisplay');
+                const banner = document.getElementById('aiBanner');
+                function updateTimer(){ timerEl.textContent = `⏱ 00:${String(seconds).padStart(2,'0')}`; }
+                function stopTimer(){ if(timer){clearInterval(timer);timer=null;} }
+                function finish(message){ if(finished)return; finished=true; stopTimer(); banner.textContent=message; banner.style.display='block'; }
+                function startTimer(){ stopTimer(); seconds=40; updateTimer(); timer=setInterval(()=>{seconds--;updateTimer();if(activeConn && activeConn.open)activeConn.send({type:'TIMER',seconds});if(seconds<=0)finish(`⏰ Time is up! Your route score: ${score}`);},1000); }
+                function draw(){ drawGraphOnCanvas(canvas,lvl,path); document.getElementById('scoreDisplay').textContent=`Score: ${score}`; }
+                draw(); updateTimer();
                 const peerId = 'cyberroute-solo-' + Math.floor(1000 + Math.random()*9000);
                 const peer = new Peer(peerId);
                 peer.on('open', id => {
                     const url = `${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;
-                    document.getElementById('urlText').textContent = url;
-                    document.getElementById('qrcode').innerHTML = "";
-                    new QRCode(document.getElementById('qrcode'), { text: url, width: 120, height: 120 });
+                    document.getElementById('urlText').textContent=url;
+                    document.getElementById('qrcode').innerHTML='';
+                    new QRCode(document.getElementById('qrcode'),{text:url,width:120,height:120});
                 });
-
                 peer.on('connection', conn => {
+                    activeConn = conn;
                     conn.on('data', data => {
-                        if (data.type === 'START') {
-                            lvl = parseInt(data.lvl) || 5; graph = getGraph(lvl); path = ['A']; score = lvl * 100;
-                            document.getElementById('playerDisplay').textContent = `Player: ${data.name} (Lvl ${lvl})`;
-                            drawGraphOnCanvas(canvas, lvl, path);
-                        } else if (data.type === 'NODE') {
-                            const last = path[path.length - 1];
-                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
-                            if (!path.includes(data.node) && (path.length === 0 || connValid)) {
-                                path.push(data.node); score += 25;
-                                document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
-                                drawGraphOnCanvas(canvas, lvl, path);
-                            }
-                        } else if (data.type === 'SUBMIT') {
-                            saveGlobalScore(document.getElementById('playerDisplay').textContent.split(': ')[1] || 'Guest', score, lvl);
-                            document.getElementById('aiBanner').textContent = `✅ Route submitted successfully! Score saved.`;
-                            document.getElementById('aiBanner').style.display = 'block';
+                        if(data.type==='START'){
+                            lvl=Math.max(1,Math.min(5,parseInt(data.lvl)||1)); graph=getGraph(lvl); path=['A']; score=500; finished=false; banner.style.display='none';
+                            document.getElementById('playerDisplay').textContent=`Player: ${data.name} (Lvl ${lvl})`;
+                            conn.send({type:'CONFIG',labels:graph.nodes.map(n=>n.label),target:graph.endNode,seconds:40}); startTimer(); draw();
+                        } else if(data.type==='NODE' && !finished){
+                            const last=path[path.length-1];
+                            const valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
+                            if(!path.includes(data.node)&&valid){path.push(data.node);score+=25;draw();}
+                        } else if(data.type==='RESET' && !finished){path=['A'];score=500;draw();}
+                        else if(data.type==='AI' && !finished){path=graph.aiPath.slice();score+=25*path.length;draw();}
+                        else if(data.type==='SUBMIT' && !finished){
+                            if(path[path.length-1]!==graph.endNode){banner.style.display='block';banner.textContent=`Keep going! Reach target node ${graph.endNode} before submitting.`;return;}
+                            saveGlobalScore(document.getElementById('playerDisplay').textContent.split(': ')[1]||'Guest',score,lvl);
+                            finish(`✅ Route completed! Score: ${score}. Target ${graph.endNode} reached.`);
                         }
                     });
                 });
             }
 
-            // --- Versus Game Logic (Option C with 3 Complexity Tiers) ---
-            function initVersusGame(selectedLvl) {
-                const c1 = document.getElementById('canvasP1'), c2 = document.getElementById('canvasP2');
-                let p1Path = ['A'], p2Path = ['A'], p1Score = 500, p2Score = 500, lvl = parseInt(selectedLvl) || 3;
-                let graph = getGraph(lvl);
-
-                document.getElementById('p1TitleLabel').textContent = `PLAYER 1 NETWORK (Tier ${lvl})`;
-                document.getElementById('p2TitleLabel').textContent = `PLAYER 2 NETWORK (Tier ${lvl})`;
-
-                drawGraphOnCanvas(c1, lvl, p1Path); drawGraphOnCanvas(c2, lvl, p2Path);
-
-                const id1 = 'cyberroute-p1-' + Math.floor(1000 + Math.random()*9000);
-                const id2 = 'cyberroute-p2-' + Math.floor(1000 + Math.random()*9000);
-
-                const peerP1 = new Peer(id1);
-                peerP1.on('open', id => {
-                    const url1 = `${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;
-                    document.getElementById('urlTextP1').textContent = url1;
-                    document.getElementById('qrcodeP1').innerHTML = "";
-                    new QRCode(document.getElementById('qrcodeP1'), { text: url1, width: 110, height: 110 });
-                });
-                peerP1.on('connection', conn => {
-                    conn.on('data', data => {
-                        if (data.type === 'START') {
-                            document.getElementById('p1StatusHeader').textContent = `P1: ${data.name} (Active)`;
-                            document.getElementById('versusStatus').textContent = "P1 Ready! Waiting for P2...";
-                        } else if (data.type === 'NODE') {
-                            const last = p1Path[p1Path.length - 1];
-                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
-                            if (!p1Path.includes(data.node) && connValid) { 
-                                p1Path.push(data.node); p1Score += 25; 
-                            }
-                            drawGraphOnCanvas(c1, lvl, p1Path);
-                            document.getElementById('scoreP1').textContent = `Score: ${p1Score}`;
-                        } else if (data.type === 'SUBMIT') {
-                            document.getElementById('versusWinnerBanner').textContent = `🏆 Player 1 Finished with score ${p1Score}!`;
-                            document.getElementById('versusWinnerBanner').style.display = 'block';
-                            saveGlobalScore('P1: ' + document.getElementById('p1StatusHeader').textContent, p1Score, lvl);
-                        }
-                    });
-                });
-
-                const peerP2 = new Peer(id2);
-                peerP2.on('open', id => {
-                    const url2 = `${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;
-                    document.getElementById('urlTextP2').textContent = url2;
-                    document.getElementById('qrcodeP2').innerHTML = "";
-                    new QRCode(document.getElementById('qrcodeP2'), { text: url2, width: 110, height: 110 });
-                });
-                peerP2.on('connection', conn => {
-                    conn.on('data', data => {
-                        if (data.type === 'START') {
-                            document.getElementById('p2StatusHeader').textContent = `P2: ${data.name} (Active)`;
-                            document.getElementById('versusStatus').textContent = "Both players connected! Race underway!";
-                        } else if (data.type === 'NODE') {
-                            const last = p2Path[p2Path.length - 1];
-                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
-                            if (!p2Path.includes(data.node) && connValid) { 
-                                p2Path.push(data.node); p2Score += 25; 
-                            }
-                            drawGraphOnCanvas(c2, lvl, p2Path);
-                            document.getElementById('scoreP2').textContent = `Score: ${p2Score}`;
-                        } else if (data.type === 'SUBMIT') {
-                            document.getElementById('versusWinnerBanner').textContent = `🏆 Player 2 Finished with score ${p2Score}!`;
-                            document.getElementById('versusWinnerBanner').style.display = 'block';
-                            saveGlobalScore('P2: ' + document.getElementById('p2StatusHeader').textContent, p2Score, lvl);
-                        }
-                    });
-                });
+            // --- Versus Game Logic: 3 multiplayer tiers mapped to distinct graphs ---
+            function initVersusGame(selectedTier) {
+                const c1=document.getElementById('canvasP1'), c2=document.getElementById('canvasP2');
+                const tier=Math.max(1,Math.min(3,parseInt(selectedTier)||1));
+                const lvl=[1,3,5][tier-1];
+                const graph=getGraph(lvl);
+                let p1Path=['A'],p2Path=['A'],p1Score=500,p2Score=500,p1Done=false,p2Done=false,seconds=40,timer=null;
+                const playerConnections={1:null,2:null};
+                const banner=document.getElementById('versusWinnerBanner');
+                banner.style.display='none';
+                document.getElementById('p1TitleLabel').textContent=`PLAYER 1 NETWORK (Tier ${tier})`;
+                document.getElementById('p2TitleLabel').textContent=`PLAYER 2 NETWORK (Tier ${tier})`;
+                document.getElementById('versusTimer').textContent='⏱ 00:40';
+                function draw(which){
+                    if(which===1){drawGraphOnCanvas(c1,lvl,p1Path);document.getElementById('scoreP1').textContent=`Score: ${p1Score} | Nodes: ${p1Path.length}`;}
+                    else{drawGraphOnCanvas(c2,lvl,p2Path);document.getElementById('scoreP2').textContent=`Score: ${p2Score} | Nodes: ${p2Path.length}`;}
+                }
+                function finish(reason){if(timer){clearInterval(timer);timer=null;}p1Done=true;p2Done=true;
+                    let winner=p1Score===p2Score?'It is a tie!':p1Score>p2Score?'🏆 Player 1 wins!':'🏆 Player 2 wins!';
+                    banner.textContent=`${reason} ${winner} Final scores — P1: ${p1Score}, P2: ${p2Score}.`;banner.style.display='block';
+                }
+                function maybeFinish(){if(p1Done&&p2Done)finish('Both players completed.');}
+                function startClock(){if(timer)clearInterval(timer);seconds=40;timer=setInterval(()=>{seconds--;document.getElementById('versusTimer').textContent=`⏱ 00:${String(Math.max(0,seconds)).padStart(2,'0')}`;Object.values(playerConnections).forEach(c=>{if(c&&c.open)c.send({type:'TIMER',seconds});});if(seconds<=0)finish('⏰ Time is up.');},1000);}
+                function handlePlayer(player,data,conn){
+                    const isOne=player===1, path=isOne?p1Path:p2Path, done=isOne?p1Done:p2Done;
+                    if(data.type==='START'){
+                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: ${data.name} (Active)`;
+                        conn.send({type:'CONFIG',labels:graph.nodes.map(n=>n.label),target:graph.endNode,seconds:40});
+                        const bothReady=document.getElementById('p1StatusHeader').textContent.includes('(Active)')&&document.getElementById('p2StatusHeader').textContent.includes('(Active)');
+                        document.getElementById('versusStatus').textContent=bothReady?'Both players connected! Race underway!':`Player ${player} ready. Waiting for the other player...`;
+                        if(bothReady&&!timer)startClock();
+                    } else if(data.type==='NODE'&&!done){
+                        const last=path[path.length-1],valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
+                        if(!path.includes(data.node)&&valid){path.push(data.node);if(isOne)p1Score+=25;else p2Score+=25;draw(player);}
+                    } else if(data.type==='RESET'&&!done){if(isOne){p1Path=['A'];p1Score=500;}else{p2Path=['A'];p2Score=500;}draw(player);
+                    } else if(data.type==='AI'&&!done){if(isOne){p1Path=graph.aiPath.slice();p1Score+=25*p1Path.length;}else{p2Path=graph.aiPath.slice();p2Score+=25*p2Path.length;}draw(player);
+                    } else if(data.type==='SUBMIT'&&!done){
+                        if(path[path.length-1]!==graph.endNode){conn.send({type:'NOTICE',message:`Reach target node ${graph.endNode} first.`});return;}
+                        if(isOne){p1Done=true;saveGlobalScore('P1: '+document.getElementById('p1StatusHeader').textContent,p1Score,lvl);}
+                        else{p2Done=true;saveGlobalScore('P2: '+document.getElementById('p2StatusHeader').textContent,p2Score,lvl);}
+                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: Finished`;
+                        document.getElementById('versusStatus').textContent=`Player ${player} finished. ${p1Done&&p2Done?'Match complete!':'Waiting for opponent...'}`;
+                        maybeFinish();
+                    }
+                }
+                draw(1);draw(2);
+                const id1='cyberroute-p1-'+Math.floor(1000+Math.random()*9000),id2='cyberroute-p2-'+Math.floor(1000+Math.random()*9000);
+                const peerP1=new Peer(id1),peerP2=new Peer(id2);
+                peerP1.on('open',id=>{const url=`${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;document.getElementById('urlTextP1').textContent=url;document.getElementById('qrcodeP1').innerHTML='';new QRCode(document.getElementById('qrcodeP1'),{text:url,width:110,height:110});});
+                peerP1.on('connection',conn=>{playerConnections[1]=conn;conn.on('data',data=>handlePlayer(1,data,conn));});
+                peerP2.on('open',id=>{const url=`${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;document.getElementById('urlTextP2').textContent=url;document.getElementById('qrcodeP2').innerHTML='';new QRCode(document.getElementById('qrcodeP2'),{text:url,width:110,height:110});});
+                peerP2.on('connection',conn=>{playerConnections[2]=conn;conn.on('data',data=>handlePlayer(2,data,conn));});
             }
+
         }
     </script>
 </body>
 </html>
-
 
