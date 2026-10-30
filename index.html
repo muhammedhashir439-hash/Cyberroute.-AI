@@ -161,6 +161,33 @@
             background: rgba(3, 7, 18, 0.85); z-index: 100000; justify-content: center; align-items: center; backdrop-filter: blur(6px);
         }
         .modal-content { max-width: 520px; width: 90%; position: relative; text-align: left; }
+
+        /* Portrait neon mobile controller */
+        body.controller-mode { padding: 10px; min-height: 100dvh; background: radial-gradient(circle at 50% 0%, #0b2940 0%, #061321 48%, #020711 100%); }
+        body.controller-mode #bgMapCanvas, body.controller-mode .top-bar { display:none !important; }
+        body.controller-mode #controller-view { width:100%; min-height:100dvh; align-items:flex-start; justify-content:center; }
+        body.controller-mode .controller-form { width:min(100%, 460px); max-width:460px; padding:15px; border-radius:18px; border:1px solid #087f99; background:linear-gradient(160deg,rgba(5,35,53,.98),rgba(3,12,25,.98)); box-shadow:0 0 24px rgba(0,220,255,.16), inset 0 0 22px rgba(0,190,220,.05); }
+        .ctrl-brand { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:2px 0 12px; border-bottom:1px solid rgba(34,211,238,.28); margin-bottom:12px; }
+        .ctrl-brand strong { color:#d8fbff; font-size:clamp(.85rem,3.5vw,1.05rem); letter-spacing:.04em; }
+        .ctrl-player { color:#22e6ef; font-size:.78rem; font-weight:800; white-space:nowrap; }
+        body.controller-mode .controller-form h3 { display:none; }
+        body.controller-mode .form-field label { color:#8deefa; }
+        body.controller-mode .form-field input, body.controller-mode .form-field select { background:#061a2b; border-color:#087f99; color:#e6fbff; }
+        body.controller-mode .btn-action { border-radius:11px; min-height:46px; box-shadow:0 0 12px rgba(0,220,255,.12); }
+        .ctrl-section-title { color:#8deefa; font-size:.78rem; font-weight:800; letter-spacing:.08em; margin:12px 0 7px; }
+        .ctrl-info-row { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }
+        #ctrlTargetBanner { color:#42e8f4 !important; font-size:.8rem !important; }
+        #ctrlTimer { background:rgba(239,68,68,.15); border:1px solid rgba(248,113,113,.45); border-radius:8px; padding:5px 9px; }
+        body.controller-mode .node-btn-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; max-height:none; overflow:visible; margin-top:8px; }
+        body.controller-mode .node-btn-grid button { min-width:0; min-height:58px; padding:8px 4px; border:1px solid #0e9db5; border-radius:14px; background:linear-gradient(145deg,#0c354b,#061a2b); color:#e4fbff; font-size:1rem; font-weight:900; text-shadow:0 0 8px #22d3ee; box-shadow:inset 0 0 12px rgba(34,211,238,.08),0 0 9px rgba(34,211,238,.08); clip-path:polygon(18% 0,82% 0,100% 50%,82% 100%,18% 100%,0 50%); }
+        body.controller-mode .node-btn-grid button:disabled { opacity:.35; filter:saturate(.55); }
+        body.controller-mode .node-btn-grid button:active:not(:disabled) { background:#087b91; transform:scale(.96); }
+        .ctrl-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+        .ctrl-actions #submitBtn { grid-column:1/-1; min-height:58px; font-size:1.05rem; background:linear-gradient(135deg,#087f88,#075568) !important; color:#efffff !important; border:1px solid #22e6ef !important; box-shadow:0 0 18px rgba(34,230,239,.2); }
+        .ctrl-actions #aiBtn { background:rgba(239,68,68,.15) !important; color:#ff858e !important; border:1px solid #e34c62 !important; margin:0; }
+        .ctrl-actions #resetBtn { background:rgba(15,105,125,.22) !important; color:#71eafa !important; border:1px solid #168da5 !important; margin:0; }
+        body.controller-mode #connStatus { background:rgba(2,14,27,.85); border:1px solid rgba(34,211,238,.22); border-radius:9px; padding:10px; line-height:1.4; color:#9beaf2 !important; overflow-wrap:anywhere; }
+        @media (max-width:380px) { body.controller-mode { padding:6px; } body.controller-mode .controller-form { padding:11px; } body.controller-mode .node-btn-grid { gap:6px; } body.controller-mode .node-btn-grid button { min-height:51px; } }
     </style>
 </head>
 <body>
@@ -357,6 +384,7 @@
     <!-- PHONE CONTROLLER -->
     <div id="controller-view" class="view-frame">
         <div class="panel controller-form">
+            <div class="ctrl-brand"><strong>CYBERROUTE AI · MOBILE CONTROLLER</strong><span class="ctrl-player" id="ctrlPlayerTag">CONNECTED</span></div>
             <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.2rem;">Mobile Pathfinder Remote</h3>
             
             <div id="setupForm">
@@ -378,18 +406,19 @@
             </div>
 
             <div id="gamepadForm" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div class="ctrl-section-title">LIVE ROUTE CONTROL</div>
+                <div class="ctrl-info-row">
                     <span id="ctrlTargetBanner" style="font-size:0.85rem; font-weight:600; color:var(--primary-accent);">Route: Node A ➔ Target</span>
                     <span id="ctrlTimer" style="font-size:0.85rem; font-family:monospace; color:#fca5a5;">⏱ 40s</span>
                 </div>
 
-                <p style="font-size:0.8rem; color:var(--text-muted); margin:6px 0;">Select adjacent nodes in valid sequence:</p>
+                <p style="font-size:0.8rem; color:#a8cbd4; margin:6px 0;">ROUTE INPUT · Tap the next connected node</p>
                 <div class="node-btn-grid" id="nodeBtnGrid"></div>
 
-                <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
-                    <button class="btn-action" id="submitBtn" style="background:rgba(16,185,129,0.2); color:var(--success-color); border:1px solid var(--success-color);">✅ Submit Route Sequence</button>
-                    <button class="btn-action" id="aiBtn" style="background:rgba(129,140,248,0.2); color:var(--secondary-accent); border:1px solid var(--secondary-accent);">🤖 AI OPTIMIZE — Find Shortest Route</button>
-                    <button class="btn-action" id="resetBtn" style="background:rgba(239,68,68,0.2); color:var(--danger-color); border:1px solid var(--danger-color);">🔄 Clear Selection</button>
+                <div class="ctrl-actions">
+                    <button class="btn-action" id="submitBtn">SUBMIT ROUTE</button>
+                    <button class="btn-action" id="aiBtn">AI OPTIMIZE</button>
+                    <button class="btn-action" id="resetBtn">CLEAR ROUTE</button>
                 </div>
             </div>
 
@@ -543,7 +572,9 @@
         const controllerPlayer = Number(params.get('player') || 0);
 
         if (isCtrl) {
+            document.body.classList.add('controller-mode');
             hub.style.display = 'none'; ctrlView.classList.add('active');
+            document.getElementById('ctrlPlayerTag').textContent = controllerMode === 'versus' ? `PLAYER ${controllerPlayer}` : 'SOLO PLAYER';
             const versusController = controllerMode === 'versus';
             if (versusController) {
                 document.querySelector('#controller-view h3').textContent = `Multiplayer Controller — Player ${controllerPlayer}`;
@@ -613,7 +644,7 @@
                 const all = ['A','B','C','D','E','F','G','H','I','J','K','L'];
                 const labels = labelsOverride || all.slice(0, counts[Number(lvl)] || 12);
                 labels.forEach(label => {
-                    const b = document.createElement('button'); b.type='button'; b.textContent='Node '+label; b.disabled=!enabled;
+                    const b = document.createElement('button'); b.type='button'; b.textContent=label; b.disabled=!enabled;
                     b.onclick = () => {
                         playSound('click');
                         if (!controlsEnabled) { document.getElementById('connStatus').textContent='Game is not active yet. Press Initialize Session first.'; return; }
@@ -888,9 +919,30 @@
                         conn.send({type:'WAITING',message:'You are ready. Waiting for the other player...'});
                         document.getElementById('versusStatus').textContent=ready[1]&&ready[2]?'Both players connected! Preparing countdown...':`Player ${player} ready. Waiting for the other player...`;
                         beginWhenBothReady();
-                    } else if(data.type==='NODE'&&matchStarted&&!done){
-                        const last=path[path.length-1],valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
-                        if(!path.includes(data.node)&&valid){path.push(data.node);if(isOne)p1Score+=25;else p2Score+=25;draw(player);}
+                    } else if(data.type==='NODE'){
+                        // Always acknowledge node messages so the controller can show
+                        // whether the laptop received them and why a move was rejected.
+                        const currentPath = isOne ? p1Path : p2Path;
+                        if(!matchStarted){
+                            conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...currentPath],message:'The match has not started yet. Wait for the countdown.'});
+                        } else if(isOne ? p1Done : p2Done){
+                            conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...currentPath],message:'Your route is already finished.'});
+                        } else {
+                            const last=currentPath[currentPath.length-1];
+                            const valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
+                            if(currentPath.includes(data.node)){
+                                conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...currentPath],message:'That node is already in your route.'});
+                            } else if(!valid){
+                                conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...currentPath],message:'Choose a node connected to '+last+'.'});
+                            } else {
+                                currentPath.push(data.node);
+                                if(isOne)p1Score+=25;else p2Score+=25;
+                                draw(player);
+                                conn.send({type:'NODE_ACK',accepted:true,node:data.node,path:[...currentPath]});
+                                conn.send({type:'PATH_UPDATE',path:[...currentPath]});
+                                document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: ${names[player]} (Playing)`;
+                            }
+                        }
                     } else if(data.type==='RESET'&&matchStarted&&!done){
                         if(isOne){p1Path=['A'];p1AI=[];p1Score=500;}else{p2Path=['A'];p2AI=[];p2Score=500;}draw(player);
                     } else if(data.type==='AI'&&matchStarted&&!done){
@@ -923,4 +975,3 @@
     </script>
 </body>
 </html>
-
