@@ -387,7 +387,7 @@
 
                 <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
                     <button class="btn-action" id="submitBtn" style="background:rgba(16,185,129,0.2); color:var(--success-color); border:1px solid var(--success-color);">✅ Submit Route Sequence</button>
-                    <button class="btn-action" id="aiBtn" style="background:rgba(129,140,248,0.2); color:var(--secondary-accent); border:1px solid var(--secondary-accent);">🤖 Compute Dijkstra Solution</button>
+                    <button class="btn-action" id="aiBtn" style="background:rgba(129,140,248,0.2); color:var(--secondary-accent); border:1px solid var(--secondary-accent);">🤖 AI OPTIMIZE — Find Shortest Route</button>
                     <button class="btn-action" id="resetBtn" style="background:rgba(239,68,68,0.2); color:var(--danger-color); border:1px solid var(--danger-color);">🔄 Clear Selection</button>
                 </div>
             </div>
@@ -469,22 +469,40 @@
             else { dot.style.backgroundColor = 'var(--text-muted)'; textSpan.textContent = 'SOUND: OFF'; }
         };
 
-        // --- Leaderboard Storage & Manual Controls ---
+        // --- Local-only leaderboard (no cloud sync required) ---
         function getGlobalLeaderboard() {
-            return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]');
+            try { return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]'); }
+            catch (error) { return []; }
         }
-        function saveGlobalScore(name, finalScore, lvl) {
-            let lb = getGlobalLeaderboard();
-            lb.push({ name, score: parseInt(finalScore) || 0, level: lvl, id: Date.now() });
-            lb.sort((a, b) => b.score - a.score);
-            lb = lb.slice(0, 15);
+
+        function cacheLeaderboard(lb) {
             localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
+        }
+
+        function escapeLeaderboardText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function saveGlobalScore(name, finalScore, lvl) {
+            const entry = {
+                id: Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+                name: String(name || 'Guest').slice(0, 32),
+                score: Math.max(0, Number.parseInt(finalScore, 10) || 0),
+                level: Number.parseInt(lvl, 10) || 1,
+                createdAt: Date.now()
+            };
+            const lb = getGlobalLeaderboard();
+            lb.push(entry);
+            lb.sort((a, b) => b.score - a.score);
+            cacheLeaderboard(lb.slice(0, 100));
             renderLb();
         }
+
         window.deleteScore = function(id) {
-            let lb = getGlobalLeaderboard();
-            lb = lb.filter(item => item.id !== id);
-            localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
+            const lb = getGlobalLeaderboard().filter(item => String(item.id) !== String(id));
+            cacheLeaderboard(lb);
             renderLb();
         };
         document.getElementById('addManualScoreBtn').onclick = () => {
@@ -502,12 +520,13 @@
             if (!data.length) { body.innerHTML = '<tr><td colspan="5">No active benchmark records saved.</td></tr>'; return; }
             body.innerHTML = data.map((d, i) => `
                 <tr>
-                    <td>#${i+1}</td><td>${d.name}</td><td>Level ${d.level}</td>
-                    <td style="color:var(--primary-accent); font-weight:700;">${d.score} pts</td>
-                    <td><button class="btn-danger" onclick="deleteScore(${d.id})">Remove</button></td>
+                    <td>#${i+1}</td><td>${escapeLeaderboardText(d.name)}</td><td>Level ${escapeLeaderboardText(d.level)}</td>
+                    <td style="color:var(--primary-accent); font-weight:700;">${Number(d.score) || 0} pts</td>
+                    <td><button class="btn-danger" onclick="deleteScore('${String(d.id).replace(/'/g, '')}')">Remove</button></td>
                 </tr>
             `).join('');
         }
+        renderLb();
 
         // --- Navigation ---
         const hub = document.getElementById('lobby-hub');
@@ -616,6 +635,63 @@
                 return graphs[Math.max(1,Math.min(5,Number(lvl)||1))];
             }
 
+            // Dijkstra's algorithm: calculates the true minimum total edge weight.
+            // Edges are treated as undirected, matching the game's route validation.
+            function runDijkstra(graph, start = 'A', target = graph.endNode) {
+                const distance = {};
+                const previous = {};
+                const unvisited = new Set(graph.nodes.map(node => node.label));
+                graph.nodes.forEach(node => { distance[node.label] = Infinity; });
+                distance[start] = 0;
+
+                while (unvisited.size) {
+                    let current = null;
+                    for (const node of unvisited) {
+                        if (current === null || distance[node] < distance[current]) current = node;
+                    }
+                    if (current === null || distance[current] === Infinity) break;
+                    if (current === target) break;
+                    unvisited.delete(current);
+
+                    graph.edges.forEach(edge => {
+                        let neighbour = null;
+                        if (edge.from === current) neighbour = edge.to;
+                        else if (edge.to === current) neighbour = edge.from;
+                        if (neighbour && unvisited.has(neighbour)) {
+                            const candidate = distance[current] + Number(edge.w);
+                            if (candidate < distance[neighbour]) {
+                                distance[neighbour] = candidate;
+                                previous[neighbour] = current;
+                            }
+                        }
+                    });
+                }
+
+                if (distance[target] === Infinity) return { path: [], cost: Infinity };
+                const path = [];
+                let step = target;
+                while (step) {
+                    path.unshift(step);
+                    if (step === start) break;
+                    step = previous[step];
+                }
+                if (path[0] !== start) return { path: [], cost: Infinity };
+                return { path, cost: distance[target] };
+            }
+
+            function calculateRouteCost(graph, route) {
+                let total = 0;
+                for (let i = 1; i < route.length; i++) {
+                    const edge = graph.edges.find(e =>
+                        (e.from === route[i - 1] && e.to === route[i]) ||
+                        (e.to === route[i - 1] && e.from === route[i])
+                    );
+                    if (!edge) return Infinity;
+                    total += Number(edge.w);
+                }
+                return total;
+            }
+
             function drawGraphOnCanvas(canvas, lvl, path) {
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -680,12 +756,28 @@
                             const last=path[path.length-1];
                             const valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
                             if(!path.includes(data.node)&&valid){path.push(data.node);score+=25;draw();}
-                        } else if(data.type==='RESET' && !finished){path=['A'];score=500;draw();}
-                        else if(data.type==='AI' && !finished){path=graph.aiPath.slice();score+=25*path.length;draw();}
-                        else if(data.type==='SUBMIT' && !finished){
+                        } else if(data.type==='RESET' && !finished){
+                            path=['A'];score=500;banner.style.display='none';draw();
+                        } else if(data.type==='AI' && !finished){
+                            const aiResult = runDijkstra(graph);
+                            const playerCost = calculateRouteCost(graph, path);
+                            const improvement = Number.isFinite(playerCost) && playerCost > 0
+                                ? Math.max(0, ((playerCost - aiResult.cost) / playerCost) * 100) : 0;
+                            banner.style.display='block';
+                            banner.textContent = Number.isFinite(playerCost)
+                                ? `🤖 AI OPTIMIZATION — Dijkstra's shortest route: ${aiResult.path.join(' → ')} | AI path cost: ${aiResult.cost} | Your current path cost: ${playerCost} | AI is ${improvement.toFixed(1)}% more efficient so far.`
+                                : `🤖 AI OPTIMIZATION — Dijkstra's shortest route: ${aiResult.path.join(' → ')} | AI path cost: ${aiResult.cost}. Complete your route and press SUBMIT to calculate the exact efficiency improvement.`;
+                        } else if(data.type==='SUBMIT' && !finished){
                             if(path[path.length-1]!==graph.endNode){banner.style.display='block';banner.textContent=`Keep going! Reach target node ${graph.endNode} before submitting.`;return;}
+                            const aiResult = runDijkstra(graph);
+                            const playerCost = calculateRouteCost(graph, path);
+                            const improvement = playerCost > 0
+                                ? Math.max(0, ((playerCost - aiResult.cost) / playerCost) * 100) : 0;
+                            const comparison = improvement < 0.05
+                                ? `🎉 Excellent! You found an optimal route. AI improvement: 0%.`
+                                : `🤖 AI found a route ${improvement.toFixed(1)}% more efficient than yours.`;
                             saveGlobalScore(document.getElementById('playerDisplay').textContent.split(': ')[1]||'Guest',score,lvl);
-                            finish(`✅ Route completed! Score: ${score}. Target ${graph.endNode} reached.`);
+                            finish(`✅ Route completed! Your path: ${path.join(' → ')} (cost ${playerCost}). Dijkstra AI: ${aiResult.path.join(' → ')} (cost ${aiResult.cost}). ${comparison}`);
                         }
                     });
                 });
@@ -726,7 +818,7 @@
                         const last=path[path.length-1],valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
                         if(!path.includes(data.node)&&valid){path.push(data.node);if(isOne)p1Score+=25;else p2Score+=25;draw(player);}
                     } else if(data.type==='RESET'&&!done){if(isOne){p1Path=['A'];p1Score=500;}else{p2Path=['A'];p2Score=500;}draw(player);
-                    } else if(data.type==='AI'&&!done){if(isOne){p1Path=graph.aiPath.slice();p1Score+=25*p1Path.length;}else{p2Path=graph.aiPath.slice();p2Score+=25*p2Path.length;}draw(player);
+                    } else if(data.type==='AI'&&!done){const result=runDijkstra(graph);conn.send({type:'NOTICE',message:`Dijkstra shortest route: ${result.path.join(' → ')} | Total path cost: ${result.cost}`});if(isOne){p1Path=result.path.slice();p1Score+=25*p1Path.length;}else{p2Path=result.path.slice();p2Score+=25*p2Path.length;}draw(player);
                     } else if(data.type==='SUBMIT'&&!done){
                         if(path[path.length-1]!==graph.endNode){conn.send({type:'NOTICE',message:`Reach target node ${graph.endNode} first.`});return;}
                         if(isOne){p1Done=true;saveGlobalScore('P1: '+document.getElementById('p1StatusHeader').textContent,p1Score,lvl);}
@@ -749,4 +841,3 @@
     </script>
 </body>
 </html>
-
