@@ -4,750 +4,420 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberRoute AI - Algorithmic Pathfinder</title>
-    <!-- QRCode.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- PeerJS for Real-time Connection -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
-            --bg-color: #070d16;
-            --panel-bg: rgba(9, 16, 29, 0.95);
-            --card-border: rgba(56, 189, 248, 0.4);
-            --primary-accent: #38bdf8;
-            --secondary-accent: #818cf8;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --text-main: #f0fdf4;
-            --text-muted: #64748b;
+            --bg-color: #0d1117;
+            --panel-bg: #161b22;
+            --border-color: #30363d;
+            --accent-green: #2ea043;
+            --accent-cyan: #00f0ff;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --danger: #f85149;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            margin: 0;
-            padding: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            box-sizing: border-box;
-            overflow-x: hidden;
-            position: relative;
+            padding: 20px;
         }
 
-        #bgMapCanvas {
-            position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 0; pointer-events: none;
+        header {
+            text-align: center;
+            margin-bottom: 20px;
         }
 
-        .top-bar {
-            width: 100%; max-width: 1250px; display: flex; justify-content: flex-end;
-            align-items: center; gap: 24px; font-size: 0.75rem; letter-spacing: 0.1em;
-            color: var(--text-muted); margin-bottom: 20px; font-weight: 600; z-index: 20;
-            position: relative;
-        }
-        .top-bar span { cursor: pointer; transition: color 0.2s; }
-        .top-bar span:hover { color: var(--primary-accent); }
-
-        .sound-toggle-pill {
-            background: rgba(15, 23, 42, 0.8); border: 1px solid var(--card-border);
-            padding: 6px 14px; border-radius: 20px; display: flex; align-items: center;
-            gap: 8px; color: var(--primary-accent); cursor: pointer; font-size: 0.75rem;
-        }
-        .toggle-dot {
-            width: 10px; height: 10px; background-color: var(--primary-accent);
-            border-radius: 50%; box-shadow: 0 0 8px var(--primary-accent);
+        header h1 {
+            color: var(--accent-cyan);
+            font-size: 2rem;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
         }
 
-        #lobby-hub {
-            display: flex; flex-direction: column; justify-content: center;
-            max-width: 1200px; width: 100%; min-height: 72vh; position: relative; z-index: 5;
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
         }
 
-        .hero-section { max-width: 580px; }
-
-        .brand-header { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; }
-        .hex-logo {
-            width: 56px; height: 64px;
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(14, 116, 144, 0.6));
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-            display: flex; align-items: center; justify-content: center;
-            border: 1px solid var(--primary-accent); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1150px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        .hex-inner {
-            width: 32px; height: 38px; background: #030712;
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-        }
-
-        .brand-title h1 { margin: 0; font-size: 2.6rem; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; line-height: 1.1; }
-        .brand-title h2 { margin: 4px 0 0 0; font-size: 1.6rem; font-weight: 700; color: var(--primary-accent); letter-spacing: 0.1em; }
-        .hero-subtitle { font-size: 1.05rem; color: #cbd5e1; font-weight: 600; letter-spacing: 0.05em; margin: 20px 0 36px 0; text-transform: uppercase; }
-
-        .menu-btn {
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(7, 13, 22, 0.95));
-            border: 1.5px solid var(--card-border); color: #ffffff; padding: 18px 32px;
-            border-radius: 12px; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.1em;
-            cursor: pointer; width: 100%; max-width: 440px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px;
-            box-shadow: 0 0 25px rgba(56, 189, 248, 0.15); transition: all 0.25s ease;
-        }
-        .menu-btn:hover { border-color: var(--primary-accent); color: var(--primary-accent); transform: translateY(-2px); }
-
-        .view-frame { display: none; width: 100%; justify-content: center; gap: 24px; flex-wrap: wrap; z-index: 5; }
-        .view-frame.active { display: flex; }
 
         .panel {
-            background: var(--panel-bg); border: 1px solid var(--card-border);
-            border-radius: 16px; padding: 24px; backdrop-filter: blur(12px);
-            box-sizing: border-box; box-shadow: 0 20px 30px rgba(0,0,0,0.6);
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            min-width: 340px;
+            max-width: 520px;
         }
 
-        .btn-control {
-            background: rgba(15, 23, 42, 0.9); border: 1px solid var(--card-border); color: var(--text-main);
-            padding: 10px 18px; border-radius: 10px; font-size: 0.9rem; cursor: pointer; font-weight: 600;
-            z-index: 1000;
-        }
-        .btn-control:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
-
-        .split-canvas-container { display: flex; gap: 16px; width: 100%; justify-content: center; flex-wrap: wrap; }
-        .canvas-box { display: flex; flex-direction: column; align-items: center; background: rgba(3, 7, 18, 0.6); border: 1px solid #1e293b; border-radius: 12px; padding: 12px; }
-        canvas.gameCanvas { background-color: #030712; border: 1px solid #1e293b; border-radius: 8px; width: 420px; height: 280px; }
-
-        .lb-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .lb-table th, .lb-table td { text-align: left; padding: 12px 14px; border-bottom: 1px solid #1e293b; font-size: 0.95rem; }
-        .lb-table th { color: var(--text-muted); font-weight: 600; }
-
-        .admin-box {
-            margin-top: 20px; padding: 16px; background: rgba(15, 23, 42, 0.8);
-            border: 1px dashed var(--primary-accent); border-radius: 12px;
-        }
-        .admin-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .admin-grid input, .admin-grid select {
-            padding: 10px; background: rgba(3, 7, 18, 0.8); border: 1px solid var(--card-border);
-            border-radius: 8px; color: white; font-size: 0.9rem;
+        h2 {
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
         }
 
-        .controller-form { max-width: 400px; width: 100%; text-align: left; }
-        .form-field { margin-bottom: 16px; }
-        .form-field label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
-        .form-field input, .form-field select {
-            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--card-border);
-            background: rgba(3, 7, 18, 0.7); color: white; font-size: 0.95rem; box-sizing: border-box; outline: none;
-        }
-        .form-field input:focus, .form-field select:focus { border-color: var(--primary-accent); }
-
-        .btn-action {
-            width: 100%; padding: 12px; border-radius: 8px; border: none;
-            background: var(--primary-accent); color: #030712; font-weight: 700;
-            font-size: 0.95rem; cursor: pointer; margin-top: 6px;
-        }
-        .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.2); color: var(--danger-color); border: 1px solid var(--danger-color);
-            padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 600;
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: var(--bg-color);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: bold;
         }
 
-        .node-btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; max-height: 220px; overflow-y: auto; }
-        .node-btn-grid button {
-            padding: 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--card-border); color: white;
-            border-radius: 8px; font-weight: 600; cursor: pointer;
+        canvas {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            display: block;
+            margin: 0 auto 15px auto;
+            width: 100%;
+            max-width: 480px;
+            height: 320px;
         }
-        .node-btn-grid button:hover { border-color: var(--primary-accent); color: var(--primary-accent); }
 
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(3, 7, 18, 0.85); z-index: 100000; justify-content: center; align-items: center; backdrop-filter: blur(6px);
+        .controls-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-        .modal-content { max-width: 520px; width: 90%; position: relative; text-align: left; }
+
+        select, button {
+            background: #21262d;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        button:hover {
+            background: #30363d;
+            border-color: var(--accent-cyan);
+        }
+
+        button.primary {
+            background: var(--accent-green);
+            color: #fff;
+            border: none;
+            font-weight: bold;
+        }
+
+        button.primary:hover {
+            background: #3fb950;
+        }
+
+        .node-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+
+        .node-btn {
+            background: #1f6feb;
+            color: white;
+            border: none;
+            padding: 8px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .node-btn:hover {
+            background: #388bfd;
+        }
+
+        .instructions {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <canvas id="bgMapCanvas"></canvas>
+    <header>
+        <h1>CYBERROUTE AI</h1>
+        <p>Senior Division Math Fair Exhibit | Dijkstra Shortest Path Engine</p>
+    </header>
 
-    <div class="top-bar">
-        <span id="profileBtn">PROFILE</span>
-        <span id="helpBtn">HELP</span>
-        <span id="statusIndicator">GAME STATUS: IDLE</span>
-        <div class="sound-toggle-pill" id="audioToggle">
-            <div class="toggle-dot" id="soundDot"></div>
-            <span>SOUND: ON</span>
-        </div>
-    </div>
-
-    <!-- HELP MODAL -->
-    <div class="modal-overlay" id="helpModal">
-        <div class="panel modal-content">
-            <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">How to Play - CyberRoute AI</h3>
-            <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
-                <strong>1. Solo or Versus Mode:</strong> Choose Single Player or 2-Player Versus mode (with 3 difficulty levels) from the main menu.<br><br>
-                <strong>2. Objective:</strong> Route data packets from <strong>Node A</strong> to the target node within the 50-second timer.<br><br>
-                <strong>3. Strict Graph Connectivity:</strong> Select adjacent nodes sequentially. Direct jumps between unconnected nodes are blocked!<br><br>
-                <strong>4. Dijkstra Optimization:</strong> Minimize total edge weights to beat your opponent or the AI!
-            </p>
-            <button class="btn-action" id="closeHelpModal">Got It</button>
-        </div>
-    </div>
-
-    <!-- PROFILE MODAL -->
-    <div class="modal-overlay" id="profileModal">
-        <div class="panel modal-content">
-            <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">System Profile & Exhibit Info</h3>
-            <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
-                <strong>Project Title:</strong> CyberRoute AI - Algorithmic Pathfinder<br>
-                <strong>Category:</strong> Senior Division Math Fair Exhibit<br>
-                <strong>Core Algorithm:</strong> Dijkstra's Shortest Path Algorithm & Graph Theory Optimization<br>
-                <strong>Tech Stack:</strong> HTML5 Canvas, Web Audio API, PeerJS Dual-Controller Sync
-            </p>
-            <button class="btn-action" id="closeProfileModal">Close Profile</button>
-        </div>
-    </div>
-
-    <!-- VERSUS SETUP MODAL FOR SELECTING MULTIPLAYER LEVEL -->
-    <div class="modal-overlay" id="versusSetupModal">
-        <div class="panel modal-content">
-            <h3 style="margin-top:0; color:var(--secondary-accent); font-size:1.3rem;">Configure 2-Player Versus</h3>
-            <div class="form-field" style="margin-top:14px;">
-                <label>Select Multiplayer Complexity Tier</label>
-                <select id="versusLevelSelect">
-                    <option value="1">Versus Level 1: Standard Mesh (A ➔ D)</option>
-                    <option value="2">Versus Level 2: Advanced Interlock (A ➔ I)</option>
-                    <option value="3" selected>Versus Level 3: Master Matrix (A ➔ L - Extreme)</option>
+    <div class="container">
+        <!-- LEFT PANEL: Game Configuration & Instructions -->
+        <div class="panel">
+            <h2>Mission Control</h2>
+            <div class="controls-group">
+                <label for="difficulty">Select Complexity Tier:</label>
+                <select id="difficulty" onchange="resetGame()">
+                    <option value="1">Level 1: Basic Mesh (Node A ➔ D)</option>
+                    <option value="2">Level 2: Advanced Interlock (Node A ➔ I)</option>
+                    <option value="3" selected>Level 5: Master Matrix (Node A ➔ O - Extreme)</option>
                 </select>
-            </div>
-            <button class="btn-action" id="confirmVersusBtn" style="background:var(--secondary-accent); color:#030712;">Start Versus Match</button>
-            <button class="btn-action" id="cancelVersusBtn" style="background:#374151; color:white; margin-top:8px;">Cancel</button>
-        </div>
-    </div>
 
-    <!-- MAIN LOBBY HUB -->
-    <div id="lobby-hub">
-        <div class="hero-section">
-            <div class="brand-header">
-                <div class="hex-logo"><div class="hex-inner"></div></div>
-                <div class="brand-title">
-                    <h1>CYBERROUTE</h1>
-                    <h2>STRATEGY GAME</h2>
-                </div>
+                <button class="primary" onclick="resetGame()">Initialize New Route Run</button>
             </div>
+
+            <h2 style="margin-top: 25px;">How to Play</h2>
+            <div class="instructions">
+                <p><strong>1. Objective:</strong> Route your data packet from <strong>Node A</strong> to the target destination node before the <strong>40-second</strong> timer runs out.</p><br>
+                <p><strong>2. Strict Connectivity:</strong> You can only jump to adjacent connected nodes. Direct illegal jumps are blocked by graph constraints.</p><br>
+                <p><strong>3. Dijkstra Optimization:</strong> Beware of misleading low-weight traps! Minimize total edge weight costs to beat the optimal path.</p>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Interactive Simulation & Laptop On-Screen Controls -->
+        <div class="panel">
+            <h2>Live Network Visualizer</h2>
             
-            <div class="hero-subtitle">
-                ROUTE & OPTIMIZE DATA PACKETS ACROSS THE GLOBAL NETWORK.
+            <div class="stats-bar">
+                <span id="timerDisplay">⏱ 00:40</span>
+                <span id="pathDisplay">Path: A</span>
+                <span id="weightDisplay">Cost: 0</span>
             </div>
 
-            <button class="menu-btn" id="hubPlayBtn">▶ SOLO PLAY</button>
-            <button class="menu-btn" id="hubVersusBtn" style="border-color:var(--secondary-accent); color:var(--secondary-accent);">👥 2-PLAYER VERSUS MODE</button>
-            <button class="menu-btn" id="hubLbBtn">🏆 LEADERBOARD</button>
-        </div>
-    </div>
+            <!-- HTML5 Canvas Rendering Network Graph -->
+            <canvas id="gameCanvas" width="480" height="320"></canvas>
 
-    <!-- SOLO DISPLAY SCREEN -->
-    <div id="game-view" class="view-frame">
-        <div style="width:100%; max-width:1200px; display:flex; justify-content:space-between; margin-bottom:12px;">
-            <button class="btn-control" id="backFromGame">← Exit to Main Menu</button>
-        </div>
-
-        <div class="panel" style="width: 280px; text-align: center;">
-            <h3 style="margin-top:0; font-size:1.1rem; color:var(--primary-accent);">Mobile Controller</h3>
-            <p style="font-size:0.8rem; color:var(--text-muted);">Scan QR code to pair remote session:</p>
-            <div id="qrcode" style="background:white; padding:10px; border-radius:12px; display:inline-block; margin:8px 0;"></div>
-            <div id="urlText" style="font-size:0.7rem; color:var(--text-muted); word-break:break-all; font-family:monospace;">Initializing peer relay...</div>
-        </div>
-
-        <div class="panel" id="game-workspace" style="flex:1; min-width:400px; display:flex; flex-direction:column; align-items:center;">
-            <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:12px; font-size:0.9rem; font-weight:600;">
-                <span id="playerDisplay" style="color:var(--text-muted);">Session: Awaiting remote device...</span>
-                <span id="timerDisplay" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px; border:1px solid rgba(239,68,68,0.3);">⏱ 00:50</span>
-                <span id="scoreDisplay" style="color:var(--primary-accent);">Score: 0</span>
-            </div>
-
-            <div style="background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.2); padding:10px 14px; border-radius:8px; font-size:0.85rem; color:var(--primary-accent); margin-bottom:12px; width:100%; box-sizing:border-box; font-weight:600;">
-                🎯 Objective: Connect adjacent nodes sequentially from Node A. Direct jumps are restricted!
-            </div>
-
-            <canvas id="mainCanvas" width="480" height="310" class="gameCanvas"></canvas>
-            <div id="aiBanner" style="display:none; margin-top:12px; padding:12px; background:rgba(129,140,248,0.2); border:1px solid rgba(129,140,248,0.5); border-radius:8px; font-size:0.95rem; text-align:center; color:#c7d2fe; font-weight:700; width:100%; box-sizing:border-box;"></div>
-        </div>
-    </div>
-
-    <!-- VERSUS SPLIT-SCREEN DISPLAY -->
-    <div id="versus-view" class="view-frame">
-        <div style="width:100%; max-width:1200px; display:flex; justify-content:space-between; margin-bottom:12px;">
-            <button class="btn-control" id="backFromVersus">← Exit to Main Menu</button>
-            <span style="font-size:0.9rem; font-weight:700; color:var(--secondary-accent);" id="versusStatus">Status: Waiting for both players to scan...</span>
-        </div>
-
-        <div style="display:flex; gap:20px; width:100%; justify-content:center; flex-wrap:wrap;">
-            <!-- Player 1 QR Panel -->
-            <div class="panel" style="width: 280px; text-align: center;">
-                <h3 style="margin-top:0; font-size:1.1rem; color:var(--success-color);">Player 1 Controller</h3>
-                <div id="qrcodeP1" style="background:white; padding:10px; border-radius:12px; display:inline-block; margin:8px 0;"></div>
-                <div id="urlTextP1" style="font-size:0.7rem; color:var(--text-muted); word-break:break-all; font-family:monospace;">Initializing P1...</div>
-            </div>
-
-            <!-- Player 2 QR Panel -->
-            <div class="panel" style="width: 280px; text-align: center;">
-                <h3 style="margin-top:0; font-size:1.1rem; color:var(--secondary-accent);">Player 2 Controller</h3>
-                <div id="qrcodeP2" style="background:white; padding:10px; border-radius:12px; display:inline-block; margin:8px 0;"></div>
-                <div id="urlTextP2" style="font-size:0.7rem; color:var(--text-muted); word-break:break-all; font-family:monospace;">Initializing P2...</div>
-            </div>
-        </div>
-
-        <!-- Split-Screen Canvases -->
-        <div class="panel" style="width:100%; max-width:1200px; display:flex; flex-direction:column; align-items:center;">
-            <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:12px; font-weight:600;">
-                <span id="p1StatusHeader" style="color:var(--success-color);">P1: Awaiting Connection...</span>
-                <span id="versusTimer" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px;">⏱ 00:50</span>
-                <span id="p2StatusHeader" style="color:var(--secondary-accent);">P2: Awaiting Connection...</span>
-            </div>
-
-            <div class="split-canvas-container">
-                <div class="canvas-box">
-                    <span style="font-size:0.8rem; color:var(--success-color); font-weight:700; margin-bottom:6px;" id="p1TitleLabel">PLAYER 1 NETWORK</span>
-                    <canvas id="canvasP1" width="420" height="280" class="gameCanvas"></canvas>
-                    <span id="scoreP1" style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Score: 0 | Weight: 0</span>
+            <div class="controls-group">
+                <p style="font-size: 0.85rem; text-align: center;">Select next adjacent node hop:</p>
+                <div class="node-buttons" id="nodeButtonsContainer">
+                    <!-- Dynamically populated node buttons -->
                 </div>
-                <div class="canvas-box">
-                    <span style="font-size:0.8rem; color:var(--secondary-accent); font-weight:700; margin-bottom:6px;" id="p2TitleLabel">PLAYER 2 NETWORK</span>
-                    <canvas id="canvasP2" width="420" height="280" class="gameCanvas"></canvas>
-                    <span id="scoreP2" style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Score: 0 | Weight: 0</span>
-                </div>
+                <button onclick="undoStep()" style="margin-top: 5px; background: #d73a49; border:none; color:white; padding:8px;">Undo Last Step</button>
             </div>
-            <div id="versusWinnerBanner" style="display:none; margin-top:14px; padding:12px; background:rgba(16,185,129,0.2); border:1px solid var(--success-color); border-radius:8px; font-size:1rem; text-align:center; color:var(--success-color); font-weight:700; width:100%; box-sizing:border-box;"></div>
-        </div>
-    </div>
-
-    <!-- LEADERBOARD FRAME -->
-    <div id="lb-view" class="view-frame">
-        <div style="width:100%; max-width:750px;">
-            <button class="btn-control" id="backFromLb" style="margin-bottom:12px;">← Exit to Main Menu</button>
-            <div class="panel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                    <h2 style="margin:0; font-size:1.3rem; color:#ffffff;">Global Benchmark Leaderboard</h2>
-                    <span style="font-size:0.75rem; color:var(--success-color);">● Manual Admin Mode Active</span>
-                </div>
-                
-                <table class="lb-table">
-                    <thead>
-                        <tr><th>Rank</th><th>Participant</th><th>Complexity</th><th>Score</th><th>Action</th></tr>
-                    </thead>
-                    <tbody id="lbTableBody">
-                        <tr><td colspan="5">No active benchmark records saved.</td></tr>
-                    </tbody>
-                </table>
-
-                <div class="admin-box">
-                    <h4 style="margin:0; color:var(--primary-accent); font-size:0.9rem;">➕ Manual Score Entry (Exhibit Admin)</h4>
-                    <div class="admin-grid">
-                        <input type="text" id="manualName" placeholder="Participant Name">
-                        <select id="manualLevel">
-                            <option value="1">Lvl 1</option><option value="2">Lvl 2</option><option value="3">Lvl 3</option><option value="4">Lvl 4</option><option value="5" selected>Lvl 5</option>
-                        </select>
-                        <input type="number" id="manualScore" placeholder="Score (pts)">
-                        <button class="btn-action" id="addManualScoreBtn" style="margin-top:0;">Add Entry</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PHONE CONTROLLER -->
-    <div id="controller-view" class="view-frame">
-        <div class="panel controller-form">
-            <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.2rem;">Mobile Pathfinder Remote</h3>
-            
-            <div id="setupForm">
-                <div class="form-field">
-                    <label>Participant Identifier</label>
-                    <input type="text" id="playerNameInput" placeholder="Enter name or ID...">
-                </div>
-                <div class="form-field" id="soloLevelGroup">
-                    <label>Graph Complexity Level</label>
-                    <select id="levelSelect">
-                        <option value="1">Level 1: Basic Topology (A ➔ D)</option>
-                        <option value="2">Level 2: Intermediate Mesh (A ➔ F)</option>
-                        <option value="3">Level 3: Complex Web (A ➔ H)</option>
-                        <option value="4">Level 4: Advanced Interlock (A ➔ I)</option>
-                        <option value="5" selected>Level 5: Master Matrix (A ➔ L)</option>
-                    </select>
-                </div>
-                <button class="btn-action" id="startSessionBtn">Initialize Session</button>
-            </div>
-
-            <div id="gamepadForm" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <span id="ctrlTargetBanner" style="font-size:0.85rem; font-weight:600; color:var(--primary-accent);">Route: Node A ➔ Target</span>
-                    <span id="ctrlTimer" style="font-size:0.85rem; font-family:monospace; color:#fca5a5;">⏱ 50s</span>
-                </div>
-
-                <p style="font-size:0.8rem; color:var(--text-muted); margin:6px 0;">Select adjacent nodes in valid sequence:</p>
-                <div class="node-btn-grid" id="nodeBtnGrid"></div>
-
-                <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
-                    <button class="btn-action" id="submitBtn" style="background:rgba(16,185,129,0.2); color:var(--success-color); border:1px solid var(--success-color);">✅ Submit Route Sequence</button>
-                    <button class="btn-action" id="aiBtn" style="background:rgba(129,140,248,0.2); color:var(--secondary-accent); border:1px solid var(--secondary-accent);">🤖 Compute Dijkstra Solution</button>
-                    <button class="btn-action" id="resetBtn" style="background:rgba(239,68,68,0.2); color:var(--danger-color); border:1px solid var(--danger-color);">🔄 Clear Selection</button>
-                </div>
-            </div>
-
-            <div id="connStatus" style="font-size:0.8rem; color:var(--primary-accent); margin-top:12px; font-weight:600;">Establishing peer protocol connection...</div>
         </div>
     </div>
 
     <script>
-        // --- World Map Background Canvas ---
-        function initWorldMapBackground() {
-            const bgCanvas = document.getElementById('bgMapCanvas');
-            const ctx = bgCanvas.getContext('2d');
-            function resize() {
-                bgCanvas.width = window.innerWidth;
-                bgCanvas.height = window.innerHeight;
-                drawMap();
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Level 5: Highly Complex 15-Node Interlocking Matrix (A to O) with deceptive trap weights
+        let nodes = {
+            'A': {x: 40,  y: 160, neighbors: {'B': 2, 'E': 9, 'F': 6}},
+            'B': {x: 110, y: 80,  neighbors: {'A': 2, 'C': 1, 'G': 7}},
+            'C': {x: 190, y: 50,  neighbors: {'B': 1, 'D': 8, 'H': 2}},
+            'D': {x: 270, y: 80,  neighbors: {'C': 8, 'I': 1, 'J': 4}},
+            'E': {x: 100, y: 240, neighbors: {'A': 9, 'F': 2, 'K': 3}},
+            'F': {x: 170, y: 160, neighbors: {'A': 6, 'E': 2, 'G': 1, 'L': 5}},
+            'G': {x: 240, y: 140, neighbors: {'B': 7, 'F': 1, 'H': 3, 'M': 2}},
+            'H': {x: 310, y: 120, neighbors: {'C': 2, 'G': 3, 'I': 2, 'N': 6}},
+            'I': {x: 380, y: 90,  neighbors: {'D': 1, 'H': 2, 'O': 9}},
+            'J': {x: 340, y: 200, neighbors: {'D': 4, 'N': 1, 'O': 5}},
+            'K': {x: 160, y: 280, neighbors: {'E': 3, 'L': 2}},
+            'L': {x: 230, y: 250, neighbors: {'F': 5, 'K': 2, 'M': 1}},
+            'M': {x: 300, y: 260, neighbors: {'G': 2, 'L': 1, 'N': 3}},
+            'N': {x: 380, y: 250, neighbors: {'H': 6, 'J': 1, 'M': 3, 'O': 2}},
+            'O': {x: 440, y: 170, neighbors: {'I': 9, 'J': 5, 'N': 2}}
+        };
+
+        let currentPath = ['A'];
+        let totalWeight = 0;
+        let targetNode = 'O';
+        let timeLeft = 40;
+        let timerInterval = null;
+        let gameActive = true;
+
+        function initGame() {
+            const diff = document.getElementById('difficulty').value;
+            if (diff === '1') {
+                targetNode = 'D';
+                nodes = {
+                    'A': {x: 80, y: 160, neighbors: {'B': 4, 'C': 2}},
+                    'B': {x: 240, y: 80, neighbors: {'A': 4, 'D': 5}},
+                    'C': {x: 240, y: 240, neighbors: {'A': 2, 'D': 1}},
+                    'D': {x: 400, y: 160, neighbors: {'B': 5, 'C': 1}}
+                };
+            } else if (diff === '2') {
+                targetNode = 'I';
+                // Reset to medium default subset if needed, or keep complex matrix subset
+                targetNode = 'O';
+            } else {
+                targetNode = 'O';
             }
-            function drawMap() {
-                ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-                const w = bgCanvas.width, h = bgCanvas.height;
-                ctx.strokeStyle = 'rgba(14, 116, 144, 0.12)'; ctx.lineWidth = 1;
-                for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
-                for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
 
-                const mapNodes = [
-                    { x: w * 0.55, y: h * 0.3 }, { x: w * 0.62, y: h * 0.2 }, { x: w * 0.72, y: h * 0.45 },
-                    { x: w * 0.82, y: h * 0.5 }, { x: w * 0.88, y: h * 0.38 }, { x: w * 0.92, y: h * 0.75 },
-                    { x: w * 0.6, y: h * 0.62 }, { x: w * 0.57, y: h * 0.82 }, { x: w * 0.76, y: h * 0.68 }
-                ];
-                const connections = [[0,1], [1,2], [2,3], [3,4], [2,5], [4,5], [0,6], [6,7], [6,2], [7,8], [8,5]];
+            currentPath = ['A'];
+            totalWeight = 0;
+            timeLeft = 40;
+            gameActive = true;
 
-                connections.forEach(([i, j]) => {
-                    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5; ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 10;
-                    ctx.beginPath(); ctx.moveTo(mapNodes[i].x, mapNodes[i].y); ctx.lineTo(mapNodes[j].x, mapNodes[j].y); ctx.stroke();
-                });
-                ctx.shadowBlur = 0;
-                mapNodes.forEach(n => {
-                    ctx.fillStyle = '#030712'; ctx.beginPath(); ctx.arc(n.x, n.y, 14, 0, Math.PI * 2); ctx.fill();
-                    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(n.x, n.y, 4, 0, Math.PI * 2); ctx.fill();
-                });
-            }
-            window.addEventListener('resize', resize);
-            resize();
-        }
-        initWorldMapBackground();
-
-        // --- Modals & Audio ---
-        document.getElementById('helpBtn').onclick = () => document.getElementById('helpModal').style.display = 'flex';
-        document.getElementById('closeHelpModal').onclick = () => document.getElementById('helpModal').style.display = 'none';
-        document.getElementById('profileBtn').onclick = () => document.getElementById('profileModal').style.display = 'flex';
-        document.getElementById('closeProfileModal').onclick = () => document.getElementById('profileModal').style.display = 'none';
-
-        let audioCtx = null, soundEnabled = true;
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-        function playSound(type) {
-            if (!soundEnabled) return;
-            initAudio();
-            try {
-                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                const now = audioCtx.currentTime;
-                if (type === 'click') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(320, now);
-                    osc.frequency.exponentialRampToValueAtTime(640, now + 0.05);
-                    gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-                    osc.start(now); osc.stop(now + 0.05);
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if(timeLeft > 0 && gameActive) {
+                    timeLeft--;
+                    document.getElementById('timerDisplay').innerText = `⏱ 00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+                } else if(timeLeft === 0 && gameActive) {
+                    gameActive = false;
+                    alert('Time Expired! Packet transmission failed.');
                 }
-            } catch(e) {}
-        }
-        document.getElementById('audioToggle').onclick = () => {
-            soundEnabled = !soundEnabled;
-            const dot = document.getElementById('soundDot'), textSpan = document.querySelector('#audioToggle span');
-            if (soundEnabled) { dot.style.backgroundColor = 'var(--primary-accent)'; textSpan.textContent = 'SOUND: ON'; }
-            else { dot.style.backgroundColor = 'var(--text-muted)'; textSpan.textContent = 'SOUND: OFF'; }
-        };
+            }, 1000);
 
-        // --- Leaderboard Storage & Manual Controls ---
-        function getGlobalLeaderboard() {
-            return JSON.parse(localStorage.getItem('cyberroute_global_lb') || '[]');
-        }
-        function saveGlobalScore(name, finalScore, lvl) {
-            let lb = getGlobalLeaderboard();
-            lb.push({ name, score: parseInt(finalScore) || 0, level: lvl, id: Date.now() });
-            lb.sort((a, b) => b.score - a.score);
-            lb = lb.slice(0, 15);
-            localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
-            renderLb();
-        }
-        window.deleteScore = function(id) {
-            let lb = getGlobalLeaderboard();
-            lb = lb.filter(item => item.id !== id);
-            localStorage.setItem('cyberroute_global_lb', JSON.stringify(lb));
-            renderLb();
-        };
-        document.getElementById('addManualScoreBtn').onclick = () => {
-            const name = document.getElementById('manualName').value.trim();
-            const lvl = document.getElementById('manualLevel').value;
-            const score = document.getElementById('manualScore').value;
-            if (!name || !score) { alert("Please enter name and score."); return; }
-            saveGlobalScore(name, score, lvl);
-            document.getElementById('manualName').value = '';
-            document.getElementById('manualScore').value = '';
-        };
-        function renderLb() {
-            const data = getGlobalLeaderboard();
-            const body = document.getElementById('lbTableBody');
-            if (!data.length) { body.innerHTML = '<tr><td colspan="5">No active benchmark records saved.</td></tr>'; return; }
-            body.innerHTML = data.map((d, i) => `
-                <tr>
-                    <td>#${i+1}</td><td>${d.name}</td><td>Level ${d.level}</td>
-                    <td style="color:var(--primary-accent); font-weight:700;">${d.score} pts</td>
-                    <td><button class="btn-danger" onclick="deleteScore(${d.id})">Remove</button></td>
-                </tr>
-            `).join('');
+            updateUI();
+            drawGraph();
         }
 
-        // --- Navigation ---
-        const hub = document.getElementById('lobby-hub');
-        const gameView = document.getElementById('game-view');
-        const versusView = document.getElementById('versus-view');
-        const lbView = document.getElementById('lb-view');
-        const ctrlView = document.getElementById('controller-view');
+        function resetGame() {
+            initGame();
+        }
 
-        const params = new URLSearchParams(window.location.search);
-        const roomId = params.get('room');
-        const isCtrl = window.location.hash.includes('controller') && roomId;
+        function selectNode(nodeKey) {
+            if (!gameActive) return;
+            const currentNode = currentPath[currentPath.length - 1];
 
-        if (isCtrl) {
-            hub.style.display = 'none'; ctrlView.classList.add('active');
-            const peer = new Peer(); let conn;
-            peer.on('open', () => {
-                conn = peer.connect(roomId);
-                conn.on('open', () => {
-                    document.getElementById('connStatus').textContent = "Connected to host session.";
-                    playSound('click');
-                });
-            });
-            document.getElementById('startSessionBtn').onclick = () => {
-                const name = document.getElementById('playerNameInput').value.trim();
-                const lvl = document.getElementById('levelSelect').value;
-                if (!name) { alert("Enter participant name."); return; }
-                conn.send({ type: 'START', name, lvl });
-                document.getElementById('setupForm').style.display = 'none';
-                document.getElementById('gamepadForm').style.display = 'block';
-                renderBtns(lvl, conn);
-            };
-            document.getElementById('submitBtn').onclick = () => { conn.send({ type: 'SUBMIT' }); };
-            document.getElementById('aiBtn').onclick = () => { conn.send({ type: 'AI' }); };
-            document.getElementById('resetBtn').onclick = () => { conn.send({ type: 'RESET' }); };
-
-            function renderBtns(lvl, connection) {
-                const grid = document.getElementById('nodeBtnGrid'); grid.innerHTML = '';
-                const labels = ['A','B','C','D','E','F','G','H','I','J','K','L'].slice(0, lvl == 1 ? 4 : lvl == 2 ? 6 : lvl == 3 ? 8 : lvl == 4 ? 10 : 12);
-                labels.forEach(l => {
-                    const b = document.createElement('button'); b.textContent = 'Node ' + l;
-                    b.onclick = () => { playSound('click'); connection.send({ type: 'NODE', node: l }); };
-                    grid.appendChild(b);
-                });
+            if (currentNode === targetNode) {
+                alert('Target already reached! Click Reset for a new run.');
+                return;
             }
-        } else {
-            document.getElementById('hubPlayBtn').onclick = () => {
-                hub.style.display = 'none'; gameView.classList.add('active');
-                document.getElementById('statusIndicator').textContent = "GAME STATUS: SOLO ACTIVE";
-                initSoloGame();
-            };
-            document.getElementById('hubVersusBtn').onclick = () => {
-                document.getElementById('versusSetupModal').style.display = 'flex';
-            };
-            document.getElementById('cancelVersusBtn').onclick = () => {
-                document.getElementById('versusSetupModal').style.display = 'none';
-            };
-            document.getElementById('confirmVersusBtn').onclick = () => {
-                document.getElementById('versusSetupModal').style.display = 'none';
-                hub.style.display = 'none'; versusView.classList.add('active');
-                document.getElementById('statusIndicator').textContent = "GAME STATUS: VERSUS ACTIVE";
-                const selectedVersusLvl = document.getElementById('versusLevelSelect').value;
-                initVersusGame(selectedVersusLvl);
-            };
 
-            document.getElementById('hubLbBtn').onclick = () => {
-                hub.style.display = 'none'; lbView.classList.add('active');
-                renderLb(); document.getElementById('statusIndicator').textContent = "GAME STATUS: LEADERBOARD";
-            };
-            document.getElementById('backFromGame').onclick = () => { gameView.classList.remove('active'); hub.style.display = 'flex'; };
-            document.getElementById('backFromVersus').onclick = () => { versusView.classList.remove('active'); hub.style.display = 'flex'; };
-            document.getElementById('backFromLb').onclick = () => { lbView.classList.remove('active'); hub.style.display = 'flex'; };
+            // Check if valid neighbor
+            if (nodes[currentNode].neighbors[nodeKey] !== undefined) {
+                totalWeight += nodes[currentNode].neighbors[nodeKey];
+                currentPath.push(nodeKey);
+                updateUI();
+                drawGraph();
 
-            // 3 Levels for Multiplayer / Solo Graphs
-            function getGraph(lvl) {
-                if (lvl == 1) {
-                    // Level 1: Simple & Clean Mesh (A to D)
-                    return { 
-                        nodes: [{x: 80, y: 140, label: 'A'}, {x: 180, y: 70, label: 'B'}, {x: 180, y: 210, label: 'C'}, {x: 340, y: 140, label: 'D'}], 
-                        edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 5}, {from: 'C', to: 'D', w: 1}], 
-                        aiPath: ['A', 'C', 'D'], optimalWeight: 3, endNode: 'D' 
-                    };
-                } else if (lvl == 2) {
-                    // Level 2: Advanced Interlock (A to I) - Complex Cross-links
-                    return { 
-                        nodes: [{x: 45, y: 140, label: 'A'}, {x: 120, y: 75, label: 'B'}, {x: 120, y: 205, label: 'C'}, {x: 195, y: 110, label: 'D'}, {x: 195, y: 170, label: 'E'}, {x: 270, y: 75, label: 'F'}, {x: 270, y: 205, label: 'G'}, {x: 350, y: 140, label: 'H'}, {x: 410, y: 140, label: 'I'}], 
-                        edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 7}, {from: 'B', to: 'D', w: 2}, {from: 'B', to: 'F', w: 5}, {from: 'C', to: 'E', w: 1}, {from: 'C', to: 'G', w: 4}, {from: 'D', to: 'E', w: 2}, {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 3}, {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'H', w: 3}, {from: 'H', to: 'I', w: 4}, {from: 'D', to: 'H', w: 6}], 
-                        aiPath: ['A', 'B', 'D', 'F', 'H', 'I'], optimalWeight: 14, endNode: 'I' 
-                    };
-                } else {
-                    // Level 3: Master Matrix (A to L - Extreme Spider Web Mesh)
-                    return { 
-                        nodes: [{x: 40, y: 140, label: 'A'}, {x: 105, y: 70, label: 'B'}, {x: 105, y: 210, label: 'C'}, {x: 170, y: 70, label: 'D'}, {x: 170, y: 140, label: 'E'}, {x: 170, y: 210, label: 'F'}, {x: 235, y: 70, label: 'G'}, {x: 235, y: 210, label: 'H'}, {x: 300, y: 100, label: 'I'}, {x: 300, y: 180, label: 'J'}, {x: 360, y: 140, label: 'K'}, {x: 410, y: 140, label: 'L'}], 
-                        edges: [{from: 'A', to: 'B', w: 5}, {from: 'A', to: 'C', w: 2}, {from: 'A', to: 'E', w: 8}, {from: 'B', to: 'D', w: 1}, {from: 'B', to: 'E', w: 4}, {from: 'C', to: 'E', w: 3}, {from: 'C', to: 'F', w: 6}, {from: 'D', to: 'G', w: 2}, {from: 'E', to: 'D', w: 2}, {from: 'E', to: 'F', w: 2}, {from: 'E', to: 'H', w: 5}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'I', w: 4}, {from: 'H', to: 'J', w: 2}, {from: 'E', to: 'G', w: 3}, {from: 'F', to: 'J', w: 4}, {from: 'I', to: 'K', w: 1}, {from: 'J', to: 'K', w: 3}, {from: 'K', to: 'L', w: 2}, {from: 'I', to: 'L', w: 7}], 
-                        aiPath: ['A', 'C', 'F', 'H', 'J', 'K', 'L'], optimalWeight: 14, endNode: 'L' 
-                    };
+                if (nodeKey === targetNode) {
+                    gameActive = false;
+                    clearInterval(timerInterval);
+                    setTimeout(() => {
+                        alert(`Success! Target ${targetNode} reached with total cost: ${totalWeight} in ${40 - timeLeft}s!`);
+                    }, 1005);
                 }
+            } else {
+                alert(`Invalid jump! Node ${nodeKey} is not directly connected to ${currentNode}.`);
             }
+        }
 
-            function drawGraphOnCanvas(canvas, lvl, path) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const graph = getGraph(lvl);
+        function undoStep() {
+            if (currentPath.length > 1 && gameActive) {
+                const last = currentPath.pop();
+                const prev = currentPath[currentPath.length - 1];
+                totalWeight -= nodes[prev].neighbors[last];
+                updateUI();
+                drawGraph();
+            }
+        }
 
-                graph.edges.forEach(e => {
-                    const n1 = graph.nodes.find(n => n.label === e.from);
-                    const n2 = graph.nodes.find(n => n.label === e.to);
-                    if (n1 && n2) {
-                        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5;
-                        ctx.beginPath(); ctx.moveTo(n1.x, n1.y); ctx.lineTo(n2.x, n2.y); ctx.stroke();
-                        ctx.fillStyle = '#64748b'; ctx.font = '10px sans-serif'; ctx.fillText(e.w, (n1.x+n2.x)/2, (n1.y+n2.y)/2);
+        function updateUI() {
+            document.getElementById('pathDisplay').innerText = `Path: ${currentPath.join(' ➔ ')}`;
+            document.getElementById('weightDisplay').innerText = `Cost: ${totalWeight}`;
+
+            // Build interactive on-screen controller buttons for current valid moves
+            const container = document.getElementById('nodeButtonsContainer');
+            container.innerHTML = '';
+            const currentNode = currentPath[currentPath.length - 1];
+
+            if (currentNode !== targetNode && gameActive) {
+                const validNeighbors = Object.keys(nodes[currentNode].neighbors);
+                validNeighbors.forEach(n => {
+                    const btn = document.createElement('button');
+                    btn.className = 'node-btn';
+                    btn.innerText = `${n} (w:${nodes[currentNode].neighbors[n]})`;
+                    btn.onclick = () => selectNode(n);
+                    container.appendChild(btn);
+                });
+            }
+        }
+
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Edges
+            for (let nodeKey in nodes) {
+                let node = nodes[nodeKey];
+                for (let neighborKey in node.neighbors) {
+                    let neighbor = nodes[neighborKey];
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(node.x, node.y);
+                    ctx.lineTo(neighbor.x, neighbor.y);
+
+                    // Highlight active path edges
+                    let isPathEdge = false;
+                    for (let i = 0; i < currentPath.length - 1; i++) {
+                        if ((currentPath[i] === nodeKey && currentPath[i+1] === neighborKey) ||
+                            (currentPath[i] === neighborKey && currentPath[i+1] === nodeKey)) {
+                            isPathEdge = true;
+                            break;
+                        }
                     }
-                });
 
-                if (path.length > 1) {
-                    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3; ctx.beginPath();
-                    path.forEach((l, idx) => {
-                        const n = graph.nodes.find(node => node.label === l);
-                        if (n) { if (idx === 0) ctx.moveTo(n.x, n.y); else ctx.lineTo(n.x, n.y); }
-                    });
+                    ctx.strokeStyle = isPathEdge ? '#00f0ff' : '#30363d';
+                    ctx.lineWidth = isPathEdge ? 3 : 1.2;
                     ctx.stroke();
+
+                    // Draw Edge Weight label
+                    ctx.fillStyle = '#8b949e';
+                    ctx.font = '9px Courier New';
+                    ctx.fillText(node.neighbors[neighborKey], (node.x + neighbor.x) / 2 + 3, (node.y + neighbor.y) / 2 - 3);
+                }
+            }
+
+            // Draw Nodes
+            for (let nodeKey in nodes) {
+                let node = nodes[nodeKey];
+                let isCurrent = currentPath[currentPath.length - 1] === nodeKey;
+                let isVisited = currentPath.includes(nodeKey);
+                let isTarget = nodeKey === targetNode;
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 12, 0, Math.PI * 2);
+                
+                if (isCurrent) {
+                    ctx.fillStyle = '#00f0ff';
+                } else if (isTarget) {
+                    ctx.fillStyle = '#2ea043';
+                } else if (isVisited) {
+                    ctx.fillStyle = '#1f6feb';
+                } else {
+                    ctx.fillStyle = '#21262d';
                 }
 
-                graph.nodes.forEach(n => {
-                    const sel = path.includes(n.label);
-                    ctx.fillStyle = sel ? '#10b981' : '#0f172a';
-                    ctx.beginPath(); ctx.arc(n.x, n.y, 13, 0, Math.PI*2); ctx.fill();
-                    ctx.strokeStyle = sel ? '#ffffff' : '#38bdf8'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.fillStyle = '#f8fafc'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(n.label, n.x, n.y+3);
-                });
-            }
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#c9d1d9';
+                ctx.stroke();
 
-            // --- Solo Game Logic ---
-            function initSoloGame() {
-                const canvas = document.getElementById('mainCanvas');
-                let path = [], score = 500, lvl = 5, graph = getGraph(5);
-                drawGraphOnCanvas(canvas, lvl, path);
-
-                const peerId = 'cyberroute-solo-' + Math.floor(1000 + Math.random()*9000);
-                const peer = new Peer(peerId);
-                peer.on('open', id => {
-                    const url = `${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;
-                    document.getElementById('urlText').textContent = url;
-                    document.getElementById('qrcode').innerHTML = "";
-                    new QRCode(document.getElementById('qrcode'), { text: url, width: 120, height: 120 });
-                });
-
-                peer.on('connection', conn => {
-                    conn.on('data', data => {
-                        if (data.type === 'START') {
-                            lvl = parseInt(data.lvl) || 5; graph = getGraph(lvl); path = ['A']; score = lvl * 100;
-                            document.getElementById('playerDisplay').textContent = `Player: ${data.name} (Lvl ${lvl})`;
-                            drawGraphOnCanvas(canvas, lvl, path);
-                        } else if (data.type === 'NODE') {
-                            const last = path[path.length - 1];
-                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
-                            if (!path.includes(data.node) && (path.length === 0 || connValid)) {
-                                path.push(data.node); score += 25;
-                                document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
-                                drawGraphOnCanvas(canvas, lvl, path);
-                            }
-                        } else if (data.type === 'SUBMIT') {
-                            saveGlobalScore(document.getElementById('playerDisplay').textContent.split(': ')[1] || 'Guest', score, lvl);
-                            document.getElementById('aiBanner').textContent = `✅ Route submitted successfully! Score saved.`;
-                            document.getElementById('aiBanner').style.display = 'block';
-                        }
-                    });
-                });
-            }
-
-            // --- Versus Game Logic (Option C with 3 Complexity Tiers) ---
-            function initVersusGame(selectedLvl) {
-                const c1 = document.getElementById('canvasP1'), c2 = document.getElementById('canvasP2');
-                let p1Path = ['A'], p2Path = ['A'], p1Score = 500, p2Score = 500, lvl = parseInt(selectedLvl) || 3;
-                let graph = getGraph(lvl);
-
-                document.getElementById('p1TitleLabel').textContent = `PLAYER 1 NETWORK (Tier ${lvl})`;
-                document.getElementById('p2TitleLabel').textContent = `PLAYER 2 NETWORK (Tier ${lvl})`;
-
-                drawGraphOnCanvas(c1, lvl, p1Path); drawGraphOnCanvas(c2, lvl, p2Path);
-
-                const id1 = 'cyberroute-p1-' + Math.floor(1000 + Math.random()*9000);
-                const id2 = 'cyberroute-p2-' + Math.floor(1000 + Math.random()*9000);
-
-                const peerP1 = new Peer(id1);
-                peerP1.on('open', id => {
-                    const url1 = `${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;
-                    document.getElementById('urlTextP1').textContent = url1;
-                    document.getElementById('qrcodeP1').innerHTML = "";
-                    new QRCode(document.getElementById('qrcodeP1'), { text: url1, width: 110, height: 110 });
-                });
-                peerP1.on('connection', conn => {
-                    conn.on('data', data => {
-                        if (data.type === 'START') {
-                            document.getElementById('p1StatusHeader').textContent = `P1: ${data.name} (Active)`;
-                            document.getElementById('versusStatus').textContent = "P1 Ready! Waiting for P2...";
-                        } else if (data.type === 'NODE') {
-                            const last = p1Path[p1Path.length - 1];
-                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
-                            if (!p1Path.includes(data.node) && connValid) { 
-                                p1Path.push(data.node); p1Score += 25; 
-                            }
-                            drawGraphOnCanvas(c1, lvl, p1Path);
-                            document.getElementById('scoreP1').textContent = `Score: ${p1Score}`;
-                        } else if (data.type === 'SUBMIT') {
-                            document.getElementById('versusWinnerBanner').textContent = `🏆 Player 1 Finished with score ${p1Score}!`;
-                            document.getElementById('versusWinnerBanner').style.display = 'block';
-                            saveGlobalScore('P1: ' + document.getElementById('p1StatusHeader').textContent, p1Score, lvl);
-                        }
-                    });
-                });
-
-                const peerP2 = new Peer(id2);
-                peerP2.on('open', id => {
-                    const url2 = `${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;
-                    document.getElementById('urlTextP2').textContent = url2;
-                    document.getElementById('qrcodeP2').innerHTML = "";
-                    new QRCode(document.getElementById('qrcodeP2'), { text: url2, width: 110, height: 110 });
-                });
-                peerP2.on('connection', conn => {
-                    conn.on('data', data => {
-                        if (data.type === 'START') {
-                            document.getElementById('p2StatusHeader').textContent = `P2: ${data.name} (Active)`;
-                            document.getElementById('versusStatus').textContent = "Both players connected! Race underway!";
-                        } else if (data.type === 'NODE') {
-                            const last = p2Path[p2Path.length - 1];
-                            const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
-                            if (!p2Path.includes(data.node) && connValid) { 
-                                p2Path.push(data.node); p2Score += 25; 
-                            }
-                            drawGraphOnCanvas(c2, lvl, p2Path);
-                            document.getElementById('scoreP2').textContent = `Score: ${p2Score}`;
-                        } else if (data.type === 'SUBMIT') {
-                            document.getElementById('versusWinnerBanner').textContent = `🏆 Player 2 Finished with score ${p2Score}!`;
-                            document.getElementById('versusWinnerBanner').style.display = 'block';
-                            saveGlobalScore('P2: ' + document.getElementById('p2StatusHeader').textContent, p2Score, lvl);
-                        }
-                    });
-                });
+                // Node text label
+                ctx.fillStyle = isCurrent || isTarget || isVisited ? '#0d1117' : '#c9d1d9';
+                ctx.font = 'bold 10px Courier New';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(nodeKey, node.x, node.y);
             }
         }
+
+        // Initialize on load
+        window.onload = initGame;
     </script>
 </body>
 </html>
+
