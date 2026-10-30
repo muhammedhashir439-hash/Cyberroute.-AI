@@ -315,6 +315,7 @@
                     <span id="scoreP2" style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Score: 0 | Weight: 0</span>
                 </div>
             </div>
+            <div style="margin-top:10px;font-size:.82rem;color:var(--text-muted);text-align:center;">🟢 Player route &nbsp; | &nbsp; 🔴 Dijkstra AI optimal route</div>
             <div id="versusWinnerBanner" style="display:none; margin-top:14px; padding:12px; background:rgba(16,185,129,0.2); border:1px solid var(--success-color); border-radius:8px; font-size:1rem; text-align:center; color:var(--success-color); font-weight:700; width:100%; box-sizing:border-box;"></div>
         </div>
     </div>
@@ -538,39 +539,76 @@
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('room');
         const isCtrl = window.location.hash.includes('controller') && roomId;
+        const controllerMode = params.get('mode') || 'solo';
+        const controllerPlayer = Number(params.get('player') || 0);
 
         if (isCtrl) {
             hub.style.display = 'none'; ctrlView.classList.add('active');
-            const peer = new Peer(); let conn;
+            const versusController = controllerMode === 'versus';
+            if (versusController) {
+                document.querySelector('#controller-view h3').textContent = `Multiplayer Controller — Player ${controllerPlayer}`;
+                document.getElementById('soloLevelGroup').style.display = 'none';
+                document.getElementById('startSessionBtn').textContent = 'Join Multiplayer Match';
+                document.getElementById('playerNameInput').placeholder = `Enter Player ${controllerPlayer} name...`;
+            }
+            let conn, controlsEnabled = false;
+            const peer = new Peer();
             peer.on('open', () => {
                 conn = peer.connect(roomId);
-                conn.on('open', () => { document.getElementById('connStatus').textContent = 'Connected to host session.'; playSound('click'); });
-                conn.on('data', data => { if(data.type==='CONFIG'){ renderBtns(1,conn,data.labels); document.getElementById('ctrlTargetBanner').textContent=`Route: Node A ➔ ${data.target}`; document.getElementById('ctrlTimer').textContent='⏱ 40s'; } else if(data.type==='TIMER'){ document.getElementById('ctrlTimer').textContent=`⏱ ${data.seconds}s`; } else if(data.type==='NOTICE'){ document.getElementById('connStatus').textContent=data.message; } });
+                conn.on('open', () => { document.getElementById('connStatus').textContent = versusController ? `Connected as Player ${controllerPlayer}. Enter your name and join.` : 'Connected to host session.'; playSound('click'); });
+                conn.on('data', data => {
+                    if(data.type==='CONFIG'){
+                        document.getElementById('setupForm').style.display='none';
+                        document.getElementById('gamepadForm').style.display='block';
+                        document.getElementById('ctrlTargetBanner').textContent=`Route: Node A ➔ ${data.target}`;
+                        document.getElementById('ctrlTimer').textContent='⏱ 40s';
+                        controlsEnabled=!versusController; renderBtns(1,conn,data.labels,controlsEnabled);
+                        document.getElementById('connStatus').textContent=versusController?'Connected. Waiting for both players to be ready...':'Session ready.';
+                    } else if(data.type==='WAITING'){
+                        document.getElementById('connStatus').textContent=data.message;
+                    } else if(data.type==='COUNTDOWN'){
+                        document.getElementById('connStatus').textContent=`Match starts in ${data.seconds}...`;
+                    } else if(data.type==='GAME_START'){
+                        controlsEnabled=true; setNodeButtonsEnabled(true);
+                        document.getElementById('connStatus').textContent='🚀 MATCH STARTED! Find the lowest-cost route.';
+                    } else if(data.type==='TIMER'){
+                        document.getElementById('ctrlTimer').textContent=`⏱ ${data.seconds}s`;
+                    } else if(data.type==='NOTICE'){
+                        document.getElementById('connStatus').textContent=data.message;
+                    } else if(data.type==='MATCH_OVER'){
+                        controlsEnabled=false; setNodeButtonsEnabled(false); document.getElementById('connStatus').textContent=data.message;
+                    }
+                });
             });
             document.getElementById('startSessionBtn').onclick = () => {
                 const name = document.getElementById('playerNameInput').value.trim();
                 const lvl = document.getElementById('levelSelect').value;
-                if (!name) { alert("Enter participant name."); return; }
+                if (!name) { alert('Enter participant name.'); return; }
                 if (!conn || !conn.open) { alert('Controller is not connected yet. Please wait a moment and try again.'); return; }
-                conn.send({ type: 'START', name, lvl });
-                document.getElementById('setupForm').style.display = 'none';
-                document.getElementById('gamepadForm').style.display = 'block';
-                renderBtns(lvl, conn);
+                if (versusController) {
+                    conn.send({type:'READY', name, player:controllerPlayer});
+                    document.getElementById('startSessionBtn').disabled=true;
+                    document.getElementById('startSessionBtn').textContent='Waiting for opponent...';
+                    document.getElementById('connStatus').textContent='You are ready. Waiting for the other player to join.';
+                } else {
+                    conn.send({ type: 'START', name, lvl });
+                    document.getElementById('setupForm').style.display = 'none';
+                    document.getElementById('gamepadForm').style.display = 'block';
+                    controlsEnabled=true; renderBtns(lvl, conn, null, true);
+                }
             };
-            document.getElementById('submitBtn').onclick = () => { conn.send({ type: 'SUBMIT' }); };
-            document.getElementById('aiBtn').onclick = () => { conn.send({ type: 'AI' }); };
-            document.getElementById('resetBtn').onclick = () => { conn.send({ type: 'RESET' }); };
-
-            function renderBtns(lvl, connection, labelsOverride) {
-                const grid = document.getElementById('nodeBtnGrid');
-                grid.innerHTML = '';
+            document.getElementById('submitBtn').onclick = () => { if(conn&&conn.open&&controlsEnabled)conn.send({ type: 'SUBMIT' }); };
+            document.getElementById('aiBtn').onclick = () => { if(conn&&conn.open)conn.send({ type: 'AI' }); };
+            document.getElementById('resetBtn').onclick = () => { if(conn&&conn.open&&controlsEnabled)conn.send({ type: 'RESET' }); };
+            function setNodeButtonsEnabled(enabled){ document.querySelectorAll('#nodeBtnGrid button').forEach(b=>b.disabled=!enabled); }
+            function renderBtns(lvl, connection, labelsOverride, enabled=true) {
+                const grid = document.getElementById('nodeBtnGrid'); grid.innerHTML = '';
                 const counts = {1:4, 2:9, 3:12, 4:10, 5:12};
                 const all = ['A','B','C','D','E','F','G','H','I','J','K','L'];
                 const labels = labelsOverride || all.slice(0, counts[Number(lvl)] || 12);
                 labels.forEach(label => {
-                    const b = document.createElement('button');
-                    b.type = 'button'; b.textContent = 'Node ' + label;
-                    b.onclick = () => { playSound('click'); if (connection && connection.open) connection.send({type:'NODE', node:label}); };
+                    const b = document.createElement('button'); b.type='button'; b.textContent='Node '+label; b.disabled=!enabled;
+                    b.onclick = () => { playSound('click'); if (connection && connection.open && controlsEnabled) connection.send({type:'NODE', node:label}); };
                     grid.appendChild(b);
                 });
             }
@@ -692,7 +730,7 @@
                 return total;
             }
 
-            function drawGraphOnCanvas(canvas, lvl, path) {
+            function drawGraphOnCanvas(canvas, lvl, path, aiPath = []) {
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 const graph = getGraph(lvl);
@@ -715,6 +753,12 @@
                     });
                     ctx.stroke();
                 }
+                // AI's Dijkstra route is drawn in red, separately from the player's green route.
+                if (aiPath.length > 1) {
+                    ctx.save(); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 5; ctx.setLineDash([8,4]); ctx.beginPath();
+                    aiPath.forEach((label, idx) => { const n=graph.nodes.find(node=>node.label===label); if(n){if(idx===0)ctx.moveTo(n.x,n.y);else ctx.lineTo(n.x,n.y);} });
+                    ctx.stroke(); ctx.restore();
+                }
 
                 graph.nodes.forEach(n => {
                     const sel = path.includes(n.label);
@@ -728,14 +772,14 @@
             // --- Solo Game Logic ---
             function initSoloGame() {
                 const canvas = document.getElementById('mainCanvas');
-                let path = [], score = 0, lvl = 1, graph = getGraph(1), seconds = 40, timer = null, finished = false, activeConn = null;
+                let path = [], aiPath = [], score = 0, lvl = 1, graph = getGraph(1), seconds = 40, timer = null, finished = false, activeConn = null;
                 const timerEl = document.getElementById('timerDisplay');
                 const banner = document.getElementById('aiBanner');
                 function updateTimer(){ timerEl.textContent = `⏱ 00:${String(seconds).padStart(2,'0')}`; }
                 function stopTimer(){ if(timer){clearInterval(timer);timer=null;} }
                 function finish(message){ if(finished)return; finished=true; stopTimer(); banner.textContent=message; banner.style.display='block'; }
                 function startTimer(){ stopTimer(); seconds=40; updateTimer(); timer=setInterval(()=>{seconds--;updateTimer();if(activeConn && activeConn.open)activeConn.send({type:'TIMER',seconds});if(seconds<=0)finish(`⏰ Time is up! Your route score: ${score}`);},1000); }
-                function draw(){ drawGraphOnCanvas(canvas,lvl,path); document.getElementById('scoreDisplay').textContent=`Score: ${score}`; }
+                function draw(){ drawGraphOnCanvas(canvas,lvl,path,aiPath); document.getElementById('scoreDisplay').textContent=`Score: ${score}`; }
                 draw(); updateTimer();
                 const peerId = 'cyberroute-solo-' + Math.floor(1000 + Math.random()*9000);
                 const peer = new Peer(peerId);
@@ -749,7 +793,7 @@
                     activeConn = conn;
                     conn.on('data', data => {
                         if(data.type==='START'){
-                            lvl=Math.max(1,Math.min(5,parseInt(data.lvl)||1)); graph=getGraph(lvl); path=['A']; score=500; finished=false; banner.style.display='none';
+                            lvl=Math.max(1,Math.min(5,parseInt(data.lvl)||1)); graph=getGraph(lvl); path=['A']; aiPath=[]; score=500; finished=false; banner.style.display='none';
                             document.getElementById('playerDisplay').textContent=`Player: ${data.name} (Lvl ${lvl})`;
                             conn.send({type:'CONFIG',labels:graph.nodes.map(n=>n.label),target:graph.endNode,seconds:40}); startTimer(); draw();
                         } else if(data.type==='NODE' && !finished){
@@ -757,9 +801,9 @@
                             const valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
                             if(!path.includes(data.node)&&valid){path.push(data.node);score+=25;draw();}
                         } else if(data.type==='RESET' && !finished){
-                            path=['A'];score=500;banner.style.display='none';draw();
+                            path=['A'];aiPath=[];score=500;banner.style.display='none';draw();
                         } else if(data.type==='AI' && !finished){
-                            const aiResult = runDijkstra(graph);
+                            const aiResult = runDijkstra(graph); aiPath=aiResult.path.slice(); draw();
                             const playerCost = calculateRouteCost(graph, path);
                             const improvement = Number.isFinite(playerCost) && playerCost > 0
                                 ? Math.max(0, ((playerCost - aiResult.cost) / playerCost) * 100) : 0;
@@ -787,53 +831,72 @@
             function initVersusGame(selectedTier) {
                 const c1=document.getElementById('canvasP1'), c2=document.getElementById('canvasP2');
                 const tier=Math.max(1,Math.min(3,parseInt(selectedTier)||1));
-                const lvl=[1,3,5][tier-1];
-                const graph=getGraph(lvl);
-                let p1Path=['A'],p2Path=['A'],p1Score=500,p2Score=500,p1Done=false,p2Done=false,seconds=40,timer=null;
-                const playerConnections={1:null,2:null};
-                const banner=document.getElementById('versusWinnerBanner');
-                banner.style.display='none';
+                const lvl=[1,3,5][tier-1], graph=getGraph(lvl);
+                let p1Path=['A'],p2Path=['A'],p1AI=[],p2AI=[],p1Score=500,p2Score=500;
+                let p1Done=false,p2Done=false,seconds=40,timer=null,countdownTimer=null,matchStarted=false;
+                const playerConnections={1:null,2:null}, ready={1:false,2:false}, names={1:'Player 1',2:'Player 2'};
+                const banner=document.getElementById('versusWinnerBanner'); banner.style.display='none';
                 document.getElementById('p1TitleLabel').textContent=`PLAYER 1 NETWORK (Tier ${tier})`;
                 document.getElementById('p2TitleLabel').textContent=`PLAYER 2 NETWORK (Tier ${tier})`;
                 document.getElementById('versusTimer').textContent='⏱ 00:40';
                 function draw(which){
-                    if(which===1){drawGraphOnCanvas(c1,lvl,p1Path);document.getElementById('scoreP1').textContent=`Score: ${p1Score} | Nodes: ${p1Path.length}`;}
-                    else{drawGraphOnCanvas(c2,lvl,p2Path);document.getElementById('scoreP2').textContent=`Score: ${p2Score} | Nodes: ${p2Path.length}`;}
+                    if(which===1){drawGraphOnCanvas(c1,lvl,p1Path,p1AI);document.getElementById('scoreP1').textContent=`Score: ${p1Score} | Route cost: ${calculateRouteCost(graph,p1Path)}`;}
+                    else{drawGraphOnCanvas(c2,lvl,p2Path,p2AI);document.getElementById('scoreP2').textContent=`Score: ${p2Score} | Route cost: ${calculateRouteCost(graph,p2Path)}`;}
                 }
-                function finish(reason){if(timer){clearInterval(timer);timer=null;}p1Done=true;p2Done=true;
-                    let winner=p1Score===p2Score?'It is a tie!':p1Score>p2Score?'🏆 Player 1 wins!':'🏆 Player 2 wins!';
-                    banner.textContent=`${reason} ${winner} Final scores — P1: ${p1Score}, P2: ${p2Score}.`;banner.style.display='block';
+                function broadcast(message){Object.values(playerConnections).forEach(c=>{if(c&&c.open)c.send(message);});}
+                function finish(reason){if(timer){clearInterval(timer);timer=null;}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null;}p1Done=true;p2Done=true;
+                    const winner=p1Score===p2Score?'It is a tie!':p1Score>p2Score?'🏆 Player 1 wins!':'🏆 Player 2 wins!';
+                    const message=`${reason} ${winner} Final scores — P1: ${p1Score}, P2: ${p2Score}.`;
+                    banner.textContent=message;banner.style.display='block';document.getElementById('versusStatus').textContent='Match complete.';broadcast({type:'MATCH_OVER',message});
                 }
-                function maybeFinish(){if(p1Done&&p2Done)finish('Both players completed.');}
-                function startClock(){if(timer)clearInterval(timer);seconds=40;timer=setInterval(()=>{seconds--;document.getElementById('versusTimer').textContent=`⏱ 00:${String(Math.max(0,seconds)).padStart(2,'0')}`;Object.values(playerConnections).forEach(c=>{if(c&&c.open)c.send({type:'TIMER',seconds});});if(seconds<=0)finish('⏰ Time is up.');},1000);}
+                function startClock(){if(timer)clearInterval(timer);seconds=40;document.getElementById('versusTimer').textContent='⏱ 00:40';timer=setInterval(()=>{seconds--;document.getElementById('versusTimer').textContent=`⏱ 00:${String(Math.max(0,seconds)).padStart(2,'0')}`;broadcast({type:'TIMER',seconds});if(seconds<=0)finish('⏰ Time is up.');},1000);}
+                function beginWhenBothReady(){
+                    if(!(ready[1]&&ready[2])||matchStarted)return;
+                    matchStarted=true;
+                    document.getElementById('versusStatus').textContent='Both players ready! Synchronized countdown starting...';
+                    let count=3; broadcast({type:'COUNTDOWN',seconds:count});
+                    countdownTimer=setInterval(()=>{count--;if(count>0){broadcast({type:'COUNTDOWN',seconds:count});document.getElementById('versusStatus').textContent=`Match starts in ${count}...`;}
+                        else{clearInterval(countdownTimer);countdownTimer=null;broadcast({type:'GAME_START'});document.getElementById('versusStatus').textContent='🚀 Both players started!';startClock();}
+                    },1000);
+                }
                 function handlePlayer(player,data,conn){
                     const isOne=player===1, path=isOne?p1Path:p2Path, done=isOne?p1Done:p2Done;
-                    if(data.type==='START'){
-                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: ${data.name} (Active)`;
-                        conn.send({type:'CONFIG',labels:graph.nodes.map(n=>n.label),target:graph.endNode,seconds:40});
-                        const bothReady=document.getElementById('p1StatusHeader').textContent.includes('(Active)')&&document.getElementById('p2StatusHeader').textContent.includes('(Active)');
-                        document.getElementById('versusStatus').textContent=bothReady?'Both players connected! Race underway!':`Player ${player} ready. Waiting for the other player...`;
-                        if(bothReady&&!timer)startClock();
-                    } else if(data.type==='NODE'&&!done){
+                    if(data.type==='READY'){
+                        if(matchStarted)return;
+                        ready[player]=true;names[player]=data.name||`Player ${player}`;
+                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: ${names[player]} (Ready)`;
+                        conn.send({type:'CONFIG',labels:graph.nodes.map(n=>n.label),target:graph.endNode,seconds:40,player,tier});
+                        conn.send({type:'WAITING',message:'You are ready. Waiting for the other player...'});
+                        document.getElementById('versusStatus').textContent=ready[1]&&ready[2]?'Both players connected! Preparing countdown...':`Player ${player} ready. Waiting for the other player...`;
+                        beginWhenBothReady();
+                    } else if(data.type==='NODE'&&matchStarted&&!done){
                         const last=path[path.length-1],valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
                         if(!path.includes(data.node)&&valid){path.push(data.node);if(isOne)p1Score+=25;else p2Score+=25;draw(player);}
-                    } else if(data.type==='RESET'&&!done){if(isOne){p1Path=['A'];p1Score=500;}else{p2Path=['A'];p2Score=500;}draw(player);
-                    } else if(data.type==='AI'&&!done){const result=runDijkstra(graph);conn.send({type:'NOTICE',message:`Dijkstra shortest route: ${result.path.join(' → ')} | Total path cost: ${result.cost}`});if(isOne){p1Path=result.path.slice();p1Score+=25*p1Path.length;}else{p2Path=result.path.slice();p2Score+=25*p2Path.length;}draw(player);
-                    } else if(data.type==='SUBMIT'&&!done){
+                    } else if(data.type==='RESET'&&matchStarted&&!done){
+                        if(isOne){p1Path=['A'];p1AI=[];p1Score=500;}else{p2Path=['A'];p2AI=[];p2Score=500;}draw(player);
+                    } else if(data.type==='AI'&&matchStarted&&!done){
+                        const result=runDijkstra(graph),playerCost=calculateRouteCost(graph,path);
+                        if(isOne)p1AI=result.path.slice();else p2AI=result.path.slice();
+                        draw(player);
+                        const improvement=Number.isFinite(playerCost)&&playerCost>0?Math.max(0,((playerCost-result.cost)/playerCost)*100):0;
+                        conn.send({type:'NOTICE',message:`🔴 Dijkstra AI route (red): ${result.path.join(' → ')} | AI cost: ${result.cost} | Your current cost: ${Number.isFinite(playerCost)?playerCost:'incomplete'} | AI improvement so far: ${improvement.toFixed(1)}%.`});
+                    } else if(data.type==='SUBMIT'&&matchStarted&&!done){
                         if(path[path.length-1]!==graph.endNode){conn.send({type:'NOTICE',message:`Reach target node ${graph.endNode} first.`});return;}
-                        if(isOne){p1Done=true;saveGlobalScore('P1: '+document.getElementById('p1StatusHeader').textContent,p1Score,lvl);}
-                        else{p2Done=true;saveGlobalScore('P2: '+document.getElementById('p2StatusHeader').textContent,p2Score,lvl);}
-                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: Finished`;
+                        const ai=runDijkstra(graph),cost=calculateRouteCost(graph,path),improvement=cost>0?Math.max(0,((cost-ai.cost)/cost)*100):0;
+                        conn.send({type:'NOTICE',message:`Submitted! Your route cost: ${cost}. Dijkstra cost: ${ai.cost}. AI improvement: ${improvement.toFixed(1)}%.`});
+                        if(isOne){p1Done=true;saveGlobalScore('P1: '+names[1],p1Score,lvl);}else{p2Done=true;saveGlobalScore('P2: '+names[2],p2Score,lvl);}
+                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: Finished (cost ${cost})`;
                         document.getElementById('versusStatus').textContent=`Player ${player} finished. ${p1Done&&p2Done?'Match complete!':'Waiting for opponent...'}`;
-                        maybeFinish();
+                        if(p1Done&&p2Done)finish('Both players completed their routes.');
                     }
                 }
                 draw(1);draw(2);
                 const id1='cyberroute-p1-'+Math.floor(1000+Math.random()*9000),id2='cyberroute-p2-'+Math.floor(1000+Math.random()*9000);
+                const base=window.location.href.split('#')[0].split('?')[0];
                 const peerP1=new Peer(id1),peerP2=new Peer(id2);
-                peerP1.on('open',id=>{const url=`${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;document.getElementById('urlTextP1').textContent=url;document.getElementById('qrcodeP1').innerHTML='';new QRCode(document.getElementById('qrcodeP1'),{text:url,width:110,height:110});});
+                peerP1.on('open',id=>{const url=`${base}?room=${id}&mode=versus&player=1#controller`;document.getElementById('urlTextP1').textContent=url;document.getElementById('qrcodeP1').innerHTML='';new QRCode(document.getElementById('qrcodeP1'),{text:url,width:110,height:110});});
                 peerP1.on('connection',conn=>{playerConnections[1]=conn;conn.on('data',data=>handlePlayer(1,data,conn));});
-                peerP2.on('open',id=>{const url=`${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;document.getElementById('urlTextP2').textContent=url;document.getElementById('qrcodeP2').innerHTML='';new QRCode(document.getElementById('qrcodeP2'),{text:url,width:110,height:110});});
+                peerP2.on('open',id=>{const url=`${base}?room=${id}&mode=versus&player=2#controller`;document.getElementById('urlTextP2').textContent=url;document.getElementById('qrcodeP2').innerHTML='';new QRCode(document.getElementById('qrcodeP2'),{text:url,width:110,height:110});});
                 peerP2.on('connection',conn=>{playerConnections[2]=conn;conn.on('data',data=>handlePlayer(2,data,conn));});
             }
 
