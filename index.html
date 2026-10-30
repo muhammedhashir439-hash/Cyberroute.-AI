@@ -270,7 +270,6 @@
             <div id="aiBanner" style="display:none; margin-top:12px; padding:12px; background:rgba(129,140,248,0.2); border:1px solid rgba(129,140,248,0.5); border-radius:8px; font-size:0.95rem; text-align:center; color:#c7d2fe; font-weight:700; width:100%; box-sizing:border-box;"></div>
         </div>
     </div>
-
     <!-- VERSUS SPLIT-SCREEN DISPLAY -->
     <div id="versus-view" class="view-frame">
         <div style="width:100%; max-width:1200px; display:flex; justify-content:space-between; margin-bottom:12px;">
@@ -799,6 +798,63 @@ function initSoloGame() {
                             document.getElementById('versusWinnerBanner').textContent = `🏆 Player 2 Finished with score ${p2Score}!`;
                             document.getElementById('versusWinnerBanner').style.display = 'block';
                             saveGlobalScore('P2: ' + document.getElementById('p2StatusHeader').textContent, p2Score, lvl);
+let timerInterval = null;
+let timeLeft = 40; // Updated time limit to 40 seconds
+
+function startHostTimer(conn, displayElementId) {
+    clearInterval(timerInterval);
+    timeLeft = 40; // Reset to 40 seconds on start
+    
+    // Initial display update
+    const hostDisplay = document.getElementById(displayElementId);
+    if (hostDisplay) {
+        hostDisplay.textContent = `⏱ 00:40`;
+    }
+
+    timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            const formattedTime = `⏱ 00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+            
+            // Update Host UI Display
+            if (hostDisplay) {
+                hostDisplay.textContent = formattedTime;
+            }
+            
+            // Send live 40-second timer update to the Mobile Controller
+            if (conn && conn.open) {
+                conn.send({ 
+                    type: 'TICK', 
+                    timeLeft: timeLeft 
+                });
+            }
+        } else {
+            clearInterval(timerInterval);
+            if (conn && conn.open) {
+                conn.send({ type: 'TIMEOUT' });
+            }
+            if (hostDisplay) {
+                hostDisplay.textContent = "⏱ Time's Up!";
+            }
+        }
+    }, 1000);
+}
+                            // Handles incoming time updates on the phone controller
+conn.on('data', data => {
+    if (data.type === 'TICK' || data.type === 'SYNC') {
+        if (data.timeLeft !== undefined) {
+            const ctrlTimer = document.getElementById('ctrlTimer');
+            if (ctrlTimer) {
+                ctrlTimer.textContent = `⏱ ${data.timeLeft}s`;
+            }
+        }
+    } else if (data.type === 'TIMEOUT') {
+        const ctrlTimer = document.getElementById('ctrlTimer');
+        if (ctrlTimer) {
+            ctrlTimer.textContent = `⏱ 0s (EXPIRED)`;
+        }
+    }
+});
                         }
                     });
                 });
