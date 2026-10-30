@@ -179,7 +179,7 @@
         #ctrlTargetBanner { color:#42e8f4 !important; font-size:.8rem !important; }
         #ctrlTimer { background:rgba(239,68,68,.15); border:1px solid rgba(248,113,113,.45); border-radius:8px; padding:5px 9px; }
         body.controller-mode .node-btn-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; max-height:none; overflow:visible; margin-top:8px; }
-        body.controller-mode .node-btn-grid button { min-width:0; min-height:58px; padding:8px 4px; border:1px solid #0e9db5; border-radius:14px; background:linear-gradient(145deg,#0c354b,#061a2b); color:#e4fbff; font-size:1rem; font-weight:900; text-shadow:0 0 8px #22d3ee; box-shadow:inset 0 0 12px rgba(34,211,238,.08),0 0 9px rgba(34,211,238,.08); clip-path:polygon(18% 0,82% 0,100% 50%,82% 100%,18% 100%,0 50%); }
+        body.controller-mode .node-btn-grid button { touch-action:manipulation; pointer-events:auto; user-select:none; -webkit-tap-highlight-color:rgba(34,211,238,.25); min-width:0; min-height:58px; padding:8px 4px; border:1px solid #0e9db5; border-radius:14px; background:linear-gradient(145deg,#0c354b,#061a2b); color:#e4fbff; font-size:1rem; font-weight:900; text-shadow:0 0 8px #22d3ee; box-shadow:inset 0 0 12px rgba(34,211,238,.08),0 0 9px rgba(34,211,238,.08); clip-path:polygon(18% 0,82% 0,100% 50%,82% 100%,18% 100%,0 50%); }
         body.controller-mode .node-btn-grid button:disabled { opacity:.35; filter:saturate(.55); }
         body.controller-mode .node-btn-grid button:active:not(:disabled) { background:#087b91; transform:scale(.96); }
         .ctrl-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
@@ -651,20 +651,31 @@
                 const all = ['A','B','C','D','E','F','G','H','I','J','K','L'];
                 const labels = labelsOverride || all.slice(0, counts[Number(lvl)] || 12);
                 labels.forEach(label => {
-                    const b = document.createElement('button'); b.type='button'; b.textContent=label; b.disabled=!enabled;
-                    b.onclick = () => {
-                        playSound('click');
-                        if (!controlsEnabled) { document.getElementById('connStatus').textContent='Game is not active yet. Press Initialize Session first.'; return; }
-                        if (!connection || !connection.open || !hostReady) { document.getElementById('connStatus').textContent='Laptop connection is not ready. Reopen the controller link if this continues.'; return; }
-                        if (pendingNode) { document.getElementById('connStatus').textContent=`Waiting for laptop to confirm Node ${pendingNode}...`; return; }
-                        pendingNode=label;
-                        document.getElementById('connStatus').textContent=`Sending Node ${label} to laptop...`;
-                        try { connection.send({type:'NODE', node:label, sentAt:Date.now()}); setTimeout(()=>{ if(pendingNode===label){ document.getElementById('connStatus').textContent=`No confirmation received for ${label}. Check the laptop connection and try again.`; pendingNode=null; } },4000); }
-                        catch (err) { document.getElementById('connStatus').textContent='Could not send node. Check your connection.'; }
-                    };
+                    const b = document.createElement('button'); b.type='button'; b.textContent=label; b.dataset.node=label; b.disabled=!enabled;
+                    b.setAttribute('aria-label', `Send node ${label} to laptop`);
                     grid.appendChild(b);
                 });
             }
+            // Delegated click handling is more reliable when the node grid is rebuilt after CONFIG.
+            // It also provides immediate visible feedback before the network send.
+            document.getElementById('nodeBtnGrid').addEventListener('click', event => {
+                const button = event.target.closest('button[data-node]');
+                if (!button) return;
+                const label = button.dataset.node;
+                playSound('click');
+                if (!controlsEnabled || button.disabled) { document.getElementById('connStatus').textContent='Game is not active yet. Wait for the laptop to start the session.'; return; }
+                if (!conn || !conn.open || !hostReady) { document.getElementById('connStatus').textContent='Laptop connection is not ready. Reopen the controller link if this continues.'; return; }
+                if (pendingNode) { document.getElementById('connStatus').textContent=`Waiting for laptop to confirm Node ${pendingNode}...`; return; }
+                pendingNode=label;
+                document.getElementById('connStatus').textContent=`NODE ${label} TAPPED — sending to laptop...`;
+                try {
+                    conn.send({type:'NODE', node:label, sentAt:Date.now(), source:'mobile-controller'});
+                    setTimeout(()=>{ if(pendingNode===label){ document.getElementById('connStatus').textContent=`No laptop acknowledgement for ${label}. The tap was sent, but the laptop did not confirm it.`; pendingNode=null; } },5000);
+                } catch (err) {
+                    pendingNode=null;
+                    document.getElementById('connStatus').textContent='SEND FAILED: '+(err?.message||'connection error');
+                }
+            });
 
         } else {
             document.getElementById('hubPlayBtn').onclick = () => {
@@ -830,7 +841,7 @@
                 const banner = document.getElementById('aiBanner');
                 function updateTimer(){ timerEl.textContent = `⏱ 00:${String(seconds).padStart(2,'0')}`; }
                 function stopTimer(){ if(timer){clearInterval(timer);timer=null;} }
-                function finish(message){ if(finished)return; finished=true; stopTimer(); banner.textContent=message; banner.style.display='block'; }
+                function finish(message){ if(finished)return; finished=true; stopTimer(); banner.textContent=message; banner.style.display='block'; if(activeConn&&activeConn.open){try{activeConn.send({type:'MATCH_OVER',message});}catch(e){}} }
                 function startTimer(){ stopTimer(); seconds=40; updateTimer(); timer=setInterval(()=>{seconds--;updateTimer();if(activeConn && activeConn.open)activeConn.send({type:'TIMER',seconds});if(seconds<=0)finish(`⏰ Time is up! Your route score: ${score}`);},1000); }
                 function draw(){ drawGraphOnCanvas(canvas,lvl,path,aiPath); document.getElementById('scoreDisplay').textContent=`Score: ${score}`; }
                 draw(); updateTimer();
@@ -847,6 +858,12 @@
                     activeConn = conn;
                     conn.on('open', () => { document.getElementById('playerDisplay').textContent='Session: Mobile controller connected'; try{conn.send({type:'HOST_READY'});}catch(e){} });
                     conn.on('data', data => {
+                        // Visible receive trace: proves whether a phone event reached this laptop.
+                        if (data && data.type) {
+                            const display = document.getElementById('playerDisplay');
+                            if (data.type === 'NODE') display.textContent = `📡 MOBILE MESSAGE RECEIVED: Node ${data.node}`;
+                            else if (data.type !== 'HELLO' && data.type !== 'TIMER') display.textContent = `📡 MOBILE MESSAGE RECEIVED: ${data.type}`;
+                        }
                         if(data.type==='HELLO'){ try{conn.send({type:'HOST_READY'});}catch(e){} return; }
                         if(data.type==='START'){
                             lvl=Math.max(1,Math.min(5,parseInt(data.lvl)||1)); graph=getGraph(lvl); path=['A']; aiPath=[]; score=500; finished=false; banner.style.display='none';
@@ -866,7 +883,7 @@
                                 conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...path],message:path.includes(data.node)?'That node is already in your route.':'Choose a node connected to '+last+'.'});
                             }
                         } else if(data.type==='RESET' && !finished){
-                            path=['A'];aiPath=[];score=500;banner.style.display='none';draw();
+                            path=['A'];aiPath=[];score=500;banner.style.display='none';draw(); try{conn.send({type:'NODE_ACK',accepted:true,node:'A',path:[...path],message:'Route reset'});conn.send({type:'PATH_UPDATE',path:[...path]});}catch(e){}
                         } else if(data.type==='AI' && !finished){
                             const aiResult = runDijkstra(graph); aiPath=aiResult.path.slice(); draw();
                             const playerCost = calculateRouteCost(graph, path);
@@ -943,7 +960,7 @@
                     } else if(data.type==='NODE'){
                         // Mark receipt on the laptop immediately, even if the move is invalid.
                         const currentPath = isOne ? p1Path : p2Path;
-                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: ${names[player]} (Node ${String(data.node||'?')} received)`;
+                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`📡 P${player}: MOBILE NODE ${String(data.node||'?')} RECEIVED` ;
                         if(!matchStarted){
                             conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...currentPath],message:'The match has not started yet. Wait for the countdown.'});
                         } else if(isOne ? p1Done : p2Done){
