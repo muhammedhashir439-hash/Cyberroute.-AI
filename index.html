@@ -4,20 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberRoute Strategy Game</title>
-    <!-- Sci-Fi Google Fonts (Orbitron / Rajdhani) -->
+    <!-- Orbitron & Rajdhani Sci-Fi Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     
-    <!-- PeerJS for Remote Controller Syncing -->
+    <!-- PeerJS & QR Code for Multiplayer / Remote -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         :root {
             --bg-dark: #040d1a;
-            --panel-bg: rgba(6, 24, 44, 0.85);
+            --panel-bg: rgba(6, 24, 44, 0.9);
             --neon-blue: #00f0ff;
             --neon-blue-glow: rgba(0, 240, 255, 0.4);
             --border-blue: #135589;
@@ -46,7 +45,6 @@
             align-items: center;
             min-height: 100vh;
             padding: 15px;
-            overflow-x: hidden;
         }
 
         /* Sci-Fi Top HUD Header */
@@ -64,262 +62,120 @@
             margin-bottom: 20px;
         }
 
-        .hud-items {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
+        .hud-items { display: flex; gap: 15px; align-items: center; }
         .hud-pill {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.8rem; color: var(--text-muted);
             background: rgba(0, 240, 255, 0.05);
             border: 1px solid var(--border-blue);
-            padding: 6px 16px;
-            border-radius: 15px;
-            cursor: pointer;
+            padding: 6px 14px; border-radius: 15px; cursor: pointer;
             transition: all 0.2s ease;
         }
+        .hud-pill:hover { border-color: var(--neon-blue); color: #fff; box-shadow: 0 0 10px var(--neon-blue-glow); }
 
-        .hud-pill:hover {
-            border-color: var(--neon-blue);
-            color: #fff;
-            box-shadow: 0 0 10px var(--neon-blue-glow);
-        }
+        /* View Management */
+        .view { display: none; width: 100%; max-width: 1100px; flex-direction: column; align-items: center; }
+        .view.active { display: flex; }
 
-        /* Screen View Router */
-        .view {
-            display: none;
-            width: 100%;
-            max-width: 1100px;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .view.active {
-            display: flex;
-        }
-
-        /* Landing Page Sci-Fi Menu Layout */
+        /* Landing Page Layout (Matches Screenshot) */
         .landing-container {
-            display: flex;
-            width: 100%;
-            min-height: 520px;
-            background: var(--panel-bg);
-            border: 2px solid var(--border-blue);
-            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
-            border-radius: 12px;
-            padding: 40px;
-            gap: 30px;
-            align-items: center;
-            position: relative;
+            display: flex; width: 100%; min-height: 500px;
+            background: var(--panel-bg); border: 2px solid var(--border-blue);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15); border-radius: 12px;
+            padding: 40px; gap: 30px; align-items: center;
         }
 
-        .landing-left {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
+        .landing-left { flex: 1; display: flex; flex-direction: column; gap: 20px; }
         .brand-logo-area h1 {
-            font-size: 2.5rem;
-            font-weight: 900;
-            color: #ffffff;
-            text-shadow: 0 0 12px var(--neon-blue);
-            line-height: 1.1;
+            font-size: 2.3rem; font-weight: 900; color: #ffffff;
+            text-shadow: 0 0 12px var(--neon-blue); line-height: 1.15;
         }
-
         .brand-logo-area p {
-            color: var(--text-muted);
-            font-size: 1rem;
-            margin-top: 10px;
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: 600;
-            text-transform: uppercase;
+            color: var(--text-muted); font-size: 0.95rem; margin-top: 10px;
+            font-family: 'Rajdhani', sans-serif; font-weight: 600; text-transform: uppercase;
         }
 
         .scifi-btn {
-            width: 100%;
-            max-width: 320px;
-            padding: 16px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-main);
-            background: rgba(0, 240, 255, 0.05);
-            border: 2px solid var(--neon-blue);
-            border-radius: 10px;
-            cursor: pointer;
-            text-transform: uppercase;
-            box-shadow: 0 0 12px var(--neon-blue-glow);
-            transition: all 0.25 ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            width: 100%; max-width: 320px; padding: 15px; font-size: 1rem; font-weight: 700;
+            color: var(--text-main); background: rgba(0, 240, 255, 0.05);
+            border: 2px solid var(--neon-blue); border-radius: 10px; cursor: pointer;
+            text-transform: uppercase; box-shadow: 0 0 12px var(--neon-blue-glow);
+            transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-
         .scifi-btn:hover {
-            background: var(--neon-blue);
-            color: #020813;
-            box-shadow: 0 0 20px var(--neon-blue);
-            transform: scale(1.02);
+            background: var(--neon-blue); color: #020813;
+            box-shadow: 0 0 20px var(--neon-blue); transform: scale(1.02);
         }
 
         .landing-right {
-            flex: 1.2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            flex: 1.2; background: #020813; border: 1px solid var(--border-blue);
+            border-radius: 8px; height: 340px; display: flex; justify-content: center; align-items: center;
         }
 
-        /* Game Workspace Layout */
+        /* Game Workspace Panel */
         .game-panel {
-            width: 100%;
-            background: var(--panel-bg);
-            border: 2px solid var(--border-blue);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            width: 100%; background: var(--panel-bg); border: 2px solid var(--border-blue);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15); border-radius: 12px; padding: 20px;
+            display: flex; flex-direction: column; gap: 15px;
         }
 
-        .action-bar {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-        }
-
+        .action-bar { display: flex; gap: 12px; width: 100%; }
         select {
-            flex: 2;
-            padding: 12px;
-            background: #06192e;
-            color: var(--text-main);
-            border: 1px solid var(--neon-blue);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            outline: none;
+            flex: 2; padding: 12px; background: #06192e; color: var(--text-main);
+            border: 1px solid var(--neon-blue); border-radius: 8px; font-size: 0.95rem; outline: none;
         }
 
         .stats-bar {
-            display: flex;
-            justify-content: space-between;
-            background: #030f1e;
-            border: 1px solid var(--border-blue);
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            color: var(--neon-blue);
-            font-weight: 700;
+            display: flex; justify-content: space-between; background: #030f1e;
+            border: 1px solid var(--border-blue); padding: 12px 20px; border-radius: 8px;
+            font-size: 1.1rem; color: var(--neon-blue); font-weight: 700;
         }
 
         canvas {
-            background: #020a14;
-            border: 1px solid var(--border-blue);
-            border-radius: 8px;
-            width: 100%;
-            max-width: 1060px;
-            height: 380px;
+            background: #020a14; border: 1px solid var(--border-blue); border-radius: 8px;
+            width: 100%; max-width: 1060px; height: 380px;
         }
 
-        /* Dual Controller Section */
-        .control-split {
-            display: flex;
-            gap: 20px;
-            width: 100%;
-        }
-
+        /* Controllers Split */
+        .control-split { display: flex; gap: 20px; width: 100%; }
         .control-box {
-            flex: 1;
-            background: #030f1e;
-            border: 1px solid var(--border-blue);
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex: 1; background: #030f1e; border: 1px solid var(--border-blue);
+            border-radius: 8px; padding: 15px; display: flex; flex-direction: column; align-items: center;
         }
+        .control-box h3 { font-size: 0.85rem; color: var(--neon-blue); margin-bottom: 10px; text-transform: uppercase; }
 
-        .control-box h3 {
-            font-size: 0.9rem;
-            color: var(--neon-blue);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
+        #qrcode { background: #ffffff; padding: 6px; border-radius: 6px; margin-bottom: 6px; }
+        #qrcode img { display: block; width: 90px; height: 90px; }
 
-        #qrcode {
-            background: #ffffff;
-            padding: 8px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-        }
-
-        #qrcode img { display: block; width: 100px; height: 100px; }
-
-        .node-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            width: 100%;
-        }
-
+        .node-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; }
         .node-btn {
-            padding: 10px 4px;
-            background: #082d4f;
-            color: var(--text-main);
-            border: 1px solid var(--border-blue);
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            padding: 12px 4px; background: #082d4f; color: var(--text-main);
+            border: 1px solid var(--border-blue); border-radius: 6px; font-weight: bold;
+            font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease;
         }
-
-        .node-btn:disabled {
-            background: #041221;
-            color: #315273;
-            border-color: #0b253d;
-            cursor: not-allowed;
-        }
-
+        .node-btn:disabled { background: #041221; color: #315273; border-color: #0b253d; cursor: not-allowed; }
         .node-btn.active-hop {
-            background: var(--accent-green);
-            color: #020813;
-            border-color: var(--accent-green);
+            background: var(--accent-green); color: #020813; border-color: var(--accent-green);
             box-shadow: 0 0 10px var(--accent-green);
         }
 
         /* Modal Overlay */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(2, 8, 19, 0.9);
-            backdrop-filter: blur(6px);
-            justify-content: center; align-items: center;
-            z-index: 100;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 8, 19, 0.9); backdrop-filter: blur(6px);
+            justify-content: center; align-items: center; z-index: 100;
         }
-
         .modal-content {
-            background: #06192e;
-            border: 2px solid var(--neon-blue);
-            box-shadow: 0 0 20px var(--neon-blue-glow);
-            padding: 30px; border-radius: 12px;
-            max-width: 500px; width: 90%;
-            display: flex; flex-direction: column; gap: 15px;
+            background: #06192e; border: 2px solid var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue-glow);
+            padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; display: flex; flex-direction: column; gap: 15px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Top Sci-Fi HUD Navigation Bar -->
+    <!-- Top Sci-Fi HUD Header -->
     <header class="hud-header">
-        <div style="font-weight: 900; color: var(--neon-blue);">CYBERROUTE STRATEGY GAME</div>
+        <div style="font-weight: 900; color: var(--neon-blue); font-size: 0.95rem;">CYBERROUTE STRATEGY GAME</div>
         <div class="hud-items">
             <div class="hud-pill">👤 PROFILE</div>
             <div class="hud-pill" onclick="toggleHelpModal()">❓ HELP</div>
@@ -328,7 +184,7 @@
         </div>
     </header>
 
-    <!-- VIEW 1: LANDING MENU PAGE (MATCHES YOUR REFERENCE IMAGE) -->
+    <!-- VIEW 1: LANDING MENU PAGE -->
     <div id="landingView" class="view active">
         <div class="landing-container">
             <div class="landing-left">
@@ -337,16 +193,12 @@
                     <p>Route & Optimize Data Packets Across the Global Network.</p>
                 </div>
                 
-                <button class="scifi-btn" onclick="navigateTo('gameView')">
-                    ▶ PLAY GAME
-                </button>
-                <button class="scifi-btn" onclick="navigateTo('leaderboardView')">
-                    🏆 LEADERBOARD
-                </button>
+                <button class="scifi-btn" onclick="startSoloMode()">🎮 SOLO GAME</button>
+                <button class="scifi-btn" onclick="startMultiplayerMode()">⚔️ MULTIPLAYER VERSUS</button>
+                <button class="scifi-btn" onclick="navigateTo('leaderboardView')">🏆 LEADERBOARD</button>
             </div>
 
             <div class="landing-right">
-                <!-- World Map Nodes Canvas Background -->
                 <canvas id="mapBgCanvas" width="450" height="320"></canvas>
             </div>
         </div>
@@ -357,13 +209,15 @@
         <div class="game-panel">
             <section class="action-bar">
                 <select id="difficulty" onchange="resetGame()">
-                    <option value="1">Level 1: Basic Topology (Node A ➔ D)</option>
-                    <option value="2">Level 2: Advanced Interlock (Node A ➔ I)</option>
-                    <option value="3" selected>Level 5: Master Matrix (Node A ➔ O - Extreme)</option>
+                    <option value="1">Level 1: Basic Topology</option>
+                    <option value="2">Level 2: Advanced Interlock</option>
+                    <option value="3">Level 3: Expanded Mesh</option>
+                    <option value="4">Level 4: High-Density Hub</option>
+                    <option value="5" selected>Level 5: Master Matrix (Extreme - 40s)</option>
                 </select>
-                <button class="scifi-btn" style="max-width: 180px; padding: 10px;" id="startBtn" onclick="startMatch()">START MATCH</button>
-                <button class="scifi-btn" style="max-width: 140px; padding: 10px;" onclick="resetGame()">RESET</button>
-                <button class="scifi-btn" style="max-width: 140px; padding: 10px;" onclick="navigateTo('landingView')">MENU</button>
+                <button class="scifi-btn" style="max-width: 170px; padding: 10px;" id="startBtn" onclick="startMatch()">START MATCH</button>
+                <button class="scifi-btn" style="max-width: 130px; padding: 10px;" onclick="resetGame()">RESET</button>
+                <button class="scifi-btn" style="max-width: 130px; padding: 10px;" onclick="navigateTo('landingView')">MENU</button>
             </section>
 
             <section class="stats-bar">
@@ -380,7 +234,7 @@
                 <div class="control-box">
                     <h3>Mobile Remote Sync (PeerJS)</h3>
                     <div id="qrcode"></div>
-                    <p id="peerIdDisplay" style="font-size: 0.75rem; color: var(--text-muted);">Initializing Peer ID...</p>
+                    <p id="peerIdDisplay" style="font-size: 0.7rem; color: var(--text-muted);">Initializing Peer ID...</p>
                 </div>
 
                 <div class="control-box">
@@ -425,9 +279,10 @@
         <div class="modal-content">
             <h2 style="color: var(--neon-blue);">SYSTEM INSTRUCTIONS</h2>
             <p style="font-size: 0.9rem; line-height: 1.5; color: var(--text-main);">
-                1. Click <strong>START MATCH</strong> to begin the <strong>40-second</strong> countdown.<br><br>
-                2. Navigate from <strong>Node A</strong> to the destination node via valid adjacent links.<br><br>
-                3. Use either the <strong>Laptop Controller</strong> or scan the QR code to play via phone.
+                1. Select your level (Levels 1 to 5 available in Solo mode).<br><br>
+                2. Click <strong>START MATCH</strong> to begin the timer.<br><br>
+                3. Navigate from start node to destination via valid adjacent links without showing weights on control buttons.<br><br>
+                4. Use the <strong>Laptop Controller</strong> or scan the QR code for mobile play.
             </p>
             <button class="scifi-btn" style="margin-top: 10px;" onclick="toggleHelpModal()">CLOSE</button>
         </div>
@@ -437,9 +292,7 @@
         // Web Audio API Sound Engine
         const AudioEngine = {
             ctx: null, soundOn: true,
-            init() {
-                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            },
+            init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
             playTone(freq, type, duration) {
                 if (!this.ctx || !this.soundOn) return;
                 try {
@@ -465,36 +318,96 @@
         function navigateTo(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
-            if (viewId === 'gameView') resetGame();
         }
 
-        // Canvas References
+        function startSoloMode() {
+            navigateTo('gameView');
+            resetGame();
+        }
+
+        function startMultiplayerMode() {
+            navigateTo('gameView');
+            resetGame();
+            alert("Multiplayer Versus mode active: Scan the QR code with a second device to join head-to-head race!");
+        }
+
+        // Canvas Setup
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Master 15-Node Network Matrix
-        const fullMatrix = {
-            'A': {x: 80,  y: 190, neighbors: {'B': 2, 'E': 9, 'F': 6}},
-            'B': {x: 220, y: 80,  neighbors: {'A': 2, 'C': 1, 'G': 7}},
-            'C': {x: 390, y: 50,  neighbors: {'B': 1, 'D': 8, 'H': 2}},
-            'D': {x: 560, y: 80,  neighbors: {'C': 8, 'I': 1, 'J': 4}},
-            'E': {x: 210, y: 300, neighbors: {'A': 9, 'F': 2, 'K': 3}},
-            'F': {x: 350, y: 190, neighbors: {'A': 6, 'E': 2, 'G': 1, 'L': 5}},
-            'G': {x: 490, y: 160, neighbors: {'B': 7, 'F': 1, 'H': 3, 'M': 2}},
-            'H': {x: 630, y: 130, neighbors: {'C': 2, 'G': 3, 'I': 2, 'N': 6}},
-            'I': {x: 770, y: 90,  neighbors: {'D': 1, 'H': 2, 'O': 9}},
-            'J': {x: 710, y: 230, neighbors: {'D': 4, 'N': 1, 'O': 5}},
-            'K': {x: 350, y: 330, neighbors: {'E': 3, 'L': 2}},
-            'L': {x: 490, y: 300, neighbors: {'F': 5, 'K': 2, 'M': 1}},
-            'M': {x: 630, y: 310, neighbors: {'G': 2, 'L': 1, 'N': 3}},
-            'N': {x: 780, y: 290, neighbors: {'H': 6, 'J': 1, 'M': 3, 'O': 2}},
-            'O': {x: 950, y: 190, neighbors: {'I': 9, 'J': 5, 'N': 2}}
+        // All 5 Level Network Topologies
+        const levels = {
+            '1': { target: 'D', nodes: {
+                'A': {x: 100, y: 190, neighbors: {'B': 4, 'C': 2}},
+                'B': {x: 400, y: 100, neighbors: {'A': 4, 'D': 3}},
+                'C': {x: 400, y: 280, neighbors: {'A': 2, 'D': 1}},
+                'D': {x: 900, y: 190, neighbors: {'B': 3, 'C': 1}}
+            }},
+            '2': { target: 'I', nodes: {
+                'A': {x: 80, y: 190, neighbors: {'B': 2, 'E': 5}},
+                'B': {x: 300, y: 100, neighbors: {'A': 2, 'C': 3, 'F': 4}},
+                'C': {x: 520, y: 80, neighbors: {'B': 3, 'D': 2, 'G': 6}},
+                'D': {x: 750, y: 120, neighbors: {'C': 2, 'I': 4}},
+                'E': {x: 250, y: 300, neighbors: {'A': 5, 'F': 1}},
+                'F': {x: 450, y: 250, neighbors: {'B': 4, 'E': 1, 'H': 3}},
+                'G': {x: 650, y: 240, neighbors: {'C': 6, 'H': 2, 'I': 3}},
+                'H': {x: 550, y: 330, neighbors: {'F': 3, 'G': 2}},
+                'I': {x: 950, y: 190, neighbors: {'D': 4, 'G': 3}}
+            }},
+            '3': { target: 'L', nodes: {
+                'A': {x: 80, y: 190, neighbors: {'B': 3, 'E': 4}},
+                'B': {x: 250, y: 90, neighbors: {'A': 3, 'C': 2, 'F': 5}},
+                'C': {x: 450, y: 60, neighbors: {'B': 2, 'D': 3, 'G': 4}},
+                'D': {x: 650, y: 100, neighbors: {'C': 3, 'H': 2, 'L': 7}},
+                'E': {x: 220, y: 300, neighbors: {'A': 4, 'F': 1, 'I': 3}},
+                'F': {x: 380, y: 200, neighbors: {'B': 5, 'E': 1, 'G': 2, 'J': 4}},
+                'G': {x: 550, y: 210, neighbors: {'C': 4, 'F': 2, 'H': 1, 'K': 5}},
+                'H': {x: 720, y: 240, neighbors: {'D': 2, 'G': 1, 'L': 3}},
+                'I': {x: 350, y: 340, neighbors: {'E': 3, 'J': 2}},
+                'J': {x: 500, y: 320, neighbors: {'F': 4, 'I': 2, 'K': 1}},
+                'K': {x: 650, y: 330, neighbors: {'G': 5, 'J': 1, 'L': 2}},
+                'L': {x: 950, y: 190, neighbors: {'D': 7, 'H': 3, 'K': 2}}
+            }},
+            '4': { target: 'N', nodes: {
+                'A': {x: 60, y: 190, neighbors: {'B': 2, 'E': 6}},
+                'B': {x: 200, y: 90, neighbors: {'A': 2, 'C': 3, 'F': 4}},
+                'C': {x: 360, y: 60, neighbors: {'B': 3, 'D': 1, 'G': 5}},
+                'D': {x: 520, y: 90, neighbors: {'C': 1, 'H': 2, 'I': 4}},
+                'E': {x: 180, y: 310, neighbors: {'A': 6, 'F': 2, 'J': 5}},
+                'F': {x: 320, y: 200, neighbors: {'B': 4, 'E': 2, 'G': 1, 'K': 3}},
+                'G': {x: 480, y: 210, neighbors: {'C': 5, 'F': 1, 'H': 2, 'L': 4}},
+                'H': {x: 640, y: 180, neighbors: {'D': 2, 'G': 2, 'M': 3}},
+                'I': {x: 700, y: 80, neighbors: {'D': 4, 'M': 1, 'N': 8}},
+                'J': {x: 300, y: 350, neighbors: {'E': 5, 'K': 2}},
+                'K': {x: 450, y: 330, neighbors: {'F': 3, 'J': 2, 'L': 1}},
+                'L': {x: 600, y: 320, neighbors: {'G': 4, 'K': 1, 'M': 2}},
+                'M': {x: 750, y: 280, neighbors: {'H': 3, 'I': 1, 'L': 2, 'N': 3}},
+                'N': {x: 950, y: 190, neighbors: {'I': 8, 'M': 3}}
+            }},
+            '5': { target: 'O', nodes: {
+                'A': {x: 80,  y: 190, neighbors: {'B': 2, 'E': 9, 'F': 6}},
+                'B': {x: 220, y: 80,  neighbors: {'A': 2, 'C': 1, 'G': 7}},
+                'C': {x: 390, y: 50,  neighbors: {'B': 1, 'D': 8, 'H': 2}},
+                'D': {x: 560, y: 80,  neighbors: {'C': 8, 'I': 1, 'J': 4}},
+                'E': {x: 210, y: 300, neighbors: {'A': 9, 'F': 2, 'K': 3}},
+                'F': {x: 350, y: 190, neighbors: {'A': 6, 'E': 2, 'G': 1, 'L': 5}},
+                'G': {x: 490, y: 160, neighbors: {'B': 7, 'F': 1, 'H': 3, 'M': 2}},
+                'H': {x: 630, y: 130, neighbors: {'C': 2, 'G': 3, 'I': 2, 'N': 6}},
+                'I': {x: 770, y: 90,  neighbors: {'D': 1, 'H': 2, 'O': 9}},
+                'J': {x: 710, y: 230, neighbors: {'D': 4, 'N': 1, 'O': 5}},
+                'K': {x: 350, y: 330, neighbors: {'E': 3, 'L': 2}},
+                'L': {x: 490, y: 300, neighbors: {'F': 5, 'K': 2, 'M': 1}},
+                'M': {x: 630, y: 310, neighbors: {'G': 2, 'L': 1, 'N': 3}},
+                'N': {x: 780, y: 290, neighbors: {'H': 6, 'J': 1, 'M': 3, 'O': 2}},
+                'O': {x: 950, y: 190, neighbors: {'I': 9, 'J': 5, 'N': 2}}
+            }}
         };
 
-        let nodes = {...fullMatrix};
+        let currentLevelData = levels['5'];
+        let nodes = currentLevelData.nodes;
         let currentPath = ['A'];
         let totalWeight = 0;
-        let targetNode = 'O';
+        let targetNode = currentLevelData.target;
         let timeLeft = 40;
         let timerInterval = null;
         let matchActive = false;
@@ -507,12 +420,12 @@
                 qrContainer.innerHTML = "";
                 new QRCode(qrContainer, {
                     text: `https://muhammedhashir439-hash.github.io/Cyberroute.-AI/?peer=${id}`,
-                    width: 100, height: 100
+                    width: 90, height: 90
                 });
             });
 
             peer.on('connection', (conn) => {
-                document.getElementById('gameStatusTag').innerText = 'STATUS: CONTROLLER CONNECTED';
+                document.getElementById('gameStatusTag').innerText = 'GAME STATUS: CONNECTED';
                 conn.on('data', (data) => {
                     if (data.action === 'selectNode') selectNode(data.nodeKey);
                     if (data.action === 'startMatch') startMatch();
@@ -524,17 +437,18 @@
         function resetGame() {
             clearInterval(timerInterval);
             matchActive = false;
-            timeLeft = 40;
+            
+            const lvl = document.getElementById('difficulty').value;
+            currentLevelData = levels[lvl];
+            nodes = currentLevelData.nodes;
+            targetNode = currentLevelData.target;
+
+            timeLeft = (lvl === '5') ? 40 : 50;
             currentPath = ['A'];
             totalWeight = 0;
 
-            const level = document.getElementById('difficulty').value;
-            if (level === '1') targetNode = 'D';
-            else if (level === '2') targetNode = 'I';
-            else targetNode = 'O';
-
             document.getElementById('gameStatusTag').innerText = 'GAME STATUS: IDLE';
-            document.getElementById('timerDisplay').innerText = '⏱ 00:40';
+            document.getElementById('timerDisplay').innerText = `⏱ 00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
             document.getElementById('startBtn').disabled = false;
 
             updateUI();
@@ -582,7 +496,7 @@
                     document.getElementById('gameStatusTag').innerText = 'GAME STATUS: SUCCESS';
                     AudioEngine.playSuccess();
                     setTimeout(() => {
-                        alert(`Target ${targetNode} reached! Cost: ${totalWeight} in ${40 - timeLeft}s.`);
+                        alert(`Target ${targetNode} reached! Cost: ${totalWeight}.`);
                     }, 200);
                 }
             }
@@ -604,7 +518,8 @@
 
                 if (activeNeighbors[nKey] !== undefined && matchActive) {
                     btn.classList.add('active-hop');
-                    btn.innerText = `${nKey} (${activeNeighbors[nKey]})`;
+                    // Clean keyboard button: NO numbers shown on the button as requested
+                    btn.innerText = `${nKey}`;
                     btn.onclick = () => selectNode(nKey);
                 } else {
                     btn.innerText = nKey;
@@ -617,7 +532,7 @@
         function drawGraph() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Sci-Fi Network Edges
+            // Draw Edges
             for (let nKey in nodes) {
                 let node = nodes[nKey];
                 for (let neighborKey in node.neighbors) {
@@ -645,7 +560,7 @@
                 }
             }
 
-            // Draw Sci-Fi Glowing Nodes
+            // Draw Nodes
             for (let nKey in nodes) {
                 let node = nodes[nKey];
                 let isCurrent = currentPath[currentPath.length - 1] === nKey;
@@ -673,7 +588,6 @@
             }
         }
 
-        // Draw Landing Page Background Map Graphic
         function drawMapBg() {
             const mapCanvas = document.getElementById('mapBgCanvas');
             if(!mapCanvas) return;
