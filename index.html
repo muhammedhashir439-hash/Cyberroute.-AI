@@ -3,17 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberRoute AI - Algorithmic Pathfinder</title>
+    <title>CyberRoute AI</title>
+    <!-- PeerJS for Remote Controller Syncing -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --bg-color: #0d1117;
             --panel-bg: #161b22;
             --border-color: #30363d;
             --accent-green: #2ea043;
+            --accent-green-hover: #3fb950;
             --accent-cyan: #00f0ff;
+            --accent-blue: #1f6feb;
+            --accent-blue-hover: #388bfd;
             --text-main: #c9d1d9;
             --text-muted: #8b949e;
-            --danger: #f85149;
+            --danger: #da3633;
+            --danger-hover: #f85149;
         }
 
         * {
@@ -33,294 +41,522 @@
             padding: 20px;
         }
 
-        header {
-            text-align: center;
+        /* Top Navigation Bar */
+        .top-bar {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 8px;
             margin-bottom: 20px;
         }
 
-        header h1 {
+        .brand {
+            font-size: 0.95rem;
             color: var(--accent-cyan);
-            font-size: 2rem;
-            letter-spacing: 2px;
-            margin-bottom: 5px;
+            font-weight: bold;
+            letter-spacing: 1px;
         }
 
-        header p {
+        .status-tag {
+            font-size: 0.85rem;
+            font-weight: bold;
             color: var(--text-muted);
+            background: var(--bg-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 18px;
             font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
         }
 
-        .container {
-            display: flex;
-            gap: 20px;
-            max-width: 1150px;
+        .btn-primary {
+            background: var(--accent-green);
+            color: #ffffff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-green-hover);
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+        }
+
+        .btn-danger {
+            background: #21262d;
+            color: var(--danger-hover);
+            border-color: var(--border-color);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger);
+            color: #ffffff;
+        }
+
+        /* Main Container */
+        .main-container {
             width: 100%;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .panel {
-            background-color: var(--panel-bg);
+            max-width: 900px;
+            background: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 20px;
-            flex: 1;
-            min-width: 340px;
-            max-width: 520px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
         }
 
-        h2 {
-            font-size: 1.2rem;
-            color: var(--accent-cyan);
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+        /* Actions Section */
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            width: 100%;
         }
 
+        .select-wrapper {
+            flex: 2;
+        }
+
+        select {
+            width: 100%;
+            padding: 11px;
+            background: #21262d;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            outline: none;
+        }
+
+        select:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        /* Metrics Display */
         .stats-bar {
             display: flex;
             justify-content: space-between;
             background: var(--bg-color);
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            padding: 14px 20px;
+            border-radius: 6px;
+            font-size: 1.05rem;
             font-weight: bold;
+        }
+
+        /* Canvas Display */
+        .canvas-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
         }
 
         canvas {
             background: var(--bg-color);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
-            display: block;
-            margin: 0 auto 15px auto;
+            border-radius: 6px;
             width: 100%;
-            max-width: 480px;
-            height: 320px;
+            max-width: 800px;
+            height: 380px;
         }
 
-        .controls-group {
+        /* Dual Controls Section */
+        .control-section {
+            width: 100%;
+        }
+
+        .split-controls {
+            display: flex;
+            gap: 18px;
+            width: 100%;
+        }
+
+        .control-box {
+            flex: 1;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
         }
 
-        select, button {
-            background: #21262d;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 10px;
+        .control-box h3 {
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        #qrcode {
+            background: #ffffff;
+            padding: 8px;
             border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            outline: none;
+            margin-bottom: 10px;
         }
 
-        button:hover {
-            background: #30363d;
-            border-color: var(--accent-cyan);
+        #qrcode img {
+            display: block;
+            width: 110px;
+            height: 110px;
         }
 
-        button.primary {
-            background: var(--accent-green);
-            color: #fff;
-            border: none;
-            font-weight: bold;
+        #peerIdDisplay {
+            font-size: 0.75rem;
+            color: var(--text-muted);
         }
 
-        button.primary:hover {
-            background: #3fb950;
+        /* Grid Controller */
+        .grid-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            width: 100%;
         }
 
-        .node-buttons {
+        .node-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 8px;
-            margin-top: 10px;
-            max-height: 140px;
-            overflow-y: auto;
+            width: 100%;
         }
 
         .node-btn {
-            background: #1f6feb;
-            color: white;
+            padding: 10px 4px;
+            background: var(--accent-blue);
+            color: #ffffff;
             border: none;
-            padding: 8px;
-            font-weight: bold;
             border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
             cursor: pointer;
-            font-size: 0.85rem;
+            transition: transform 0.1s ease, background-color 0.2s ease;
         }
 
-        .node-btn:hover {
-            background: #388bfd;
+        .node-btn:disabled {
+            background: #21262d;
+            color: #484f58;
+            cursor: not-allowed;
+            border: 1px solid var(--border-color);
         }
 
-        .instructions {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-            margin-top: 10px;
+        .node-btn.active-hop {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px rgba(46, 160, 67, 0.4);
+        }
+
+        .node-btn.active-hop:hover {
+            background: var(--accent-green-hover);
+            transform: translateY(-2px);
+        }
+
+        /* Help Modal Styling */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 28px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .modal-content h2 {
+            color: var(--accent-cyan);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            font-size: 1.2rem;
+        }
+
+        .modal-body p {
+            font-size: 0.88rem;
+            color: var(--text-main);
+            line-height: 1.5;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>CYBERROUTE AI</h1>
-        <p>Senior Division Math Fair Exhibit | Dijkstra Shortest Path Engine</p>
+    <!-- Top Navigation Bar -->
+    <header class="top-bar">
+        <div class="brand">CYBERROUTE AI // NETWORK PATHFINDER</div>
+        <div class="status-tag" id="gameStatusTag">STATUS: IDLE</div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="toggleHelpModal()">HELP</button>
+        </div>
     </header>
 
-    <div class="container">
-        <!-- LEFT PANEL: Game Configuration & Instructions -->
-        <div class="panel">
-            <h2>Mission Control</h2>
-            <div class="controls-group">
-                <label for="difficulty">Select Complexity Tier:</label>
+    <!-- Main Workspace Layout -->
+    <main class="main-container">
+
+        <!-- Controls & Level Selector Bar -->
+        <section class="action-bar">
+            <div class="select-wrapper">
                 <select id="difficulty" onchange="resetGame()">
-                    <option value="1">Level 1: Basic Mesh (Node A ➔ D)</option>
+                    <option value="1">Level 1: Basic Topology (Node A ➔ D)</option>
                     <option value="2">Level 2: Advanced Interlock (Node A ➔ I)</option>
                     <option value="3" selected>Level 5: Master Matrix (Node A ➔ O - Extreme)</option>
                 </select>
-
-                <button class="primary" onclick="resetGame()">Initialize New Route Run</button>
             </div>
+            <button class="btn btn-primary" id="startBtn" onclick="startMatch()">START MATCH</button>
+            <button class="btn btn-secondary" onclick="resetGame()">RESET</button>
+            <button class="btn btn-danger" onclick="undoStep()">UNDO STEP</button>
+        </section>
 
-            <h2 style="margin-top: 25px;">How to Play</h2>
-            <div class="instructions">
-                <p><strong>1. Objective:</strong> Route your data packet from <strong>Node A</strong> to the target destination node before the <strong>40-second</strong> timer runs out.</p><br>
-                <p><strong>2. Strict Connectivity:</strong> You can only jump to adjacent connected nodes. Direct illegal jumps are blocked by graph constraints.</p><br>
-                <p><strong>3. Dijkstra Optimization:</strong> Beware of misleading low-weight traps! Minimize total edge weight costs to beat the optimal path.</p>
-            </div>
-        </div>
+        <!-- Real-Time Metrics Display -->
+        <section class="stats-bar">
+            <div class="stat-box" id="timerDisplay">⏱ 00:35</div>
+            <div class="stat-box" id="pathDisplay">Path: A</div>
+            <div class="stat-box" id="weightDisplay">Cost: 0</div>
+        </section>
 
-        <!-- RIGHT PANEL: Interactive Simulation & Laptop On-Screen Controls -->
-        <div class="panel">
-            <h2>Live Network Visualizer</h2>
-            
-            <div class="stats-bar">
-                <span id="timerDisplay">⏱ 00:40</span>
-                <span id="pathDisplay">Path: A</span>
-                <span id="weightDisplay">Cost: 0</span>
-            </div>
+        <!-- Interactive HTML5 Network Graph Visualizer -->
+        <section class="canvas-container">
+            <canvas id="gameCanvas" width="800" height="380"></canvas>
+        </section>
 
-            <!-- HTML5 Canvas Rendering Network Graph -->
-            <canvas id="gameCanvas" width="480" height="320"></canvas>
-
-            <div class="controls-group">
-                <p style="font-size: 0.85rem; text-align: center;">Select next adjacent node hop:</p>
-                <div class="node-buttons" id="nodeButtonsContainer">
-                    <!-- Dynamically populated node buttons -->
+        <!-- Connection Panel & Laptop On-Screen Controls -->
+        <section class="control-section">
+            <div class="split-controls">
+                
+                <!-- Remote QR Connection Box -->
+                <div class="control-box">
+                    <h3>Mobile Remote Controller</h3>
+                    <div id="qrcode"></div>
+                    <p id="peerIdDisplay">Initializing Peer ID...</p>
                 </div>
-                <button onclick="undoStep()" style="margin-top: 5px; background: #d73a49; border:none; color:white; padding:8px;">Undo Last Step</button>
+
+                <!-- Laptop On-Screen Direct Controller -->
+                <div class="control-box">
+                    <h3>Laptop On-Screen Controller</h3>
+                    <div class="grid-label">Select Next Hop:</div>
+                    <div class="node-grid" id="nodeGridContainer">
+                        <!-- Dynamically populated via script -->
+                    </div>
+                </div>
+
             </div>
+        </section>
+    </main>
+
+    <!-- Help Modal Overlay -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-content">
+            <h2>System Instructions</h2>
+            <div class="modal-body">
+                <p><strong>1. Mission Objective:</strong> Route the data packet from <strong>Node A</strong> to the target destination node before the 35-second timer expires.</p>
+                <p><strong>2. Starting the Match:</strong> Click the green <strong>START MATCH</strong> button to unlock controls and start the countdown timer.</p>
+                <p><strong>3. Controller Options:</strong> You can play using the <strong>Laptop On-Screen Controller</strong> directly on this screen, or scan the QR code to pair a mobile phone via PeerJS.</p>
+                <p><strong>4. Adjacent Hops:</strong> You can only navigate to directly connected nodes. Valid adjacent nodes will highlight on the controller layout.</p>
+                <p><strong>5. Algorithmic Optimization:</strong> Avoid misleading low-weight traps! Minimize the total accumulated edge weight cost to achieve the optimal path.</p>
+            </div>
+            <button class="btn btn-primary" onclick="toggleHelpModal()">CLOSE</button>
         </div>
     </div>
 
     <script>
+        // Web Audio API Audio Engine
+        const AudioEngine = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTone(freq, type, duration) {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {
+                    console.warn("Audio Context waiting for user gesture.");
+                }
+            },
+            playHop() { this.playTone(520, 'sine', 0.15); },
+            playSuccess() { this.playTone(880, 'triangle', 0.4); },
+            playError() { this.playTone(180, 'sawtooth', 0.25); }
+        };
+
+        // Canvas Reference
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Level 5: Highly Complex 15-Node Interlocking Matrix (A to O) with deceptive trap weights
-        let nodes = {
-            'A': {x: 40,  y: 160, neighbors: {'B': 2, 'E': 9, 'F': 6}},
-            'B': {x: 110, y: 80,  neighbors: {'A': 2, 'C': 1, 'G': 7}},
-            'C': {x: 190, y: 50,  neighbors: {'B': 1, 'D': 8, 'H': 2}},
-            'D': {x: 270, y: 80,  neighbors: {'C': 8, 'I': 1, 'J': 4}},
-            'E': {x: 100, y: 240, neighbors: {'A': 9, 'F': 2, 'K': 3}},
-            'F': {x: 170, y: 160, neighbors: {'A': 6, 'E': 2, 'G': 1, 'L': 5}},
-            'G': {x: 240, y: 140, neighbors: {'B': 7, 'F': 1, 'H': 3, 'M': 2}},
-            'H': {x: 310, y: 120, neighbors: {'C': 2, 'G': 3, 'I': 2, 'N': 6}},
-            'I': {x: 380, y: 90,  neighbors: {'D': 1, 'H': 2, 'O': 9}},
-            'J': {x: 340, y: 200, neighbors: {'D': 4, 'N': 1, 'O': 5}},
-            'K': {x: 160, y: 280, neighbors: {'E': 3, 'L': 2}},
-            'L': {x: 230, y: 250, neighbors: {'F': 5, 'K': 2, 'M': 1}},
-            'M': {x: 300, y: 260, neighbors: {'G': 2, 'L': 1, 'N': 3}},
-            'N': {x: 380, y: 250, neighbors: {'H': 6, 'J': 1, 'M': 3, 'O': 2}},
-            'O': {x: 440, y: 170, neighbors: {'I': 9, 'J': 5, 'N': 2}}
+        // Master 15-Node Network Matrix
+        const fullMatrix = {
+            'A': {x: 60,  y: 190, neighbors: {'B': 2, 'E': 9, 'F': 6}},
+            'B': {x: 170, y: 80,  neighbors: {'A': 2, 'C': 1, 'G': 7}},
+            'C': {x: 300, y: 50,  neighbors: {'B': 1, 'D': 8, 'H': 2}},
+            'D': {x: 430, y: 80,  neighbors: {'C': 8, 'I': 1, 'J': 4}},
+            'E': {x: 160, y: 300, neighbors: {'A': 9, 'F': 2, 'K': 3}},
+            'F': {x: 270, y: 190, neighbors: {'A': 6, 'E': 2, 'G': 1, 'L': 5}},
+            'G': {x: 380, y: 160, neighbors: {'B': 7, 'F': 1, 'H': 3, 'M': 2}},
+            'H': {x: 490, y: 130, neighbors: {'C': 2, 'G': 3, 'I': 2, 'N': 6}},
+            'I': {x: 600, y: 90,  neighbors: {'D': 1, 'H': 2, 'O': 9}},
+            'J': {x: 550, y: 230, neighbors: {'D': 4, 'N': 1, 'O': 5}},
+            'K': {x: 270, y: 330, neighbors: {'E': 3, 'L': 2}},
+            'L': {x: 380, y: 300, neighbors: {'F': 5, 'K': 2, 'M': 1}},
+            'M': {x: 490, y: 310, neighbors: {'G': 2, 'L': 1, 'N': 3}},
+            'N': {x: 610, y: 290, neighbors: {'H': 6, 'J': 1, 'M': 3, 'O': 2}},
+            'O': {x: 730, y: 190, neighbors: {'I': 9, 'J': 5, 'N': 2}}
         };
 
+        let nodes = {...fullMatrix};
         let currentPath = ['A'];
         let totalWeight = 0;
         let targetNode = 'O';
-        let timeLeft = 40;
+        let timeLeft = 35;
         let timerInterval = null;
-        let gameActive = true;
+        let matchActive = false;
+        let peer = null;
 
-        function initGame() {
-            const diff = document.getElementById('difficulty').value;
-            if (diff === '1') {
-                targetNode = 'D';
-                nodes = {
-                    'A': {x: 80, y: 160, neighbors: {'B': 4, 'C': 2}},
-                    'B': {x: 240, y: 80, neighbors: {'A': 4, 'D': 5}},
-                    'C': {x: 240, y: 240, neighbors: {'A': 2, 'D': 1}},
-                    'D': {x: 400, y: 160, neighbors: {'B': 5, 'C': 1}}
-                };
-            } else if (diff === '2') {
-                targetNode = 'I';
-                // Reset to medium default subset if needed, or keep complex matrix subset
-                targetNode = 'O';
-            } else {
-                targetNode = 'O';
-            }
+        // Initialize PeerJS Remote Setup
+        function initPeer() {
+            peer = new Peer();
+            peer.on('open', (id) => {
+                document.getElementById('peerIdDisplay').innerText = `ID: ${id}`;
+                
+                // Generate QR Code containing the connection link
+                const qrContainer = document.getElementById("qrcode");
+                qrContainer.innerHTML = "";
+                new QRCode(qrContainer, {
+                    text: `https://muhammedhashir439-hash.github.io/Cyberroute.-AI/?peer=${id}`,
+                    width: 110,
+                    height: 110
+                });
+            });
 
+            peer.on('connection', (conn) => {
+                document.getElementById('gameStatusTag').innerText = 'STATUS: CONTROLLER CONNECTED';
+                conn.on('data', (data) => {
+                    if (data.action === 'selectNode') selectNode(data.nodeKey);
+                    if (data.action === 'startMatch') startMatch();
+                    if (data.action === 'resetGame') resetGame();
+                    if (data.action === 'undoStep') undoStep();
+                });
+            });
+        }
+
+        function resetGame() {
+            clearInterval(timerInterval);
+            matchActive = false;
+            timeLeft = 35;
             currentPath = ['A'];
             totalWeight = 0;
-            timeLeft = 40;
-            gameActive = true;
 
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if(timeLeft > 0 && gameActive) {
-                    timeLeft--;
-                    document.getElementById('timerDisplay').innerText = `⏱ 00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-                } else if(timeLeft === 0 && gameActive) {
-                    gameActive = false;
-                    alert('Time Expired! Packet transmission failed.');
-                }
-            }, 1000);
+            const level = document.getElementById('difficulty').value;
+            if (level === '1') targetNode = 'D';
+            else if (level === '2') targetNode = 'I';
+            else targetNode = 'O';
+
+            document.getElementById('gameStatusTag').innerText = 'STATUS: IDLE';
+            document.getElementById('timerDisplay').innerText = '⏱ 00:35';
+            document.getElementById('startBtn').disabled = false;
 
             updateUI();
             drawGraph();
         }
 
-        function resetGame() {
-            initGame();
+        function startMatch() {
+            if (matchActive) return;
+            AudioEngine.init();
+            matchActive = true;
+            document.getElementById('gameStatusTag').innerText = 'STATUS: IN PROGRESS';
+            document.getElementById('startBtn').disabled = true;
+
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0 && matchActive) {
+                    timeLeft--;
+                    document.getElementById('timerDisplay').innerText = `⏱ 00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+                } else if (timeLeft === 0 && matchActive) {
+                    matchActive = false;
+                    document.getElementById('gameStatusTag').innerText = 'STATUS: TIME EXPIRED';
+                    AudioEngine.playError();
+                    alert('Time Expired! Route transmission failed.');
+                    updateUI();
+                }
+            }, 1000);
+
+            updateUI();
         }
 
         function selectNode(nodeKey) {
-            if (!gameActive) return;
+            if (!matchActive) return;
+
             const currentNode = currentPath[currentPath.length - 1];
-
-            if (currentNode === targetNode) {
-                alert('Target already reached! Click Reset for a new run.');
-                return;
-            }
-
-            // Check if valid neighbor
             if (nodes[currentNode].neighbors[nodeKey] !== undefined) {
                 totalWeight += nodes[currentNode].neighbors[nodeKey];
                 currentPath.push(nodeKey);
+                AudioEngine.playHop();
+                
                 updateUI();
                 drawGraph();
 
                 if (nodeKey === targetNode) {
-                    gameActive = false;
+                    matchActive = false;
                     clearInterval(timerInterval);
+                    document.getElementById('gameStatusTag').innerText = 'STATUS: SUCCESS';
+                    AudioEngine.playSuccess();
                     setTimeout(() => {
-                        alert(`Success! Target ${targetNode} reached with total cost: ${totalWeight} in ${40 - timeLeft}s!`);
-                    }, 1005);
+                        alert(`Target ${targetNode} reached! Total Route Cost: ${totalWeight} in ${35 - timeLeft}s.`);
+                    }, 200);
                 }
-            } else {
-                alert(`Invalid jump! Node ${nodeKey} is not directly connected to ${currentNode}.`);
             }
         }
 
         function undoStep() {
-            if (currentPath.length > 1 && gameActive) {
+            if (currentPath.length > 1 && matchActive) {
                 const last = currentPath.pop();
                 const prev = currentPath[currentPath.length - 1];
                 totalWeight -= nodes[prev].neighbors[last];
+                AudioEngine.playHop();
                 updateUI();
                 drawGraph();
             }
@@ -330,94 +566,99 @@
             document.getElementById('pathDisplay').innerText = `Path: ${currentPath.join(' ➔ ')}`;
             document.getElementById('weightDisplay').innerText = `Cost: ${totalWeight}`;
 
-            // Build interactive on-screen controller buttons for current valid moves
-            const container = document.getElementById('nodeButtonsContainer');
+            const container = document.getElementById('nodeGridContainer');
             container.innerHTML = '';
-            const currentNode = currentPath[currentPath.length - 1];
 
-            if (currentNode !== targetNode && gameActive) {
-                const validNeighbors = Object.keys(nodes[currentNode].neighbors);
-                validNeighbors.forEach(n => {
-                    const btn = document.createElement('button');
-                    btn.className = 'node-btn';
-                    btn.innerText = `${n} (w:${nodes[currentNode].neighbors[n]})`;
-                    btn.onclick = () => selectNode(n);
-                    container.appendChild(btn);
-                });
-            }
+            const currentNode = currentPath[currentPath.length - 1];
+            const activeNeighbors = nodes[currentNode] ? nodes[currentNode].neighbors : {};
+
+            Object.keys(nodes).forEach(nKey => {
+                const btn = document.createElement('button');
+                btn.className = 'node-btn';
+
+                if (activeNeighbors[nKey] !== undefined && matchActive) {
+                    btn.classList.add('active-hop');
+                    btn.innerText = `${nKey} (${activeNeighbors[nKey]})`;
+                    btn.onclick = () => selectNode(nKey);
+                } else {
+                    btn.innerText = nKey;
+                    btn.disabled = true;
+                }
+                container.appendChild(btn);
+            });
         }
 
         function drawGraph() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw Edges
-            for (let nodeKey in nodes) {
-                let node = nodes[nodeKey];
+            for (let nKey in nodes) {
+                let node = nodes[nKey];
                 for (let neighborKey in node.neighbors) {
                     let neighbor = nodes[neighborKey];
-                    
+
                     ctx.beginPath();
                     ctx.moveTo(node.x, node.y);
                     ctx.lineTo(neighbor.x, neighbor.y);
 
-                    // Highlight active path edges
-                    let isPathEdge = false;
+                    let isPath = false;
                     for (let i = 0; i < currentPath.length - 1; i++) {
-                        if ((currentPath[i] === nodeKey && currentPath[i+1] === neighborKey) ||
-                            (currentPath[i] === neighborKey && currentPath[i+1] === nodeKey)) {
-                            isPathEdge = true;
+                        if ((currentPath[i] === nKey && currentPath[i+1] === neighborKey) ||
+                            (currentPath[i] === neighborKey && currentPath[i+1] === nKey)) {
+                            isPath = true;
                             break;
                         }
                     }
 
-                    ctx.strokeStyle = isPathEdge ? '#00f0ff' : '#30363d';
-                    ctx.lineWidth = isPathEdge ? 3 : 1.2;
+                    ctx.strokeStyle = isPath ? '#00f0ff' : '#30363d';
+                    ctx.lineWidth = isPath ? 3.5 : 1.5;
                     ctx.stroke();
 
-                    // Draw Edge Weight label
+                    // Edge Cost Label
                     ctx.fillStyle = '#8b949e';
-                    ctx.font = '9px Courier New';
+                    ctx.font = '11px Courier New';
                     ctx.fillText(node.neighbors[neighborKey], (node.x + neighbor.x) / 2 + 3, (node.y + neighbor.y) / 2 - 3);
                 }
             }
 
             // Draw Nodes
-            for (let nodeKey in nodes) {
-                let node = nodes[nodeKey];
-                let isCurrent = currentPath[currentPath.length - 1] === nodeKey;
-                let isVisited = currentPath.includes(nodeKey);
-                let isTarget = nodeKey === targetNode;
+            for (let nKey in nodes) {
+                let node = nodes[nKey];
+                let isCurrent = currentPath[currentPath.length - 1] === nKey;
+                let isVisited = currentPath.includes(nKey);
+                let isTarget = nKey === targetNode;
 
                 ctx.beginPath();
-                ctx.arc(node.x, node.y, 12, 0, Math.PI * 2);
-                
-                if (isCurrent) {
-                    ctx.fillStyle = '#00f0ff';
-                } else if (isTarget) {
-                    ctx.fillStyle = '#2ea043';
-                } else if (isVisited) {
-                    ctx.fillStyle = '#1f6feb';
-                } else {
-                    ctx.fillStyle = '#21262d';
-                }
+                ctx.arc(node.x, node.y, 16, 0, Math.PI * 2);
+
+                if (isCurrent) ctx.fillStyle = '#00f0ff';
+                else if (isTarget) ctx.fillStyle = '#2ea043';
+                else if (isVisited) ctx.fillStyle = '#1f6feb';
+                else ctx.fillStyle = '#21262d';
 
                 ctx.fill();
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = '#c9d1d9';
                 ctx.stroke();
 
-                // Node text label
                 ctx.fillStyle = isCurrent || isTarget || isVisited ? '#0d1117' : '#c9d1d9';
-                ctx.font = 'bold 10px Courier New';
+                ctx.font = 'bold 12px Courier New';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(nodeKey, node.x, node.y);
+                ctx.fillText(nKey, node.x, node.y);
             }
         }
 
-        // Initialize on load
-        window.onload = initGame;
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        // Initialize on Load
+        window.onload = () => {
+            resetGame();
+            initPeer();
+        };
     </script>
 </body>
 </html>
-
