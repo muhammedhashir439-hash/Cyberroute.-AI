@@ -582,16 +582,19 @@
                 document.getElementById('startSessionBtn').textContent = 'Join Multiplayer Match';
                 document.getElementById('playerNameInput').placeholder = `Enter Player ${controllerPlayer} name...`;
             }
-            let conn, controlsEnabled = false;
+            let conn, controlsEnabled = false, hostReady = false, pendingNode = null;
             const peer = new Peer();
             peer.on('error', err => { document.getElementById('connStatus').textContent='Peer connection error: '+(err?.type || err?.message || 'unknown error'); });
             peer.on('open', () => {
                 conn = peer.connect(roomId, { reliable: true });
-                conn.on('open', () => { document.getElementById('connStatus').textContent = versusController ? `Connected as Player ${controllerPlayer}. Enter your name and join.` : 'Connected to host session.'; playSound('click'); });
+                conn.on('open', () => { document.getElementById('connStatus').textContent = 'Transport connected. Checking laptop session...'; try { conn.send({type:'HELLO', mode:controllerMode, player:controllerPlayer}); } catch(e) { document.getElementById('connStatus').textContent='Could not contact laptop. Reopen the QR link.'; } playSound('click'); });
                 conn.on('close', () => { controlsEnabled=false; setNodeButtonsEnabled(false); document.getElementById('connStatus').textContent='Connection to laptop closed. Reopen this controller link.'; });
                 conn.on('error', err => { document.getElementById('connStatus').textContent='Controller connection error: '+(err?.type || err?.message || 'unknown error'); });
                 conn.on('data', data => {
-                    if(data.type==='CONFIG'){
+                    if(data.type==='HOST_READY'){
+                        hostReady=true;
+                        document.getElementById('connStatus').textContent=versusController?`Laptop ready for Player ${controllerPlayer}. Enter your name and join.`:'Laptop ready. Enter your name and initialize the session.';
+                    } else if(data.type==='CONFIG'){
                         document.getElementById('setupForm').style.display='none';
                         document.getElementById('gamepadForm').style.display='block';
                         document.getElementById('ctrlTargetBanner').textContent=`Route: Node A ➔ ${data.target}`;
@@ -610,6 +613,7 @@
                     } else if(data.type==='NOTICE'){
                         document.getElementById('connStatus').textContent=data.message;
                     } else if(data.type==='NODE_ACK'){
+                        pendingNode=null;
                         document.getElementById('connStatus').textContent = data.accepted
                             ? `✓ ${data.node} received. Current route: ${data.path.join(' → ')}`
                             : `⚠ ${data.message || 'That node is not connected to the previous node.'}`;
@@ -624,7 +628,7 @@
                 const name = document.getElementById('playerNameInput').value.trim();
                 const lvl = document.getElementById('levelSelect').value;
                 if (!name) { alert('Enter participant name.'); return; }
-                if (!conn || !conn.open) { alert('Controller is not connected yet. Please wait a moment and try again.'); return; }
+                if (!conn || !conn.open || !hostReady) { alert('The laptop session is not ready yet. Wait until the controller says Laptop ready.'); return; }
                 if (versusController) {
                     conn.send({type:'READY', name, player:controllerPlayer});
                     document.getElementById('startSessionBtn').disabled=true;
@@ -651,9 +655,11 @@
                     b.onclick = () => {
                         playSound('click');
                         if (!controlsEnabled) { document.getElementById('connStatus').textContent='Game is not active yet. Press Initialize Session first.'; return; }
-                        if (!connection || !connection.open) { document.getElementById('connStatus').textContent='Connection lost. Reopen the controller link and reconnect.'; return; }
+                        if (!connection || !connection.open || !hostReady) { document.getElementById('connStatus').textContent='Laptop connection is not ready. Reopen the controller link if this continues.'; return; }
+                        if (pendingNode) { document.getElementById('connStatus').textContent=`Waiting for laptop to confirm Node ${pendingNode}...`; return; }
+                        pendingNode=label;
                         document.getElementById('connStatus').textContent=`Sending Node ${label} to laptop...`;
-                        try { connection.send({type:'NODE', node:label}); }
+                        try { connection.send({type:'NODE', node:label, sentAt:Date.now()}); setTimeout(()=>{ if(pendingNode===label){ document.getElementById('connStatus').textContent=`No confirmation received for ${label}. Check the laptop connection and try again.`; pendingNode=null; } },4000); }
                         catch (err) { document.getElementById('connStatus').textContent='Could not send node. Check your connection.'; }
                     };
                     grid.appendChild(b);
@@ -828,8 +834,9 @@
                 function startTimer(){ stopTimer(); seconds=40; updateTimer(); timer=setInterval(()=>{seconds--;updateTimer();if(activeConn && activeConn.open)activeConn.send({type:'TIMER',seconds});if(seconds<=0)finish(`⏰ Time is up! Your route score: ${score}`);},1000); }
                 function draw(){ drawGraphOnCanvas(canvas,lvl,path,aiPath); document.getElementById('scoreDisplay').textContent=`Score: ${score}`; }
                 draw(); updateTimer();
-                const peerId = 'cyberroute-solo-' + Math.floor(1000 + Math.random()*9000);
+                const peerId = 'cyberroute-solo-' + (window.crypto?.randomUUID ? crypto.randomUUID().replace(/-/g,'').slice(0,16) : Date.now().toString(36)+Math.random().toString(36).slice(2,10));
                 const peer = new Peer(peerId);
+                peer.on('error', err => { document.getElementById('urlText').textContent='Peer server error: '+(err?.type||err?.message||'unknown')+'. Refresh and try again.'; });
                 peer.on('open', id => {
                     const url = `${window.location.href.split('#')[0].split('?')[0]}?room=${id}#controller`;
                     document.getElementById('urlText').textContent=url;
@@ -838,12 +845,17 @@
                 });
                 peer.on('connection', conn => {
                     activeConn = conn;
+                    conn.on('open', () => { document.getElementById('playerDisplay').textContent='Session: Mobile controller connected'; try{conn.send({type:'HOST_READY'});}catch(e){} });
                     conn.on('data', data => {
+                        if(data.type==='HELLO'){ try{conn.send({type:'HOST_READY'});}catch(e){} return; }
                         if(data.type==='START'){
                             lvl=Math.max(1,Math.min(5,parseInt(data.lvl)||1)); graph=getGraph(lvl); path=['A']; aiPath=[]; score=500; finished=false; banner.style.display='none';
                             document.getElementById('playerDisplay').textContent=`Player: ${data.name} (Lvl ${lvl})`;
                             conn.send({type:'CONFIG',labels:graph.nodes.map(n=>n.label),target:graph.endNode,seconds:40}); startTimer(); draw();
+                        } else if(data.type==='NODE' && finished){
+                            conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...path],message:'The round has ended. Start a new session to play again.'});
                         } else if(data.type==='NODE' && !finished){
+                            document.getElementById('playerDisplay').textContent=`Player: ${document.getElementById('playerDisplay').textContent.replace(/^Player: /,'')} · Received ${data.node}`;
                             const last=path[path.length-1];
                             const valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
                             if(!path.includes(data.node)&&valid){
@@ -919,6 +931,7 @@
                 }
                 function handlePlayer(player,data,conn){
                     const isOne=player===1, path=isOne?p1Path:p2Path, done=isOne?p1Done:p2Done;
+                    if(data.type==='HELLO'){ try{conn.send({type:'HOST_READY'});}catch(e){} document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: Controller connected`; return; }
                     if(data.type==='READY'){
                         if(matchStarted)return;
                         ready[player]=true;names[player]=data.name||`Player ${player}`;
@@ -970,15 +983,16 @@
                     }
                 }
                 draw(1);draw(2);
-                const id1='cyberroute-p1-'+Math.floor(1000+Math.random()*9000),id2='cyberroute-p2-'+Math.floor(1000+Math.random()*9000);
+                const uniqueId=()=>window.crypto?.randomUUID?crypto.randomUUID().replace(/-/g,'').slice(0,16):Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+                const id1='cyberroute-p1-'+uniqueId(),id2='cyberroute-p2-'+uniqueId();
                 const base=window.location.href.split('#')[0].split('?')[0];
                 const peerP1=new Peer(id1),peerP2=new Peer(id2);
                 peerP1.on('open',id=>{const url=`${base}?room=${id}&mode=versus&player=1#controller`;document.getElementById('urlTextP1').textContent=url;document.getElementById('qrcodeP1').innerHTML='';new QRCode(document.getElementById('qrcodeP1'),{text:url,width:110,height:110});});
                 peerP1.on('error',err=>{document.getElementById('p1StatusHeader').textContent='P1 connection error: '+(err?.type||err?.message||'unknown');});
-                peerP1.on('connection',conn=>{playerConnections[1]=conn;conn.on('open',()=>{document.getElementById('p1StatusHeader').textContent='P1: Controller connected';});conn.on('data',data=>handlePlayer(1,data,conn));conn.on('close',()=>{document.getElementById('p1StatusHeader').textContent='P1: Controller disconnected';});conn.on('error',err=>{document.getElementById('p1StatusHeader').textContent='P1 data error: '+(err?.type||err?.message||'unknown');});});
+                peerP1.on('connection',conn=>{playerConnections[1]=conn;conn.on('open',()=>{document.getElementById('p1StatusHeader').textContent='P1: Controller connected';try{conn.send({type:'HOST_READY'});}catch(e){}});conn.on('data',data=>handlePlayer(1,data,conn));conn.on('close',()=>{document.getElementById('p1StatusHeader').textContent='P1: Controller disconnected';});conn.on('error',err=>{document.getElementById('p1StatusHeader').textContent='P1 data error: '+(err?.type||err?.message||'unknown');});});
                 peerP2.on('open',id=>{const url=`${base}?room=${id}&mode=versus&player=2#controller`;document.getElementById('urlTextP2').textContent=url;document.getElementById('qrcodeP2').innerHTML='';new QRCode(document.getElementById('qrcodeP2'),{text:url,width:110,height:110});});
                 peerP2.on('error',err=>{document.getElementById('p2StatusHeader').textContent='P2 connection error: '+(err?.type||err?.message||'unknown');});
-                peerP2.on('connection',conn=>{playerConnections[2]=conn;conn.on('open',()=>{document.getElementById('p2StatusHeader').textContent='P2: Controller connected';});conn.on('data',data=>handlePlayer(2,data,conn));conn.on('close',()=>{document.getElementById('p2StatusHeader').textContent='P2: Controller disconnected';});conn.on('error',err=>{document.getElementById('p2StatusHeader').textContent='P2 data error: '+(err?.type||err?.message||'unknown');});});
+                peerP2.on('connection',conn=>{playerConnections[2]=conn;conn.on('open',()=>{document.getElementById('p2StatusHeader').textContent='P2: Controller connected';try{conn.send({type:'HOST_READY'});}catch(e){}});conn.on('data',data=>handlePlayer(2,data,conn));conn.on('close',()=>{document.getElementById('p2StatusHeader').textContent='P2: Controller disconnected';});conn.on('error',err=>{document.getElementById('p2StatusHeader').textContent='P2 data error: '+(err?.type||err?.message||'unknown');});});
             }
 
         }
