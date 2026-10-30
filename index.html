@@ -584,9 +584,12 @@
             }
             let conn, controlsEnabled = false;
             const peer = new Peer();
+            peer.on('error', err => { document.getElementById('connStatus').textContent='Peer connection error: '+(err?.type || err?.message || 'unknown error'); });
             peer.on('open', () => {
-                conn = peer.connect(roomId);
+                conn = peer.connect(roomId, { reliable: true });
                 conn.on('open', () => { document.getElementById('connStatus').textContent = versusController ? `Connected as Player ${controllerPlayer}. Enter your name and join.` : 'Connected to host session.'; playSound('click'); });
+                conn.on('close', () => { controlsEnabled=false; setNodeButtonsEnabled(false); document.getElementById('connStatus').textContent='Connection to laptop closed. Reopen this controller link.'; });
+                conn.on('error', err => { document.getElementById('connStatus').textContent='Controller connection error: '+(err?.type || err?.message || 'unknown error'); });
                 conn.on('data', data => {
                     if(data.type==='CONFIG'){
                         document.getElementById('setupForm').style.display='none';
@@ -893,7 +896,12 @@
                     if(which===1){drawGraphOnCanvas(c1,lvl,p1Path,p1AI);document.getElementById('scoreP1').textContent=`Score: ${p1Score} | Route cost: ${calculateRouteCost(graph,p1Path)}`;}
                     else{drawGraphOnCanvas(c2,lvl,p2Path,p2AI);document.getElementById('scoreP2').textContent=`Score: ${p2Score} | Route cost: ${calculateRouteCost(graph,p2Path)}`;}
                 }
-                function broadcast(message){Object.values(playerConnections).forEach(c=>{if(c&&c.open)c.send(message);});}
+                function sendToPlayer(player, message){
+                    const c=playerConnections[player];
+                    if(c && c.open){ try { c.send(message); return true; } catch(err) { console.error('Send failed for P'+player,err); } }
+                    return false;
+                }
+                function broadcast(message){[1,2].forEach(player=>sendToPlayer(player,message));}
                 function finish(reason){if(timer){clearInterval(timer);timer=null;}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null;}p1Done=true;p2Done=true;
                     const winner=p1Score===p2Score?'It is a tie!':p1Score>p2Score?'🏆 Player 1 wins!':'🏆 Player 2 wins!';
                     const message=`${reason} ${winner} Final scores — P1: ${p1Score}, P2: ${p2Score}.`;
@@ -920,9 +928,9 @@
                         document.getElementById('versusStatus').textContent=ready[1]&&ready[2]?'Both players connected! Preparing countdown...':`Player ${player} ready. Waiting for the other player...`;
                         beginWhenBothReady();
                     } else if(data.type==='NODE'){
-                        // Always acknowledge node messages so the controller can show
-                        // whether the laptop received them and why a move was rejected.
+                        // Mark receipt on the laptop immediately, even if the move is invalid.
                         const currentPath = isOne ? p1Path : p2Path;
+                        document.getElementById(isOne?'p1StatusHeader':'p2StatusHeader').textContent=`P${player}: ${names[player]} (Node ${String(data.node||'?')} received)`;
                         if(!matchStarted){
                             conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...currentPath],message:'The match has not started yet. Wait for the countdown.'});
                         } else if(isOne ? p1Done : p2Done){
@@ -966,9 +974,11 @@
                 const base=window.location.href.split('#')[0].split('?')[0];
                 const peerP1=new Peer(id1),peerP2=new Peer(id2);
                 peerP1.on('open',id=>{const url=`${base}?room=${id}&mode=versus&player=1#controller`;document.getElementById('urlTextP1').textContent=url;document.getElementById('qrcodeP1').innerHTML='';new QRCode(document.getElementById('qrcodeP1'),{text:url,width:110,height:110});});
-                peerP1.on('connection',conn=>{playerConnections[1]=conn;conn.on('data',data=>handlePlayer(1,data,conn));});
+                peerP1.on('error',err=>{document.getElementById('p1StatusHeader').textContent='P1 connection error: '+(err?.type||err?.message||'unknown');});
+                peerP1.on('connection',conn=>{playerConnections[1]=conn;conn.on('open',()=>{document.getElementById('p1StatusHeader').textContent='P1: Controller connected';});conn.on('data',data=>handlePlayer(1,data,conn));conn.on('close',()=>{document.getElementById('p1StatusHeader').textContent='P1: Controller disconnected';});conn.on('error',err=>{document.getElementById('p1StatusHeader').textContent='P1 data error: '+(err?.type||err?.message||'unknown');});});
                 peerP2.on('open',id=>{const url=`${base}?room=${id}&mode=versus&player=2#controller`;document.getElementById('urlTextP2').textContent=url;document.getElementById('qrcodeP2').innerHTML='';new QRCode(document.getElementById('qrcodeP2'),{text:url,width:110,height:110});});
-                peerP2.on('connection',conn=>{playerConnections[2]=conn;conn.on('data',data=>handlePlayer(2,data,conn));});
+                peerP2.on('error',err=>{document.getElementById('p2StatusHeader').textContent='P2 connection error: '+(err?.type||err?.message||'unknown');});
+                peerP2.on('connection',conn=>{playerConnections[2]=conn;conn.on('open',()=>{document.getElementById('p2StatusHeader').textContent='P2: Controller connected';});conn.on('data',data=>handlePlayer(2,data,conn));conn.on('close',()=>{document.getElementById('p2StatusHeader').textContent='P2: Controller disconnected';});conn.on('error',err=>{document.getElementById('p2StatusHeader').textContent='P2 data error: '+(err?.type||err?.message||'unknown');});});
             }
 
         }
