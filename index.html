@@ -197,6 +197,7 @@
             <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">System Profile & Exhibit Info</h3>
             <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
                 <strong>Project Title:</strong> CyberRoute AI - Algorithmic Pathfinder<br>
+                <strong>Category:</strong> Senior Division Math Fair Exhibit<br>
                 <strong>Core Algorithm:</strong> Dijkstra's Shortest Path Algorithm & Graph Theory Optimization<br>
                 <strong>Tech Stack:</strong> HTML5 Canvas, Web Audio API, PeerJS Dual-Controller Sync
             </p>
@@ -270,6 +271,7 @@
             <div id="aiBanner" style="display:none; margin-top:12px; padding:12px; background:rgba(129,140,248,0.2); border:1px solid rgba(129,140,248,0.5); border-radius:8px; font-size:0.95rem; text-align:center; color:#c7d2fe; font-weight:700; width:100%; box-sizing:border-box;"></div>
         </div>
     </div>
+
     <!-- VERSUS SPLIT-SCREEN DISPLAY -->
     <div id="versus-view" class="view-frame">
         <div style="width:100%; max-width:1200px; display:flex; justify-content:space-between; margin-bottom:12px;">
@@ -366,8 +368,8 @@
                     <select id="levelSelect">
                         <option value="1">Level 1: Basic Topology (A ➔ D)</option>
                         <option value="2">Level 2: Intermediate Mesh (A ➔ F)</option>
-                        <option value="3">Level 3: Complex Web (A ➔ L)</option>
-                        <option value="4">Level 4: Advanced Interlock (A ➔ L)</option>
+                        <option value="3">Level 3: Complex Web (A ➔ H)</option>
+                        <option value="4">Level 4: Advanced Interlock (A ➔ I)</option>
                         <option value="5" selected>Level 5: Master Matrix (A ➔ L)</option>
                     </select>
                 </div>
@@ -638,11 +640,9 @@
             }
 
             // --- Solo Game Logic ---
-function initSoloGame() {
+            function initSoloGame() {
                 const canvas = document.getElementById('mainCanvas');
                 let path = [], score = 500, lvl = 5, graph = getGraph(5);
-                let timeLeft = 40;
-                let timerInterval = null;
                 drawGraphOnCanvas(canvas, lvl, path);
 
                 const peerId = 'cyberroute-solo-' + Math.floor(1000 + Math.random()*9000);
@@ -657,57 +657,18 @@ function initSoloGame() {
                 peer.on('connection', conn => {
                     conn.on('data', data => {
                         if (data.type === 'START') {
-                            // Clear any running timers from previous matches
-                            clearInterval(timerInterval);
-                            
-                            lvl = parseInt(data.lvl) || 5; 
-                            graph = getGraph(lvl); 
-                            path = ['A']; 
-                            score = lvl * 100;
-                            timeLeft = 40;
-
+                            lvl = parseInt(data.lvl) || 5; graph = getGraph(lvl); path = ['A']; score = lvl * 100;
                             document.getElementById('playerDisplay').textContent = `Player: ${data.name} (Lvl ${lvl})`;
                             drawGraphOnCanvas(canvas, lvl, path);
-
-                            // Start the 40-second countdown timer
-                            timerInterval = setInterval(() => {
-                                if (timeLeft > 0) {
-                                    timeLeft--;
-                                    // Send live timer updates back to the mobile controller
-                                    conn.send({ 
-                                        type: 'TICK', 
-                                        timeLeft: timeLeft, 
-                                        pathText: path.join(' ➔ '), 
-                                        weight: score 
-                                    });
-                                } else {
-                                    clearInterval(timerInterval);
-                                    conn.send({ type: 'TIMEOUT', timeLeft: 0 });
-                                    document.getElementById('aiBanner').textContent = `⏱️ Time Expired! Route transmission failed.`;
-                                    document.getElementById('aiBanner').style.display = 'block';
-                                }
-                            }, 1000);
-
                         } else if (data.type === 'NODE') {
                             const last = path[path.length - 1];
                             const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
-                            
                             if (!path.includes(data.node) && (path.length === 0 || connValid)) {
-                                path.push(data.node); 
-                                score += 25;
+                                path.push(data.node); score += 25;
                                 document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
                                 drawGraphOnCanvas(canvas, lvl, path);
-                                
-                                // Sync path updates back to the controller
-                                conn.send({ 
-                                    type: 'SYNC', 
-                                    timeLeft: timeLeft, 
-                                    pathText: path.join(' ➔ '), 
-                                    weight: score 
-                                });
                             }
                         } else if (data.type === 'SUBMIT') {
-                            clearInterval(timerInterval);
                             saveGlobalScore(document.getElementById('playerDisplay').textContent.split(': ')[1] || 'Guest', score, lvl);
                             document.getElementById('aiBanner').textContent = `✅ Route submitted successfully! Score saved.`;
                             document.getElementById('aiBanner').style.display = 'block';
@@ -782,80 +743,6 @@ function initSoloGame() {
                             document.getElementById('versusWinnerBanner').textContent = `🏆 Player 2 Finished with score ${p2Score}!`;
                             document.getElementById('versusWinnerBanner').style.display = 'block';
                             saveGlobalScore('P2: ' + document.getElementById('p2StatusHeader').textContent, p2Score, lvl);
-let timerInterval = null;
-let timeLeft = 40; // Updated time limit to 40 seconds
-
-function startHostTimer(conn, displayElementId) {
-    clearInterval(timerInterval);
-    timeLeft = 40; // Reset to 40 seconds on start
-    
-    // Initial display update
-    const hostDisplay = document.getElementById(displayElementId);
-    if (hostDisplay) {
-        hostDisplay.textContent = `⏱ 00:40`;
-    }
-
-    timerInterval = setInterval(() => {
-        if (timeLeft > 0) {
-            timeLeft--;
-            const formattedTime = `⏱ 00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-            
-            // Update Host UI Display
-            if (hostDisplay) {
-                hostDisplay.textContent = formattedTime;
-            }
-            
-            // Send live 40-second timer update to the Mobile Controller
-            if (conn && conn.open) {
-                conn.send({ 
-                    type: 'TICK', 
-                    timeLeft: timeLeft 
-                });
-            }
-        } else {
-            clearInterval(timerInterval);
-            if (conn && conn.open) {
-                conn.send({ type: 'TIMEOUT' });
-            }
-            if (hostDisplay) {
-                hostDisplay.textContent = "⏱ Time's Up!";
-            }
-        }
-    }, 1000);
-}
-                            // Handles incoming time updates on the phone controller
-conn.on('data', data => {
-    if (data.type === 'TICK' || data.type === 'SYNC') {
-        if (data.timeLeft !== undefined) {
-            const ctrlTimer = document.getElementById('ctrlTimer');
-            if (ctrlTimer) {
-                ctrlTimer.textContent = `⏱ ${data.timeLeft}s`;
-            }
-        }
-    } else if (data.type === 'TIMEOUT') {
-        const ctrlTimer = document.getElementById('ctrlTimer');
-        if (ctrlTimer) {
-            ctrlTimer.textContent = `⏱ 0s (EXPIRED)`;
-        }
-    }
-});
-                            <script>
-    // Function to update the mobile controller's node grid dynamically based on the current level's graph
-    function renderControllerNodes(graph) {
-        const grid = document.getElementById('nodeBtnGrid');
-        grid.innerHTML = ""; // Clear existing buttons
-        
-        Object.keys(graph.nodes).forEach(nodeKey => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.textContent = `Node ${nodeKey}`;
-            btn.onclick = () => {
-                conn.send({ type: 'NODE', node: nodeKey });
-            };
-            grid.appendChild(btn);
-        });
-    }
-</script>
                         }
                     });
                 });
