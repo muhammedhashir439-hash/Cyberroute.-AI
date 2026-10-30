@@ -212,9 +212,11 @@
             <div class="form-field" style="margin-top:14px;">
                 <label>Select Multiplayer Complexity Tier</label>
                 <select id="versusLevelSelect">
-                    <option value="1">Versus Level 1: Standard Mesh (A ➔ D)</option>
-                    <option value="2">Versus Level 2: Advanced Interlock (A ➔ I)</option>
-                    <option value="3" selected>Versus Level 3: Master Matrix (A ➔ L - Extreme)</option>
+                 <option value="1">Versus Level 1: Basic Topology (A → D)</option>
+                 <option value="2">Versus Level 2: Intermediate Mesh (A → I)</option>
+                 <option value="3">Versus Level 3: Master Matrix (A → L)</option>
+                 <option value="4">Versus Level 4: Complex Network (A → L)</option>
+                 <option value="5" selected>Versus Level 5: Extreme Network (A → L)</option>
                 </select>
             </div>
             <button class="btn-action" id="confirmVersusBtn" style="background:var(--secondary-accent); color:#030712;">Start Versus Match</button>
@@ -259,7 +261,7 @@
         <div class="panel" id="game-workspace" style="flex:1; min-width:400px; display:flex; flex-direction:column; align-items:center;">
             <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:12px; font-size:0.9rem; font-weight:600;">
                 <span id="playerDisplay" style="color:var(--text-muted);">Session: Awaiting remote device...</span>
-                <span id="timerDisplay" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px; border:1px solid rgba(239,68,68,0.3);">⏱ 00:50</span>
+                <span id="timerDisplay" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px; border:1px solid rgba(239,68,68,0.3);">⏱ 00:40</span>
                 <span id="scoreDisplay" style="color:var(--primary-accent);">Score: 0</span>
             </div>
 
@@ -299,7 +301,7 @@
         <div class="panel" style="width:100%; max-width:1200px; display:flex; flex-direction:column; align-items:center;">
             <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:12px; font-weight:600;">
                 <span id="p1StatusHeader" style="color:var(--success-color);">P1: Awaiting Connection...</span>
-                <span id="versusTimer" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px;">⏱ 00:50</span>
+                <span id="versusTimer" style="color:#fca5a5; font-family:monospace; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:6px;">⏱ 00:40</span>
                 <span id="p2StatusHeader" style="color:var(--secondary-accent);">P2: Awaiting Connection...</span>
             </div>
 
@@ -366,11 +368,11 @@
                 <div class="form-field" id="soloLevelGroup">
                     <label>Graph Complexity Level</label>
                     <select id="levelSelect">
-                        <option value="1">Level 1: Basic Topology (A ➔ D)</option>
-                        <option value="2">Level 2: Intermediate Mesh (A ➔ F)</option>
-                        <option value="3">Level 3: Complex Web (A ➔ H)</option>
-                        <option value="4">Level 4: Advanced Interlock (A ➔ I)</option>
-                        <option value="5" selected>Level 5: Master Matrix (A ➔ L)</option>
+                       <option value="1">Level 1: Basic Topology (A → D)</option>
+                       <option value="2">Level 2: Intermediate Mesh (A → I)</option>
+                       <option value="3">Level 3: Master Matrix (A → L)</option>
+                       <option value="4">Level 4: Complex Network (A → L)</option>
+                       <option value="5" selected>Level 5: Extreme Network (A → L)</option>
                     </select>
                 </div>
                 <button class="btn-action" id="startSessionBtn">Initialize Session</button>
@@ -397,6 +399,12 @@
     </div>
 
     <script>
+conn.on('data', data => {
+    if (data.type === 'TIMER') {
+        document.getElementById('ctrlTimer').textContent =
+            `⏱ ${data.time}s`;
+    }
+});
         // --- World Map Background Canvas ---
         function initWorldMapBackground() {
             const bgCanvas = document.getElementById('bgMapCanvas');
@@ -545,7 +553,7 @@
 
             function renderBtns(lvl, connection) {
                 const grid = document.getElementById('nodeBtnGrid'); grid.innerHTML = '';
-                const labels = ['A','B','C','D','E','F','G','H','I','J','K','L'].slice(0, lvl == 1 ? 4 : lvl == 2 ? 6 : lvl == 3 ? 8 : lvl == 4 ? 10 : 12);
+               const labels = ['A','B','C','D','E','F','G','H','I','J','K','L'].slice(0, lvl == 1 ? 4 : lvl == 2 ? 9 : 12);
                 labels.forEach(l => {
                     const b = document.createElement('button'); b.textContent = 'Node ' + l;
                     b.onclick = () => { playSound('click'); connection.send({ type: 'NODE', node: l }); };
@@ -582,29 +590,202 @@
 
             // 3 Levels for Multiplayer / Solo Graphs
             function getGraph(lvl) {
-                if (lvl == 1) {
-                    // Level 1: Simple & Clean Mesh (A to D)
-                    return { 
-                        nodes: [{x: 80, y: 140, label: 'A'}, {x: 180, y: 70, label: 'B'}, {x: 180, y: 210, label: 'C'}, {x: 340, y: 140, label: 'D'}], 
-                        edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 2}, {from: 'B', to: 'D', w: 5}, {from: 'C', to: 'D', w: 1}], 
-                        aiPath: ['A', 'C', 'D'], optimalWeight: 3, endNode: 'D' 
-                    };
-                } else if (lvl == 2) {
-                    // Level 2: Advanced Interlock (A to I) - Complex Cross-links
-                    return { 
-                        nodes: [{x: 45, y: 140, label: 'A'}, {x: 120, y: 75, label: 'B'}, {x: 120, y: 205, label: 'C'}, {x: 195, y: 110, label: 'D'}, {x: 195, y: 170, label: 'E'}, {x: 270, y: 75, label: 'F'}, {x: 270, y: 205, label: 'G'}, {x: 350, y: 140, label: 'H'}, {x: 410, y: 140, label: 'I'}], 
-                        edges: [{from: 'A', to: 'B', w: 4}, {from: 'A', to: 'C', w: 7}, {from: 'B', to: 'D', w: 2}, {from: 'B', to: 'F', w: 5}, {from: 'C', to: 'E', w: 1}, {from: 'C', to: 'G', w: 4}, {from: 'D', to: 'E', w: 2}, {from: 'D', to: 'F', w: 3}, {from: 'E', to: 'G', w: 3}, {from: 'F', to: 'H', w: 2}, {from: 'G', to: 'H', w: 3}, {from: 'H', to: 'I', w: 4}, {from: 'D', to: 'H', w: 6}], 
-                        aiPath: ['A', 'B', 'D', 'F', 'H', 'I'], optimalWeight: 14, endNode: 'I' 
-                    };
-                } else {
-                    // Level 3: Master Matrix (A to L - Extreme Spider Web Mesh)
-                    return { 
-                        nodes: [{x: 40, y: 140, label: 'A'}, {x: 105, y: 70, label: 'B'}, {x: 105, y: 210, label: 'C'}, {x: 170, y: 70, label: 'D'}, {x: 170, y: 140, label: 'E'}, {x: 170, y: 210, label: 'F'}, {x: 235, y: 70, label: 'G'}, {x: 235, y: 210, label: 'H'}, {x: 300, y: 100, label: 'I'}, {x: 300, y: 180, label: 'J'}, {x: 360, y: 140, label: 'K'}, {x: 410, y: 140, label: 'L'}], 
-                        edges: [{from: 'A', to: 'B', w: 5}, {from: 'A', to: 'C', w: 2}, {from: 'A', to: 'E', w: 8}, {from: 'B', to: 'D', w: 1}, {from: 'B', to: 'E', w: 4}, {from: 'C', to: 'E', w: 3}, {from: 'C', to: 'F', w: 6}, {from: 'D', to: 'G', w: 2}, {from: 'E', to: 'D', w: 2}, {from: 'E', to: 'F', w: 2}, {from: 'E', to: 'H', w: 5}, {from: 'F', to: 'H', w: 1}, {from: 'G', to: 'I', w: 4}, {from: 'H', to: 'J', w: 2}, {from: 'E', to: 'G', w: 3}, {from: 'F', to: 'J', w: 4}, {from: 'I', to: 'K', w: 1}, {from: 'J', to: 'K', w: 3}, {from: 'K', to: 'L', w: 2}, {from: 'I', to: 'L', w: 7}], 
-                        aiPath: ['A', 'C', 'F', 'H', 'J', 'K', 'L'], optimalWeight: 14, endNode: 'L' 
-                    };
-                }
-            }
+                function getGraph(lvl) {
+
+    // LEVEL 1 — SIMPLE NETWORK (A to D)
+    if (lvl == 1) {
+        return {
+            nodes: [
+                {x:80,y:140,label:'A'},
+                {x:180,y:70,label:'B'},
+                {x:180,y:210,label:'C'},
+                {x:340,y:140,label:'D'}
+            ],
+            edges: [
+                {from:'A',to:'B',w:4},
+                {from:'A',to:'C',w:2},
+                {from:'B',to:'D',w:5},
+                {from:'C',to:'D',w:1}
+            ],
+            aiPath:['A','C','D'],
+            optimalWeight:3,
+            endNode:'D'
+        };
+    }
+
+    // LEVEL 2 — ADVANCED INTERLOCK (A to I)
+    else if (lvl == 2) {
+        return {
+            nodes: [
+                {x:45,y:140,label:'A'},
+                {x:120,y:75,label:'B'},
+                {x:120,y:205,label:'C'},
+                {x:195,y:110,label:'D'},
+                {x:195,y:170,label:'E'},
+                {x:270,y:75,label:'F'},
+                {x:270,y:205,label:'G'},
+                {x:350,y:140,label:'H'},
+                {x:410,y:140,label:'I'}
+            ],
+            edges: [
+                {from:'A',to:'B',w:4},
+                {from:'A',to:'C',w:7},
+                {from:'B',to:'D',w:2},
+                {from:'B',to:'F',w:5},
+                {from:'C',to:'E',w:1},
+                {from:'C',to:'G',w:4},
+                {from:'D',to:'E',w:2},
+                {from:'D',to:'F',w:3},
+                {from:'E',to:'G',w:3},
+                {from:'F',to:'H',w:2},
+                {from:'G',to:'H',w:3},
+                {from:'H',to:'I',w:4},
+                {from:'D',to:'H',w:6}
+            ],
+            aiPath:['A','B','D','F','H','I'],
+            optimalWeight:14,
+            endNode:'I'
+        };
+    }
+
+    // LEVEL 3 — MASTER MATRIX (A to L)
+    else if (lvl == 3) {
+        return {
+            nodes: [
+                {x:40,y:140,label:'A'},
+                {x:105,y:70,label:'B'},
+                {x:105,y:210,label:'C'},
+                {x:170,y:70,label:'D'},
+                {x:170,y:140,label:'E'},
+                {x:170,y:210,label:'F'},
+                {x:235,y:70,label:'G'},
+                {x:235,y:210,label:'H'},
+                {x:300,y:100,label:'I'},
+                {x:300,y:180,label:'J'},
+                {x:360,y:140,label:'K'},
+                {x:410,y:140,label:'L'}
+            ],
+            edges: [
+                {from:'A',to:'B',w:5},
+                {from:'A',to:'C',w:2},
+                {from:'A',to:'E',w:8},
+                {from:'B',to:'D',w:1},
+                {from:'B',to:'E',w:4},
+                {from:'C',to:'E',w:3},
+                {from:'C',to:'F',w:6},
+                {from:'D',to:'G',w:2},
+                {from:'E',to:'D',w:2},
+                {from:'E',to:'F',w:2},
+                {from:'E',to:'H',w:5},
+                {from:'F',to:'H',w:1},
+                {from:'G',to:'I',w:4},
+                {from:'H',to:'J',w:2},
+                {from:'E',to:'G',w:3},
+                {from:'F',to:'J',w:4},
+                {from:'I',to:'K',w:1},
+                {from:'J',to:'K',w:3},
+                {from:'K',to:'L',w:2},
+                {from:'I',to:'L',w:7}
+            ],
+            aiPath:['A','B','D','G','I','K','L'],
+            optimalWeight:15,
+            endNode:'L'
+        };
+    }
+
+    // LEVEL 4 — COMPLEX NETWORK (A to L)
+    else if (lvl == 4) {
+        return {
+            nodes: [
+                {x:40,y:140,label:'A'},
+                {x:105,y:55,label:'B'},
+                {x:105,y:140,label:'C'},
+                {x:105,y:225,label:'D'},
+                {x:180,y:55,label:'E'},
+                {x:180,y:140,label:'F'},
+                {x:180,y:225,label:'G'},
+                {x:260,y:55,label:'H'},
+                {x:260,y:140,label:'I'},
+                {x:260,y:225,label:'J'},
+                {x:340,y:100,label:'K'},
+                {x:410,y:140,label:'L'}
+            ],
+            edges: [
+                {from:'A',to:'B',w:6},
+                {from:'A',to:'C',w:3},
+                {from:'A',to:'D',w:7},
+                {from:'B',to:'E',w:2},
+                {from:'B',to:'F',w:5},
+                {from:'C',to:'E',w:4},
+                {from:'C',to:'F',w:6},
+                {from:'C',to:'G',w:3},
+                {from:'D',to:'F',w:4},
+                {from:'D',to:'G',w:2},
+                {from:'E',to:'H',w:5},
+                {from:'E',to:'I',w:3},
+                {from:'F',to:'H',w:4},
+                {from:'F',to:'I',w:2},
+                {from:'F',to:'J',w:5},
+                {from:'G',to:'I',w:4},
+                {from:'G',to:'J',w:3},
+                {from:'H',to:'K',w:3},
+                {from:'I',to:'K',w:2},
+                {from:'J',to:'K',w:5},
+                {from:'K',to:'L',w:4}
+            ],
+            aiPath:['A','C','G','J','K','L'],
+            optimalWeight:17,
+            endNode:'L'
+        };
+    }
+
+    // LEVEL 5 — EXTREME NETWORK (A to L)
+    else {
+        return {
+            nodes: [
+                {x:40,y:140,label:'A'},
+                {x:105,y:50,label:'B'},
+                {x:105,y:140,label:'C'},
+                {x:105,y:230,label:'D'},
+                {x:175,y:50,label:'E'},
+                {x:175,y:140,label:'F'},
+                {x:175,y:230,label:'G'},
+                {x:250,y:50,label:'H'},
+                {x:250,y:140,label:'I'},
+                {x:250,y:230,label:'J'},
+                {x:340,y:90,label:'K'},
+                {x:410,y:140,label:'L'}
+            ],
+            edges: [
+                {from:'A',to:'B',w:2},
+                {from:'A',to:'C',w:6},
+                {from:'A',to:'D',w:5},
+                {from:'B',to:'E',w:2},
+                {from:'B',to:'F',w:7},
+                {from:'C',to:'E',w:3},
+                {from:'C',to:'F',w:5},
+                {from:'C',to:'G',w:4},
+                {from:'D',to:'F',w:6},
+                {from:'D',to:'G',w:2},
+                {from:'E',to:'H',w:3},
+                {from:'E',to:'I',w:6},
+                {from:'F',to:'H',w:4},
+                {from:'F',to:'I',w:5},
+                {from:'F',to:'J',w:3},
+                {from:'G',to:'I',w:4},
+                {from:'G',to:'J',w:2},
+                {from:'H',to:'K',w:4},
+                {from:'I',to:'K',w:3},
+                {from:'I',to:'L',w:8},
+                {from:'J',to:'K',w:5},
+                {from:'K',to:'L',w:2}
+            ],
+            aiPath:['A','B','E','H','K','L'],
+            optimalWeight:13,
+            endNode:'L'
+        };
+    }
+}
 
             function drawGraphOnCanvas(canvas, lvl, path) {
                 const ctx = canvas.getContext('2d');
@@ -643,6 +824,39 @@
             function initSoloGame() {
                 const canvas = document.getElementById('mainCanvas');
                 let path = [], score = 500, lvl = 5, graph = getGraph(5);
+                let timeLeft = 40;
+let timerInterval = null;
+let gameOver = false;
+
+function startTimer(connection) {
+    clearInterval(timerInterval);
+
+    timeLeft = 40;
+    gameOver = false;
+
+    function updateTimer() {
+        const display = `⏱ 00:${String(timeLeft).padStart(2, '0')}`;
+
+        document.getElementById('timerDisplay').textContent = display;
+
+        if (connection && connection.open) {
+            connection.send({ type: 'TIMER', time: timeLeft });
+        }
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            gameOver = true;
+            document.getElementById('aiBanner').textContent = '⏰ TIME UP! Game Over.';
+            document.getElementById('aiBanner').style.display = 'block';
+            return;
+        }
+
+        timeLeft--;
+    }
+
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+}
                 drawGraphOnCanvas(canvas, lvl, path);
 
                 const peerId = 'cyberroute-solo-' + Math.floor(1000 + Math.random()*9000);
