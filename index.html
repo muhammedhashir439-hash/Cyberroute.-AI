@@ -575,6 +575,12 @@
                         document.getElementById('ctrlTimer').textContent=`⏱ ${data.seconds}s`;
                     } else if(data.type==='NOTICE'){
                         document.getElementById('connStatus').textContent=data.message;
+                    } else if(data.type==='NODE_ACK'){
+                        document.getElementById('connStatus').textContent = data.accepted
+                            ? `✓ ${data.node} received. Current route: ${data.path.join(' → ')}`
+                            : `⚠ ${data.message || 'That node is not connected to the previous node.'}`;
+                    } else if(data.type==='PATH_UPDATE'){
+                        document.getElementById('connStatus').textContent = `Route on laptop: ${data.path.join(' → ')}`;
                     } else if(data.type==='MATCH_OVER'){
                         controlsEnabled=false; setNodeButtonsEnabled(false); document.getElementById('connStatus').textContent=data.message;
                     }
@@ -608,7 +614,14 @@
                 const labels = labelsOverride || all.slice(0, counts[Number(lvl)] || 12);
                 labels.forEach(label => {
                     const b = document.createElement('button'); b.type='button'; b.textContent='Node '+label; b.disabled=!enabled;
-                    b.onclick = () => { playSound('click'); if (connection && connection.open && controlsEnabled) connection.send({type:'NODE', node:label}); };
+                    b.onclick = () => {
+                        playSound('click');
+                        if (!controlsEnabled) { document.getElementById('connStatus').textContent='Game is not active yet. Press Initialize Session first.'; return; }
+                        if (!connection || !connection.open) { document.getElementById('connStatus').textContent='Connection lost. Reopen the controller link and reconnect.'; return; }
+                        document.getElementById('connStatus').textContent=`Sending Node ${label} to laptop...`;
+                        try { connection.send({type:'NODE', node:label}); }
+                        catch (err) { document.getElementById('connStatus').textContent='Could not send node. Check your connection.'; }
+                    };
                     grid.appendChild(b);
                 });
             }
@@ -799,7 +812,13 @@
                         } else if(data.type==='NODE' && !finished){
                             const last=path[path.length-1];
                             const valid=graph.edges.some(e=>(e.from===last&&e.to===data.node)||(e.to===last&&e.from===data.node));
-                            if(!path.includes(data.node)&&valid){path.push(data.node);score+=25;draw();}
+                            if(!path.includes(data.node)&&valid){
+                                path.push(data.node); score+=25; draw();
+                                conn.send({type:'NODE_ACK',accepted:true,node:data.node,path:[...path]});
+                                conn.send({type:'PATH_UPDATE',path:[...path]});
+                            } else {
+                                conn.send({type:'NODE_ACK',accepted:false,node:data.node,path:[...path],message:path.includes(data.node)?'That node is already in your route.':'Choose a node connected to '+last+'.'});
+                            }
                         } else if(data.type==='RESET' && !finished){
                             path=['A'];aiPath=[];score=500;banner.style.display='none';draw();
                         } else if(data.type==='AI' && !finished){
@@ -904,3 +923,4 @@
     </script>
 </body>
 </html>
+
