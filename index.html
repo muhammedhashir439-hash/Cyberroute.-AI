@@ -368,8 +368,8 @@
                     <select id="levelSelect">
                         <option value="1">Level 1: Basic Topology (A ➔ D)</option>
                         <option value="2">Level 2: Intermediate Mesh (A ➔ F)</option>
-                        <option value="3">Level 3: Complex Web (A ➔ H)</option>
-                        <option value="4">Level 4: Advanced Interlock (A ➔ I)</option>
+                        <option value="3">Level 3: Complex Web (A ➔ L)</option>
+                        <option value="4">Level 4: Advanced Interlock (A ➔ L)</option>
                         <option value="5" selected>Level 5: Master Matrix (A ➔ L)</option>
                     </select>
                 </div>
@@ -640,9 +640,11 @@
             }
 
             // --- Solo Game Logic ---
-            function initSoloGame() {
+function initSoloGame() {
                 const canvas = document.getElementById('mainCanvas');
                 let path = [], score = 500, lvl = 5, graph = getGraph(5);
+                let timeLeft = 40;
+                let timerInterval = null;
                 drawGraphOnCanvas(canvas, lvl, path);
 
                 const peerId = 'cyberroute-solo-' + Math.floor(1000 + Math.random()*9000);
@@ -657,18 +659,57 @@
                 peer.on('connection', conn => {
                     conn.on('data', data => {
                         if (data.type === 'START') {
-                            lvl = parseInt(data.lvl) || 5; graph = getGraph(lvl); path = ['A']; score = lvl * 100;
+                            // Clear any running timers from previous matches
+                            clearInterval(timerInterval);
+                            
+                            lvl = parseInt(data.lvl) || 5; 
+                            graph = getGraph(lvl); 
+                            path = ['A']; 
+                            score = lvl * 100;
+                            timeLeft = 40;
+
                             document.getElementById('playerDisplay').textContent = `Player: ${data.name} (Lvl ${lvl})`;
                             drawGraphOnCanvas(canvas, lvl, path);
+
+                            // Start the 40-second countdown timer
+                            timerInterval = setInterval(() => {
+                                if (timeLeft > 0) {
+                                    timeLeft--;
+                                    // Send live timer updates back to the mobile controller
+                                    conn.send({ 
+                                        type: 'TICK', 
+                                        timeLeft: timeLeft, 
+                                        pathText: path.join(' ➔ '), 
+                                        weight: score 
+                                    });
+                                } else {
+                                    clearInterval(timerInterval);
+                                    conn.send({ type: 'TIMEOUT', timeLeft: 0 });
+                                    document.getElementById('aiBanner').textContent = `⏱️ Time Expired! Route transmission failed.`;
+                                    document.getElementById('aiBanner').style.display = 'block';
+                                }
+                            }, 1000);
+
                         } else if (data.type === 'NODE') {
                             const last = path[path.length - 1];
                             const connValid = graph.edges.some(e => (e.from === last && e.to === data.node) || (e.from === data.node && e.to === last));
+                            
                             if (!path.includes(data.node) && (path.length === 0 || connValid)) {
-                                path.push(data.node); score += 25;
+                                path.push(data.node); 
+                                score += 25;
                                 document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
                                 drawGraphOnCanvas(canvas, lvl, path);
+                                
+                                // Sync path updates back to the controller
+                                conn.send({ 
+                                    type: 'SYNC', 
+                                    timeLeft: timeLeft, 
+                                    pathText: path.join(' ➔ '), 
+                                    weight: score 
+                                });
                             }
                         } else if (data.type === 'SUBMIT') {
+                            clearInterval(timerInterval);
                             saveGlobalScore(document.getElementById('playerDisplay').textContent.split(': ')[1] || 'Guest', score, lvl);
                             document.getElementById('aiBanner').textContent = `✅ Route submitted successfully! Score saved.`;
                             document.getElementById('aiBanner').style.display = 'block';
