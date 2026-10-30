@@ -354,7 +354,7 @@
     </div>
 
     <!-- PHONE CONTROLLER -->
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -396,45 +396,23 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
-            padding: 10px;
-            overflow: hidden;
+            padding: 12px;
         }
 
-        /* Landscape orientation notice for portrait mobile users */
-        #orientation-warning {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #040d1a;
-            z-index: 9999;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
-            color: var(--neon-blue);
-        }
-
-        @media screen and (orientation: portrait) {
-            #orientation-warning {
-                display: flex;
-            }
-        }
-
-        /* Mobile Controller Exact Layout Frame */
+        /* Mobile Controller Portrait Frame */
         .controller-frame {
             width: 100%;
-            max-width: 860px;
+            max-width: 480px;
             background: var(--panel-bg);
             border: 2px solid var(--neon-blue);
             box-shadow: 0 0 25px var(--neon-blue-glow);
             border-radius: 14px;
-            padding: 12px 18px;
+            padding: 14px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
         }
 
         /* Top Bar */
@@ -443,17 +421,17 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-blue);
-            padding-bottom: 6px;
+            padding-bottom: 8px;
         }
 
         .title {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--neon-blue);
         }
 
         .connection-status {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--accent-green);
             font-family: 'Rajdhani', sans-serif;
             font-weight: 700;
@@ -463,17 +441,17 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--text-muted);
             border: 1px solid var(--border-blue);
-            padding: 3px 10px;
+            padding: 3px 8px;
             border-radius: 12px;
             background: rgba(0, 240, 255, 0.05);
         }
 
         .sound-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: var(--accent-green);
             border-radius: 50%;
             box-shadow: 0 0 6px var(--accent-green);
@@ -483,27 +461,27 @@
         .section-label {
             font-size: 0.65rem;
             color: var(--text-muted);
-            margin-bottom: 3px;
+            margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .level-select-bar {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             overflow-x: auto;
             padding-bottom: 2px;
         }
 
         .level-pill {
-            min-width: 45px;
-            height: 28px;
+            min-width: 42px;
+            height: 32px;
             background: #06192e;
             border: 1px solid var(--border-blue);
             color: var(--text-muted);
             font-size: 0.75rem;
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -517,28 +495,20 @@
             box-shadow: 0 0 8px var(--neon-blue);
         }
 
-        /* Workspace Split */
-        .workspace {
-            display: flex;
-            gap: 14px;
-        }
-
-        /* Left Side: Route Input Hub */
+        /* Route Input Hub (Portrait Optimized) */
         .route-input-area {
-            flex: 2.3;
             background: #030f1e;
             border: 1px solid var(--border-blue);
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
-        /* Hexagonal Cluster Layout Matching Reference */
         .hex-cluster {
             position: relative;
-            height: 145px;
+            height: 160px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -568,31 +538,31 @@
             box-shadow: 0 0 12px var(--neon-blue);
         }
 
-        /* Exact Positioning for the Nodes Cluster */
-        .node-c { top: 2px; left: 165px; width: 44px; height: 38px; font-size: 0.8rem; background: #051e36; }
-        .node-b { top: 32px; left: 100px; }
-        .node-d { top: 32px; left: 230px; }
-        .node-a { top: 62px; left: 35px; }
-        .node-f { top: 62px; left: 295px; }
-        .node-e { top: 92px; left: 100px; }
-        .node-g { top: 92px; left: 230px; }
-        .node-h { top: 92px; left: 360px; width: 44px; height: 38px; font-size: 0.8rem; background: #051e36; }
+        /* Portrait Centered Node Positions */
+        .node-c { top: 5px; left: 160px; width: 44px; height: 38px; font-size: 0.8rem; background: #051e36; }
+        .node-b { top: 38px; left: 95px; }
+        .node-d { top: 38px; left: 225px; }
+        .node-a { top: 72px; left: 35px; }
+        .node-f { top: 72px; left: 285px; }
+        .node-e { top: 105px; left: 95px; }
+        .node-g { top: 105px; left: 225px; }
+        .node-h { top: 105px; left: 285px; display: none; } /* Condensed for portrait layout */
 
-        /* Bottom Action Row inside Route Input */
+        /* Metrics & Actions Row */
         .bottom-action-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px solid var(--border-blue);
-            padding-top: 8px;
-            margin-top: 2px;
+            padding-top: 10px;
+            gap: 8px;
         }
 
         .ai-btn {
             background: rgba(255, 152, 0, 0.08);
             border: 1px solid #ff9800;
             color: #ff9800;
-            padding: 6px 10px;
+            padding: 8px 10px;
             font-size: 0.6rem;
             font-weight: bold;
             border-radius: 6px;
@@ -606,6 +576,7 @@
             color: var(--text-main);
             font-family: 'Rajdhani', sans-serif;
             font-weight: 700;
+            text-align: center;
             line-height: 1.3;
         }
 
@@ -613,43 +584,41 @@
             background: rgba(255, 82, 82, 0.08);
             border: 1px solid var(--danger);
             color: var(--danger);
-            padding: 8px 14px;
+            padding: 8px 12px;
             font-size: 0.7rem;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
         }
 
-        /* Right Side: D-Pad & Submit */
-        .right-control-area {
-            flex: 1;
+        /* Bottom Controls: D-Pad & Submit */
+        .bottom-control-split {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
-            justify-content: space-between;
         }
 
         .d-pad {
             position: relative;
-            width: 115px;
-            height: 115px;
+            width: 110px;
+            height: 110px;
             background: #030f1e;
             border: 1px solid var(--border-blue);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .d-btn {
             position: absolute;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             background: #082d4f;
             border: 1px solid var(--neon-blue);
             color: var(--neon-blue);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -657,18 +626,18 @@
             cursor: pointer;
         }
 
-        .d-up { top: 5px; left: 39px; }
-        .d-down { bottom: 5px; left: 39px; }
-        .d-left { left: 5px; top: 39px; }
-        .d-right { right: 5px; top: 39px; }
+        .d-up { top: 4px; left: 38px; }
+        .d-down { bottom: 4px; left: 38px; }
+        .d-left { left: 4px; top: 38px; }
+        .d-right { right: 4px; top: 38px; }
 
         .submit-btn {
-            width: 100%;
-            height: 55px;
+            flex: 1;
+            height: 110px;
             background: rgba(0, 240, 255, 0.05);
             border: 2px solid var(--neon-blue);
             color: var(--neon-blue);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 900;
             border-radius: 8px;
             cursor: pointer;
@@ -678,7 +647,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            line-height: 1.2;
+            line-height: 1.3;
         }
 
         .submit-btn:active {
@@ -694,9 +663,9 @@
             gap: 10px;
             background: #030f1e;
             border: 1px solid var(--border-blue);
-            padding: 5px 12px;
+            padding: 8px 12px;
             border-radius: 6px;
-            font-size: 0.72rem;
+            font-size: 0.75rem;
         }
 
         .player-tag-bar input {
@@ -705,13 +674,148 @@
             color: var(--neon-blue);
             font-weight: bold;
             outline: none;
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             font-family: 'Orbitron', sans-serif;
             width: 100%;
         }
     </style>
 </head>
 <body>
+
+    <div class="controller-frame">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="title">CYBERROUTE MOBILE</div>
+            <div class="connection-status" id="connStatus"><span id="playerTagName">QuantumExplorer</span> (Connecting...)</div>
+            <div class="sound-toggle-pill">
+                <div class="sound-dot"></div>
+                SOUND: ON
+            </div>
+        </div>
+
+        <!-- Level Select (1 to 5) -->
+        <div>
+            <div class="section-label">LEVEL SELECT (1-5):</div>
+            <div class="level-select-bar" id="levelSelectBar"></div>
+        </div>
+
+        <!-- Route Input Hub -->
+        <div class="route-input-area">
+            <div class="section-label">Route Input:</div>
+            <div class="hex-cluster">
+                <button class="hex-btn node-c" onclick="sendNode('C')">C</button>
+                <button class="hex-btn node-b" onclick="sendNode('B')">B</button>
+                <button class="hex-btn node-d" onclick="sendNode('D')">D</button>
+                <button class="hex-btn node-a" onclick="sendNode('A')">A</button>
+                <button class="hex-btn node-f" onclick="sendNode('F')">F</button>
+                <button class="hex-btn node-e" onclick="sendNode('E')">E</button>
+                <button class="hex-btn node-g" onclick="sendNode('G')">G</button>
+            </div>
+
+            <div class="bottom-action-row">
+                <button class="ai-btn" onclick="requestAI()">REQUEST AI<br>SOLUTION</button>
+                <div class="metrics-display" id="metricsDisplay">PATH: A<br>WEIGHT: 0 | TIME: 0:40</div>
+                <button class="clear-btn" onclick="sendAction('undo')">CLEAR</button>
+            </div>
+        </div>
+
+        <!-- Bottom Controls: D-Pad & Submit -->
+        <div class="bottom-control-split">
+            <div class="d-pad">
+                <div class="d-btn d-up" onclick="sendAction('up')">▲</div>
+                <div class="d-btn d-left" onclick="sendAction('left')">◄</div>
+                <div class="d-btn d-right" onclick="sendAction('right')">►</div>
+                <div class="d-btn d-down" onclick="sendAction('down')">▼</div>
+            </div>
+
+            <button class="submit-btn" onclick="sendAction('submit')">
+                SUBMIT<br>ROUTE
+            </button>
+        </div>
+
+        <!-- Player Tag Bar -->
+        <div class="player-tag-bar">
+            <span style="color: var(--text-muted);">PLAYER</span>
+            <input type="text" id="playerTagInput" value="QuantumExplorer" oninput="updatePlayerTag(this.value)">
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const hostPeerId = urlParams.get('peer');
+
+        let peer = null;
+        let conn = null;
+
+        function initControllerConnection() {
+            peer = new Peer();
+            peer.on('open', (id) => {
+                if (hostPeerId) {
+                    conn = peer.connect(hostPeerId);
+                    conn.on('open', () => {
+                        const currentTag = document.getElementById('playerTagInput').value;
+                        document.getElementById('connStatus').innerHTML = `<span id="playerTagName">${currentTag}</span> (Connected)`;
+                        sendAction('setTag', currentTag);
+                    });
+                    conn.on('data', (data) => {
+                        if(data.pathText && data.weight !== undefined && data.timeLeft !== undefined) {
+                            document.getElementById('metricsDisplay').innerHTML = `PATH: ${data.pathText}<br>WEIGHT: ${data.weight} | TIME: 0:${data.timeLeft < 10 ? '0':''}${data.timeLeft}`;
+                        }
+                    });
+                } else {
+                    document.getElementById('connStatus').innerText = 'Error: No Host ID';
+                }
+            });
+        }
+
+        // Build Level Select Pills (1 to 5)
+        const levelBar = document.getElementById('levelSelectBar');
+        for (let i = 1; i <= 5; i++) {
+            const pill = document.createElement('div');
+            pill.className = `level-pill ${i === 5 ? 'active' : ''}`;
+            pill.innerText = `L${i}`;
+            pill.onclick = () => {
+                document.querySelectorAll('.level-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                if(conn && conn.open) {
+                    conn.send({ action: 'selectLevel', level: i });
+                }
+            };
+            levelBar.appendChild(pill);
+        }
+
+        function updatePlayerTag(newName) {
+            const formattedName = newName.trim() || "Player";
+            document.getElementById('playerTagName').innerText = formattedName;
+            if (conn && conn.open) {
+                conn.send({ action: 'updatePlayerTag', name: formattedName });
+            }
+        }
+
+        function sendNode(nodeKey) {
+            if (conn && conn.open) {
+                conn.send({ action: 'selectNode', nodeKey: nodeKey });
+            }
+        }
+
+        function sendAction(actionType, extraData = null) {
+            if (conn && conn.open) {
+                conn.send({ action: actionType, data: extraData });
+            }
+        }
+
+        function requestAI() {
+            if (conn && conn.open) {
+                conn.send({ action: 'requestAI' });
+            } else {
+                alert("AI Dijkstra Solver requested!");
+            }
+        }
+
+        window.onload = initControllerConnection;
+    </script>
+</body>
+</html>
 
     <!-- Orientation Warning Overlay for Portrait Phones -->
     <div id="orientation-warning">
