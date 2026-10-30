@@ -197,7 +197,6 @@
             <h3 style="margin-top:0; color:var(--primary-accent); font-size:1.3rem;">System Profile & Exhibit Info</h3>
             <p style="font-size:0.9rem; color:#cbd5e1; line-height:1.6; margin-bottom:15px;">
                 <strong>Project Title:</strong> CyberRoute AI - Algorithmic Pathfinder<br>
-                <strong>Category:</strong> Senior Division Math Fair Exhibit<br>
                 <strong>Core Algorithm:</strong> Dijkstra's Shortest Path Algorithm & Graph Theory Optimization<br>
                 <strong>Tech Stack:</strong> HTML5 Canvas, Web Audio API, PeerJS Dual-Controller Sync
             </p>
@@ -395,7 +394,23 @@
             <div id="connStatus" style="font-size:0.8rem; color:var(--primary-accent); margin-top:12px; font-weight:600;">Establishing peer protocol connection...</div>
         </div>
     </div>
+// Function to update the mobile controller's node grid dynamically based on the current level's graph
+function renderControllerNodes(graph) {
+    const grid = document.getElementById('nodeBtnGrid');
+    grid.innerHTML = ''; // Clear existing buttons
 
+    // Loop through all nodes present in the current level's graph (e.g., A, B, C ... L)
+    Object.keys(graph.nodes).forEach(nodeKey => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = `Node ${nodeKey}`;
+        btn.onclick = () => {
+            // Send selected node back to the host laptop via PeerJS
+            conn.send({ type: 'NODE', node: nodeKey });
+        };
+        grid.appendChild(btn);
+    });
+}
     <script>
         // --- World Map Background Canvas ---
         function initWorldMapBackground() {
